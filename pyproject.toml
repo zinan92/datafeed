@@ -1,6 +1,6 @@
 [project]
 name = "kline"
-version = "0.1.0"
+version = "0.2.0"
 description = "Multi-asset K-line data. in ticker + timeframe → out OHLCV candles."
 requires-python = ">=3.11"
 dependencies = [

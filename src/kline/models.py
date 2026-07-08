@@ -7,7 +7,7 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import Column, DateTime, Float, Index, Integer, String, func
 from sqlalchemy.orm import DeclarativeBase
 
@@ -44,15 +44,38 @@ class Candle(BaseModel):
     close: float
     volume: float
     amount: Optional[float] = None
+    # Provenance — stamped on the way out so a consumer never has to guess
+    # where a bar came from. Optional so cached/ORM rows stay constructible.
+    provider: Optional[str] = None
+    quality_flags: list[str] = Field(default_factory=list)
 
 
 class CandleResponse(BaseModel):
-    """API response envelope."""
+    """API response envelope.
+
+    Carries a provenance/trust header alongside the candles so a downstream
+    consumer (chart, backtest, agent) can tell where the data came from, how
+    fresh it is, and — critically — that it is real market data, never a
+    fabricated placeholder. kline has no synthetic path: ``is_synthetic`` is
+    always ``False``. The field exists so consumers can rely on a single,
+    uniform OHLCV contract across data sources.
+    """
 
     ticker: str
     asset_class: AssetClass
     timeframe: Timeframe
     count: int
+    # ── provenance / trust envelope ──
+    schema_version: str = "kline-candles-v1"
+    provider: str = ""  # concrete upstream, e.g. "binance_spot", "yahoo_finance"
+    source_mode: str = ""  # path label, e.g. "binance_spot_public"
+    quality_flags: list[str] = Field(default_factory=list)
+    is_synthetic: bool = False  # kline never fabricates data — always False
+    served_from: str = ""  # "cache" | "upstream"
+    fresh: Optional[bool] = None  # only asserted for continuous (24/7) markets
+    latest_timestamp: Optional[str] = None
+    age_seconds: Optional[float] = None
+    max_age_seconds: Optional[float] = None
     candles: list[Candle]
 
 

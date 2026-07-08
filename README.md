@@ -14,10 +14,11 @@
 
 ```
 in  ticker + timeframe (1m/5m/30m/1h/1d/1w) + date range
-out OHLCV candles (timestamp, open, high, low, close, volume)
+out OHLCV candles + provenance header (provider, source_mode, quality_flags,
+    is_synthetic=false, served_from, fresh, age_seconds)
 
 fail ticker not found     → search suggestions
-fail data source down     → fallback to cache / stale warning
+fail data source down     → cached candles, tagged served_from=cache + age_seconds
 fail timeframe not supported → supported list
 fail A-share no token     → setup instructions
 ```
@@ -36,13 +37,36 @@ $ curl "localhost:8100/api/candles/us_stock/AAPL?timeframe=1d&limit=3"
   "asset_class": "us_stock",
   "timeframe": "1d",
   "count": 3,
+  "schema_version": "kline-candles-v1",
+  "provider": "yahoo_finance",
+  "source_mode": "yahoo_finance",
+  "quality_flags": ["delayed_possible", "market_hours", "research_only"],
+  "is_synthetic": false,
+  "served_from": "upstream",
+  "fresh": null,
+  "latest_timestamp": "2026-03-28",
+  "age_seconds": 172800.0,
+  "max_age_seconds": null,
   "candles": [
-    {"timestamp": "2026-03-26", "open": 178.5, "high": 182.3, "low": 177.8, "close": 181.2, "volume": 52340000},
-    {"timestamp": "2026-03-27", "open": 181.2, "high": 183.1, "low": 179.5, "close": 180.8, "volume": 48120000},
-    {"timestamp": "2026-03-28", "open": 180.8, "high": 185.0, "low": 180.2, "close": 184.5, "volume": 55670000}
+    {"timestamp": "2026-03-26", "open": 178.5, "high": 182.3, "low": 177.8, "close": 181.2, "volume": 52340000, "provider": "yahoo_finance", "quality_flags": ["delayed_possible", "market_hours", "research_only"]},
+    {"timestamp": "2026-03-27", "open": 181.2, "high": 183.1, "low": 179.5, "close": 180.8, "volume": 48120000, "provider": "yahoo_finance", "quality_flags": ["delayed_possible", "market_hours", "research_only"]},
+    {"timestamp": "2026-03-28", "open": 180.8, "high": 185.0, "low": 180.2, "close": 184.5, "volume": 55670000, "provider": "yahoo_finance", "quality_flags": ["delayed_possible", "market_hours", "research_only"]}
   ]
 }
 ```
+
+每个响应都带一层 **provenance / 信任头**，让下游（图表、回测、agent）不用猜数据来自哪、有多新、是不是真价格：
+
+| 字段 | 含义 |
+|------|------|
+| `provider` / `source_mode` | 具体上游与取数路径（`binance_spot` / `yahoo_finance` / `tushare` …） |
+| `quality_flags` | 数据性质标记；**所有源都带 `research_only`**——kline 的源都不是实盘执行场地，误接进下单链路时应据此 fail-closed |
+| `is_synthetic` | 恒为 `false`。kline 没有任何合成/占位数据路径，返回的要么是真实数据、要么直接报错 |
+| `served_from` | `"cache"`（本地库）或 `"upstream"`（刚从上游拉的） |
+| `latest_timestamp` / `age_seconds` | 最新一根 bar 的时间与年龄（永远是诚实事实） |
+| `fresh` / `max_age_seconds` | **仅对 7×24 连续市场（crypto）给出**新鲜度判定；行情有休市的源（美股/商品/A股）恒为 `null`，由消费方按自己的交易日历判断 |
+
+> 当前缓存命中即返回、不会自动回源刷新——但 `served_from` + `age_seconds` + `fresh` 让陈旧数据**可见**，消费方可自行拒绝。"陈旧即自动回源/拒绝"的强制逻辑列在 roadmap。
 
 ```bash
 # A股日线 (需要 TuShare token)
@@ -183,14 +207,17 @@ kline/
 
 ```yaml
 name: kline
-version: 0.1.0
+version: 0.2.0
 capability:
-  summary: "Multi-asset K-line data service. Give it a ticker + timeframe, get back OHLCV candles."
+  summary: "Multi-asset K-line data service. Give it a ticker + timeframe, get back OHLCV candles with a provenance header."
   in: "ticker + timeframe + optional date range"
-  out: "standardized OHLCV candles (timestamp, open, high, low, close, volume)"
+  out: "standardized OHLCV candles + provenance (provider, source_mode, quality_flags, is_synthetic=false, served_from, fresh, age_seconds)"
+  guarantees:
+    - "is_synthetic is always false — real data or an error, never a fabricated placeholder"
+    - "every source is tagged research_only — none is a live-order execution venue"
   fail:
     - "ticker not found → suggestions list"
-    - "data source down → cached data or stale warning"
+    - "data source down → cached candles tagged served_from=cache + age_seconds"
     - "timeframe not supported → supported timeframes list"
     - "A-share no token → setup instructions"
   providers: [tushare, yahoo, binance]

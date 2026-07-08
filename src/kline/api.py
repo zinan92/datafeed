@@ -4,11 +4,50 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 
-from kline.models import AssetClass, CandleResponse, ErrorResponse, Timeframe
+from kline.models import AssetClass, Candle, CandleResponse, ErrorResponse, Timeframe
 from kline.providers.base import ProviderError
+from kline.provenance import ProviderMeta, freshness, provider_meta
 from kline.registry import get_provider, get_store
 
 router = APIRouter()
+
+
+def _build_response(
+    ticker: str,
+    asset_class: AssetClass,
+    timeframe: Timeframe,
+    candles: list[Candle],
+    meta: ProviderMeta,
+    *,
+    served_from: str,
+) -> CandleResponse:
+    """Stamp provenance on each candle and wrap them in the trust envelope."""
+    stamped = [
+        candle.model_copy(update={"provider": meta.name, "quality_flags": list(meta.quality_flags)})
+        for candle in candles
+    ]
+    latest = stamped[-1].timestamp if stamped else None
+    age_seconds = max_age_seconds = None
+    fresh = None
+    if latest is not None:
+        age_seconds, max_age_seconds, fresh = freshness(latest, meta, timeframe)
+    return CandleResponse(
+        ticker=ticker,
+        asset_class=asset_class,
+        timeframe=timeframe,
+        count=len(stamped),
+        schema_version="kline-candles-v1",
+        provider=meta.name,
+        source_mode=meta.source_mode,
+        quality_flags=list(meta.quality_flags),
+        is_synthetic=False,
+        served_from=served_from,
+        fresh=fresh,
+        latest_timestamp=latest,
+        age_seconds=age_seconds,
+        max_age_seconds=max_age_seconds,
+        candles=stamped,
+    )
 
 
 @router.get(
@@ -34,18 +73,16 @@ async def get_candles(
     - **refresh**: Force re-fetch from upstream source
     """
     store = get_store()
+    meta = provider_meta(asset_class)
 
-    # Try local store first (unless refresh requested)
+    # Try local store first (unless refresh requested).
+    # NOTE: this serves cached candles without re-checking the upstream. The
+    # response's served_from="cache" + fresh/age_seconds make that visible so a
+    # consumer can reject stale data; automatic refetch-on-stale is roadmap.
     if not refresh:
-        candles = store.query(ticker, asset_class, timeframe, start=start, end=end, limit=limit)
-        if candles:
-            return CandleResponse(
-                ticker=ticker,
-                asset_class=asset_class,
-                timeframe=timeframe,
-                count=len(candles),
-                candles=candles,
-            )
+        cached = store.query(ticker, asset_class, timeframe, start=start, end=end, limit=limit)
+        if cached:
+            return _build_response(ticker, asset_class, timeframe, cached, meta, served_from="cache")
 
     # Fetch from upstream provider
     provider = get_provider(asset_class)
@@ -64,13 +101,7 @@ async def get_candles(
     if candles:
         store.save(ticker, asset_class, timeframe, candles)
 
-    return CandleResponse(
-        ticker=ticker,
-        asset_class=asset_class,
-        timeframe=timeframe,
-        count=len(candles),
-        candles=candles,
-    )
+    return _build_response(ticker, asset_class, timeframe, candles, meta, served_from="upstream")
 
 
 @router.get("/tickers")
@@ -86,4 +117,6 @@ async def list_tickers(
 @router.get("/health")
 async def health() -> dict:
     """Health check."""
-    return {"status": "ok", "service": "kline", "version": "0.1.0"}
+    from kline import __version__
+
+    return {"status": "ok", "service": "kline", "version": __version__}
