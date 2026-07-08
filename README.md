@@ -1,6 +1,6 @@
 <div align="center">
 
-# kline
+# datafeed
 
 **多资产 K 线数据服务 — 一个 ticker + 一个 timeframe，返回标准化 OHLCV 蜡烛图**
 
