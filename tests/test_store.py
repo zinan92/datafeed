@@ -1,6 +1,5 @@
 """Tests for KlineStore — the core storage layer."""
 
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -45,9 +44,29 @@ class TestSaveAndQuery:
         result = store.query("AAPL", AssetClass.US_STOCK, Timeframe.DAY)
         assert len(result) == 1
         assert result[0].open == 101.0  # Updated
+        assert store.count("AAPL", AssetClass.US_STOCK, Timeframe.DAY) == 1
 
     def test_empty_save_returns_zero(self, store: KlineStore):
         assert store.save("AAPL", AssetClass.US_STOCK, Timeframe.DAY, []) == 0
+
+    def test_raw_upstream_response_is_saved_separately(self, store: KlineStore):
+        assert store.count_raw_responses() == 0
+
+        count = store.save_raw_response(
+            provider="binance_usdm_futures",
+            source_mode="binance_usdm_futures",
+            ticker="XAUUSDT",
+            asset_class=AssetClass.COMMODITY,
+            timeframe=Timeframe.MIN_1,
+            served_from="upstream",
+            execution_venue=True,
+            request_params={"symbol": "XAUUSDT", "interval": "1m"},
+            response_body=[["raw"]],
+            status_code=200,
+        )
+
+        assert count == 1
+        assert store.count_raw_responses() == 1
 
     def test_query_with_date_range(self, store: KlineStore, sample_candles: list[Candle]):
         store.save("AAPL", AssetClass.US_STOCK, Timeframe.DAY, sample_candles)

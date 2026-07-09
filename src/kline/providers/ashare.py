@@ -68,8 +68,6 @@ class AShareProvider:
         if not end_date:
             end_date = date.today().strftime("%Y%m%d")
 
-        freq = _TF_MAP.get(timeframe, "D")
-
         try:
             df = self._pro.daily(
                 ts_code=ts_code,

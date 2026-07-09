@@ -17,8 +17,10 @@ BINANCE_KLINE_URL = "https://api.binance.com/api/v3/klines"
 _TF_MAP = {
     Timeframe.MIN_1: "1m",
     Timeframe.MIN_5: "5m",
+    Timeframe.MIN_15: "15m",
     Timeframe.MIN_30: "30m",
     Timeframe.HOUR_1: "1h",
+    Timeframe.HOUR_4: "4h",
     Timeframe.DAY: "1d",
     Timeframe.WEEK: "1w",
 }

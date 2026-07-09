@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import json
+from typing import Any
+
 from sqlalchemy import create_engine, event, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
-from kline.models import AssetClass, Base, Candle, KlineRow, Timeframe
+from kline.models import AssetClass, Base, Candle, KlineRow, RawUpstreamResponse, Timeframe
 
 
 class KlineStore:
@@ -99,6 +102,40 @@ class KlineStore:
             session.commit()
             return result.rowcount
 
+    def save_raw_response(
+        self,
+        *,
+        provider: str,
+        source_mode: str,
+        ticker: str,
+        asset_class: AssetClass,
+        timeframe: Timeframe,
+        served_from: str,
+        execution_venue: bool,
+        request_params: dict[str, Any],
+        response_body: Any,
+        status_code: int | None = None,
+        error: str | None = None,
+    ) -> int:
+        """Persist raw upstream payloads for debugging source behavior."""
+        row = RawUpstreamResponse(
+            provider=provider,
+            source_mode=source_mode,
+            ticker=ticker,
+            asset_class=asset_class.value,
+            timeframe=timeframe.value,
+            served_from=served_from,
+            execution_venue=execution_venue,
+            request_params=json.dumps(request_params, ensure_ascii=False, sort_keys=True),
+            response_body=json.dumps(response_body, ensure_ascii=False, sort_keys=True),
+            status_code=status_code,
+            error=error,
+        )
+        with self._session_factory() as session:
+            session.add(row)
+            session.commit()
+            return 1
+
     def list_tickers(self, asset_class: AssetClass | None = None) -> list[str]:
         """List all tickers with stored data."""
         with self._session_factory() as session:
@@ -121,4 +158,12 @@ class KlineStore:
                     KlineRow.timeframe == timeframe.value,
                 )
             )
+            return session.execute(stmt).scalar_one()
+
+    def count_raw_responses(self) -> int:
+        """Count captured raw upstream payloads."""
+        from sqlalchemy import func
+
+        with self._session_factory() as session:
+            stmt = select(func.count()).select_from(RawUpstreamResponse)
             return session.execute(stmt).scalar_one()

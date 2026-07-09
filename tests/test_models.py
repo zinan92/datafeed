@@ -1,7 +1,5 @@
 """Tests for data models."""
 
-import pytest
-
 from kline.models import AssetClass, Candle, CandleResponse, Timeframe
 
 
@@ -41,3 +39,5 @@ class TestEnums:
     def test_timeframe_values(self):
         assert Timeframe.DAY.value == "1d"
         assert Timeframe.MIN_5.value == "5m"
+        assert Timeframe.MIN_15.value == "15m"
+        assert Timeframe.HOUR_4.value == "4h"

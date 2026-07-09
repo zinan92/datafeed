@@ -1,8 +1,5 @@
 """Tests for provider logic (unit tests, no network calls)."""
 
-import pytest
-
-from kline.models import Timeframe
 from kline.providers.base import ProviderError
 from kline.providers.commodity import _resolve_ticker
 

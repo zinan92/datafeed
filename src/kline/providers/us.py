@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 _TF_MAP = {
     Timeframe.MIN_1: "1m",
     Timeframe.MIN_5: "5m",
+    Timeframe.MIN_15: "15m",
     Timeframe.MIN_30: "30m",
     Timeframe.HOUR_1: "1h",
     Timeframe.DAY: "1d",
@@ -25,6 +26,7 @@ _TF_MAP = {
 _MAX_PERIOD = {
     Timeframe.MIN_1: "7d",
     Timeframe.MIN_5: "60d",
+    Timeframe.MIN_15: "60d",
     Timeframe.MIN_30: "60d",
     Timeframe.HOUR_1: "730d",
     Timeframe.DAY: "max",
