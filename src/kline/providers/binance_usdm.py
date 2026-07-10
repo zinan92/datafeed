@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from datetime import datetime, timezone
@@ -85,9 +86,15 @@ def _candle_from_ws_kline(item: dict[str, Any]) -> Candle:
 class BinanceUsdmFuturesProvider:
     """Fetch and stream XAUUSDT candles from Binance USD-M Futures."""
 
-    def __init__(self, timeout: int = 30, transport: httpx.AsyncBaseTransport | None = None) -> None:
+    def __init__(
+        self,
+        timeout: float = 30,
+        transport: httpx.AsyncBaseTransport | None = None,
+        websocket_connect: Any | None = None,
+    ) -> None:
         self._timeout = timeout
         self._transport = transport
+        self._websocket_connect = websocket_connect
         self.last_raw_response: dict[str, Any] | None = None
 
     def supported_timeframes(self) -> list[Timeframe]:
@@ -180,10 +187,26 @@ class BinanceUsdmFuturesProvider:
                 suggestions=["Install the websockets package"],
             ) from e
 
-        async with websockets.connect(url) as websocket:
-            async for raw_message in websocket:
-                message = json.loads(raw_message)
-                kline = message.get("data", {}).get("k")
-                if not kline:
-                    continue
-                yield _candle_from_ws_kline(kline)
+        connect = self._websocket_connect or websockets.connect
+        try:
+            async with connect(url, open_timeout=self._timeout) as websocket:
+                while True:
+                    try:
+                        raw_message = await asyncio.wait_for(websocket.recv(), timeout=self._timeout)
+                    except TimeoutError as e:
+                        raise ProviderError(
+                            f"Binance USD-M Futures stream returned no kline update within {self._timeout:g}s",
+                            suggestions=["Check the WebSocket proxy path to fstream.binance.com"],
+                        ) from e
+                    message = json.loads(raw_message)
+                    kline = message.get("data", {}).get("k")
+                    if not kline:
+                        continue
+                    yield _candle_from_ws_kline(kline)
+        except ProviderError:
+            raise
+        except (OSError, TimeoutError) as e:
+            raise ProviderError(
+                f"Binance USD-M Futures stream failed: {e}",
+                suggestions=["Check network and proxy access to fstream.binance.com"],
+            ) from e
