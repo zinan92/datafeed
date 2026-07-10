@@ -124,3 +124,37 @@ complete and fail visibly when the upstream stream is silent.
 - No real candle was received. Tick-level server streaming remains blocked by
   the machine's Binance WebSocket network path; REST and cached data were not
   substituted into the WebSocket response.
+
+## 2026-07-10 - Versioned execution instrument definition
+
+Objective: give paper and shadow execution engines one upstream-derived GOLD
+contract definition instead of duplicating precision and margin assumptions.
+
+### Decisions
+
+- Added `instrument-definition-v1` and
+  `GET /api/instruments/{asset_class}/{ticker}`.
+- Binance USD-M definitions are parsed from live `exchangeInfo`; the response
+  preserves price/quantity increments, limits, currencies, contract status,
+  order types, and normalized initial/maintenance margin rates.
+- Public `exchangeInfo` does not provide account fee rates or an explicit
+  contract multiplier. Those fields remain null and are named in
+  `missing_fields`; no default fee or synthetic multiplier is returned.
+- The response always reports `served_from=upstream` and
+  `is_synthetic=false`. Upstream failure returns an explicit 502 error.
+
+### Gotchas
+
+- `requiredMarginPercent` and `maintMarginPercent` are percentages upstream;
+  the v1 response converts them to decimal rates (`5.0000` -> `0.0500`).
+- XAUUSDT currently reports `TRADIFI_PERPETUAL`, not generic `PERPETUAL`.
+  Consumers must preserve the upstream contract type.
+- `exchangeInfo?symbol=XAUUSDT` can still return a multi-symbol payload, so the
+  provider selects the exact symbol and fails if it is absent.
+- Raw instrument responses are auditable through `last_raw_response` but are
+  not yet persisted in a dedicated instrument-history table.
+
+### Verification
+
+- Provider tests assert exact XAUUSDT increments, minimums, currencies, margin
+  conversion, missing fields, and raw response capture.

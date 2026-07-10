@@ -15,6 +15,7 @@ from kline.models import (
     FallbackPolicy,
     QualityPolicy,
     Timeframe,
+    InstrumentDefinition,
 )
 from kline.ports import MarketDataPort
 from kline.providers.base import ProviderError
@@ -524,6 +525,8 @@ async def stream_candles(
             ).model_dump()
         )
         await websocket.close(code=1011)
+
+
         return
 
     try:
@@ -562,6 +565,42 @@ async def stream_candles(
             ).model_dump()
         )
         await websocket.close(code=1011)
+
+
+@router.get(
+    "/instruments/{asset_class}/{ticker}",
+    response_model=InstrumentDefinition,
+    summary="Get an upstream execution instrument definition",
+)
+async def get_instrument_definition(
+    asset_class: AssetClass,
+    ticker: str,
+    source: str = Query("auto"),
+    require_execution_venue: bool = Query(False),
+) -> InstrumentDefinition:
+    try:
+        normalized_source = normalize_source(source, asset_class)
+        meta = source_meta(normalized_source, asset_class)
+        if require_execution_venue and not meta.execution_venue:
+            raise ProviderError(
+                f"Source {normalized_source} is not an execution venue",
+                suggestions=["Choose a source with execution_venue=true"],
+            )
+        adapter = get_adapter_for_source(normalized_source, asset_class)
+        definition = await adapter.fetch_instrument_definition(ticker)
+    except ProviderError as e:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "error": "instrument_definition_unavailable",
+                "detail": str(e),
+                "suggestions": e.suggestions,
+                "source_mode": source,
+                "is_synthetic": False,
+                "reject_reason": "upstream_error",
+            },
+        ) from e
+    return definition
 
 
 @router.get("/tickers")
