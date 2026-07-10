@@ -87,3 +87,40 @@ Objective: make any broker/exchange feed fit into datafeed by implementing one s
 - `python3 -m compileall src/kline`
 - `python3 -m ruff check .` -> all checks passed
 - `python3 -m pytest` -> 47 passed in 6.10s
+
+## 2026-07-10 - WebSocket proxy runtime dependency
+
+Objective: make the standardized Binance USD-M WebSocket path dependency-
+complete and fail visibly when the upstream stream is silent.
+
+### Decisions
+
+- Added `python-socks[asyncio]` as an explicit runtime dependency. `websockets`
+  auto-detects SOCKS proxy settings, so proxy support is part of the production
+  stream path rather than an optional development convenience.
+- Kept the existing `binance_usdm_futures` source, strict quality policy, and
+  `fallback_policy=none`. No alternate source is selected when the stream fails.
+- Ignored SQLite `-wal` and `-shm` sidecars created by a running datafeed service.
+
+### Gotchas
+
+- `/api/health` validates provider registration, not a live upstream socket. A
+  healthy service can still fail its first WebSocket subscription if proxy
+  runtime dependencies are missing.
+- Installing proxy support removes the immediate import failure but does not
+  prove market messages flow. On this machine both XAUUSDT and BTCUSDT complete
+  the WebSocket handshake and then receive no frames through the current
+  network path.
+- The provider now times out a silent upstream and raises `ProviderError`; the
+  API returns a structured `stream_error` with `fallback_policy=none` rather
+  than leaving consumers connected indefinitely.
+
+### Verification
+
+- `python3 -m pytest` -> 48 passed.
+- Real local subscription returned `stream_error` after 30 seconds with
+  `served_from=websocket`, `is_synthetic=false`, `execution_venue=true`, and
+  `reject_reason=upstream_error`.
+- No real candle was received. Tick-level server streaming remains blocked by
+  the machine's Binance WebSocket network path; REST and cached data were not
+  substituted into the WebSocket response.

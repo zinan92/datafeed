@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import asyncio
 
 import httpx
 import pytest
@@ -68,3 +69,35 @@ async def test_binance_usdm_rejects_non_xau_symbols():
         await provider.fetch("BTCUSDT", Timeframe.MIN_1)
 
     assert "not enabled" in str(exc.value)
+
+
+class _FakeWebSocket:
+    def __init__(self, messages: list[str] | None = None) -> None:
+        self.messages = list(messages or [])
+
+    async def recv(self) -> str:
+        if self.messages:
+            return self.messages.pop(0)
+        await asyncio.Event().wait()
+        raise AssertionError("unreachable")
+
+
+class _FakeWebSocketContext:
+    def __init__(self, socket: _FakeWebSocket) -> None:
+        self.socket = socket
+
+    async def __aenter__(self) -> _FakeWebSocket:
+        return self.socket
+
+    async def __aexit__(self, *_args) -> None:
+        return None
+
+
+async def test_binance_usdm_stream_fails_visibly_when_upstream_is_silent():
+    provider = BinanceUsdmFuturesProvider(
+        timeout=0.01,
+        websocket_connect=lambda *_args, **_kwargs: _FakeWebSocketContext(_FakeWebSocket()),
+    )
+
+    with pytest.raises(ProviderError, match="no kline update"):
+        await anext(provider.stream("XAUUSDT", Timeframe.MIN_1))
