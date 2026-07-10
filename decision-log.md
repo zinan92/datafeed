@@ -137,9 +137,11 @@ contract definition instead of duplicating precision and margin assumptions.
 - Binance USD-M definitions are parsed from live `exchangeInfo`; the response
   preserves price/quantity increments, limits, currencies, contract status,
   order types, and normalized initial/maintenance margin rates.
-- Public `exchangeInfo` does not provide account fee rates or an explicit
-  contract multiplier. Those fields remain null and are named in
-  `missing_fields`; no default fee or synthetic multiplier is returned.
+- Public `exchangeInfo` does not provide account fee rates. Those fields remain
+  null and are named in `missing_fields`.
+- The USD-M adapter returns `contract_multiplier=1` as an explicitly derived
+  field because linear USD-M notional is `price * quantity`; `derived_fields`
+  records that derivation so consumers do not mistake it for a raw field.
 - The response always reports `served_from=upstream` and
   `is_synthetic=false`. Upstream failure returns an explicit 502 error.
 
@@ -151,6 +153,8 @@ contract definition instead of duplicating precision and margin assumptions.
   Consumers must preserve the upstream contract type.
 - `exchangeInfo?symbol=XAUUSDT` can still return a multi-symbol payload, so the
   provider selects the exact symbol and fails if it is absent.
+- Derived fields must carry a stable explanation in `derived_fields`; consumers
+  must reject an unexplained multiplier rather than silently defaulting it.
 - Raw instrument responses are auditable through `last_raw_response` but are
   not yet persisted in a dedicated instrument-history table.
 
