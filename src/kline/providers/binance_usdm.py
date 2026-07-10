@@ -300,6 +300,7 @@ class BinanceUsdmFuturesProvider:
             min_notional=str(notional_filter["notional"]),
             margin_init_rate=_decimal_rate_from_percent(str(item["requiredMarginPercent"])),
             margin_maint_rate=_decimal_rate_from_percent(str(item["maintMarginPercent"])),
+            contract_multiplier="1",
             order_types=[str(value) for value in item.get("orderTypes", [])],
             time_in_force=[str(value) for value in item.get("timeInForce", [])],
             provider="binance_usdm_futures",
@@ -307,5 +308,9 @@ class BinanceUsdmFuturesProvider:
             execution_venue=True,
             upstream_server_time=payload.get("serverTime"),
             observed_at=observed_at,
-            missing_fields=["maker_fee_rate", "taker_fee_rate", "contract_multiplier"],
+            missing_fields=["maker_fee_rate", "taker_fee_rate"],
+            derived_fields={
+                "is_inverse": "binance_usdm_linear_contract",
+                "contract_multiplier": "usd_m_notional_equals_price_times_quantity",
+            },
         )

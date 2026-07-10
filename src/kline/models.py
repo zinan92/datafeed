@@ -171,6 +171,7 @@ class InstrumentDefinition(BaseModel):
     upstream_server_time: Optional[int] = None
     observed_at: str
     missing_fields: list[str] = Field(default_factory=list)
+    derived_fields: dict[str, str] = Field(default_factory=dict)
 
 
 # ── SQLAlchemy ORM (storage layer) ─────────────────────────

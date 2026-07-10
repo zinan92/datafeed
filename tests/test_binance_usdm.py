@@ -139,11 +139,11 @@ async def test_xauusdt_instrument_definition_preserves_exchange_constraints():
     assert definition.margin_init_rate == "0.0500"
     assert definition.margin_maint_rate == "0.0250"
     assert definition.is_synthetic is False
-    assert definition.missing_fields == [
-        "maker_fee_rate",
-        "taker_fee_rate",
-        "contract_multiplier",
-    ]
+    assert definition.contract_multiplier == "1"
+    assert definition.missing_fields == ["maker_fee_rate", "taker_fee_rate"]
+    assert definition.derived_fields["contract_multiplier"] == (
+        "usd_m_notional_equals_price_times_quantity"
+    )
     assert provider.last_raw_response is not None
     assert provider.last_raw_response["response_body"]["serverTime"] == 1783667819466
 
