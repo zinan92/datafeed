@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, Mapping, Protocol
 
-from kline.models import AssetClass, Candle, Timeframe
+from kline.models import AssetClass, Candle, InstrumentDefinition, Timeframe
 from kline.providers.base import Provider, ProviderError
 
 
@@ -78,6 +78,9 @@ class MarketDataPort(Protocol):
     ) -> AsyncIterator[Candle]:
         ...
 
+    async def fetch_instrument_definition(self, ticker: str) -> InstrumentDefinition:
+        ...
+
 
 class ProviderBackedMarketDataAdapter:
     """Adapter wrapper for the existing provider classes."""
@@ -133,3 +136,13 @@ class ProviderBackedMarketDataAdapter:
         canonical = self.canonical_ticker(ticker)
         async for candle in stream(canonical, timeframe):
             yield candle
+
+    async def fetch_instrument_definition(self, ticker: str) -> InstrumentDefinition:
+        fetch = getattr(self._provider, "fetch_instrument_definition", None)
+        if fetch is None:
+            raise ProviderError(
+                f"Source {self.manifest.source_id} does not expose instrument definitions",
+                suggestions=["Choose an execution source with instrument metadata"],
+            )
+        canonical = self.canonical_ticker(ticker)
+        return await fetch(canonical)

@@ -338,6 +338,7 @@ capability:
     - "source identity and cache/quality/fallback policies are visible in every response"
     - "profile=realtime skips cache and applies strict quality checks"
     - "profile=execution_live uses Binance USD-M Futures XAUUSDT, skips cache, applies strict quality checks, and requires execution_venue=true"
+    - "instrument-definition-v1 exposes upstream price/quantity constraints and reports unavailable fee or multiplier fields instead of inventing values"
   fail:
     - "ticker not found → suggestions list"
     - "cache_policy=require + no cache → cache_miss"
@@ -347,6 +348,16 @@ capability:
   sources: [tushare_pro, yahoo_finance, yahoo_finance_futures, binance_spot_public, binance_usdm_futures]
 api_base_url: http://localhost:8100
 endpoints:
+  - path: /api/instruments/{asset_class}/{ticker}
+    method: GET
+    description: "Get a versioned upstream execution instrument definition"
+    params:
+      - name: source
+        type: string
+        default: auto
+      - name: require_execution_venue
+        type: boolean
+        default: false
   - path: /api/candles/{asset_class}/{ticker}
     method: GET
     description: "Get OHLCV candles under explicit source/cache/quality policy"

@@ -128,6 +128,51 @@ class ErrorResponse(BaseModel):
     access_issues: list[str] = Field(default_factory=list)
 
 
+class InstrumentDefinition(BaseModel):
+    """Versioned execution instrument metadata from an upstream venue."""
+
+    schema_version: str = "instrument-definition-v1"
+    instrument_id: str
+    venue: str
+    symbol: str
+    asset_class: AssetClass
+    market_type: str
+    contract_type: str
+    status: str
+    base_currency: str
+    quote_currency: str
+    settlement_currency: str
+    margin_currency: str
+    is_inverse: bool
+    price_precision: int
+    price_increment: str
+    min_price: str
+    max_price: str
+    size_precision: int
+    size_increment: str
+    min_quantity: str
+    max_quantity: str
+    market_size_increment: str
+    market_min_quantity: str
+    market_max_quantity: str
+    min_notional: str
+    margin_init_rate: str
+    margin_maint_rate: str
+    maker_fee_rate: Optional[str] = None
+    taker_fee_rate: Optional[str] = None
+    contract_multiplier: Optional[str] = None
+    order_types: list[str] = Field(default_factory=list)
+    time_in_force: list[str] = Field(default_factory=list)
+    provider: str
+    source_mode: str
+    served_from: str = "upstream"
+    execution_venue: bool
+    is_synthetic: bool = False
+    upstream_server_time: Optional[int] = None
+    observed_at: str
+    missing_fields: list[str] = Field(default_factory=list)
+
+
 # ── SQLAlchemy ORM (storage layer) ─────────────────────────
 
 
