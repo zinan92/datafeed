@@ -4,18 +4,21 @@ from __future__ import annotations
 
 from kline.config import Settings, ensure_data_dir, get_settings
 from kline.models import AssetClass
+from kline.plugin_loader import load_configured_adapters, load_entrypoint_adapters
 from kline.ports import MarketDataPort, ProviderBackedMarketDataAdapter
 from kline.providers.ashare import AShareProvider
 from kline.providers.base import Provider, ProviderError
 from kline.providers.binance_usdm import BinanceUsdmFuturesProvider
 from kline.providers.commodity import CommodityProvider
 from kline.providers.crypto import CryptoProvider
+from kline.providers.fred import FredCsvProvider
 from kline.providers.us import USStockProvider
 from kline.provenance import (
     all_source_manifests,
     normalize_source,
     register_source_manifest,
     source_manifest,
+    fred_source_manifest,
 )
 from kline.store import KlineStore
 
@@ -48,6 +51,13 @@ def init(settings: Settings | None = None) -> None:
             _providers[AssetClass.US_STOCK],
         )
     )
+    for factor_asset_class in (AssetClass.MACRO, AssetClass.FLOW, AssetClass.EVENT):
+        register_adapter(
+            ProviderBackedMarketDataAdapter(
+                fred_source_manifest(factor_asset_class),
+                FredCsvProvider(timeout=s.request_timeout),
+            )
+        )
     register_adapter(
         ProviderBackedMarketDataAdapter(
             source_manifest("binance_spot_public", AssetClass.CRYPTO),
@@ -76,6 +86,12 @@ def init(settings: Settings | None = None) -> None:
                 _providers[AssetClass.A_SHARE],
             )
         )
+
+    external_adapters = load_configured_adapters(s.adapter_config_path)
+    if s.load_entrypoint_adapters:
+        external_adapters.extend(load_entrypoint_adapters())
+    for adapter in external_adapters:
+        register_adapter(adapter)
 
 
 def get_store() -> KlineStore:
@@ -109,7 +125,10 @@ def get_live_provider(source_mode: str = "binance_usdm_futures") -> Provider:
 
 def register_adapter(adapter: MarketDataPort) -> None:
     """Register a source adapter. This is the broker/plugin extension point."""
-    _adapters[adapter.manifest.source_id] = adapter
+    source_id = adapter.manifest.source_id
+    if source_id in _adapters:
+        raise ProviderError(f"Duplicate source adapter: {source_id}")
+    _adapters[source_id] = adapter
     register_source_manifest(adapter.manifest)
 
 

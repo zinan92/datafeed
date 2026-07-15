@@ -1,6 +1,6 @@
 [project]
 name = "kline"
-version = "0.2.0"
+version = "0.3.0"
 description = "Multi-asset K-line data. in ticker + timeframe → out OHLCV candles."
 requires-python = ">=3.11"
 dependencies = [
@@ -19,6 +19,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+tiger = [
+    "tigeropen>=3.3.0",
+]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",

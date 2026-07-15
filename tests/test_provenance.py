@@ -2,13 +2,20 @@
 
 from datetime import datetime, timezone
 
+import pytest
+
 from kline.models import AssetClass, Timeframe
 from kline.provenance import freshness, provider_meta
 
 
 class TestProviderMeta:
     def test_every_asset_class_has_metadata(self):
-        for asset_class in AssetClass:
+        for asset_class in (
+            AssetClass.A_SHARE,
+            AssetClass.US_STOCK,
+            AssetClass.CRYPTO,
+            AssetClass.COMMODITY,
+        ):
             meta = provider_meta(asset_class)
             assert meta.name
             assert meta.source_mode
@@ -16,8 +23,30 @@ class TestProviderMeta:
     def test_every_source_is_flagged_research_only(self):
         # No kline source is an execution venue for a live order loop; the flag
         # is the durable guard against a consumer trusting it as one.
-        for asset_class in AssetClass:
+        for asset_class in (
+            AssetClass.A_SHARE,
+            AssetClass.US_STOCK,
+            AssetClass.CRYPTO,
+            AssetClass.COMMODITY,
+        ):
             assert "research_only" in provider_meta(asset_class).quality_flags
+
+    def test_extensible_asset_classes_fail_without_guessing_a_default(self):
+        for asset_class in (
+            AssetClass.FUTURES,
+            AssetClass.FOREX,
+            AssetClass.INDEX,
+            AssetClass.ETF,
+        ):
+            with pytest.raises(KeyError, match="No default source configured"):
+                provider_meta(asset_class)
+
+    def test_fred_factor_asset_classes_have_explicit_defaults_after_registration(self):
+        from kline.registry import init
+
+        init()
+        for asset_class in (AssetClass.MACRO, AssetClass.FLOW, AssetClass.EVENT):
+            assert provider_meta(asset_class).name == "fred"
 
     def test_crypto_is_spot_and_not_execution_venue(self):
         meta = provider_meta(AssetClass.CRYPTO)
