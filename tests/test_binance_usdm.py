@@ -80,7 +80,7 @@ def _exchange_info() -> dict:
 
 @pytest.mark.parametrize(
     ("timeframe", "interval"),
-    [(Timeframe.MIN_1, "1m"), (Timeframe.MIN_5, "5m")],
+    [(Timeframe.MIN_1, "1m"), (Timeframe.MIN_5, "5m"), (Timeframe.DAY, "1d")],
 )
 async def test_xauusdt_rest_normalizes_to_standard_candles(timeframe: Timeframe, interval: str):
     seen_params: dict[str, str] = {}
@@ -94,7 +94,7 @@ async def test_xauusdt_rest_normalizes_to_standard_candles(timeframe: Timeframe,
 
     assert seen_params["symbol"] == "XAUUSDT"
     assert seen_params["interval"] == interval
-    assert candles[0].timestamp == "2026-07-09T10:00:00"
+    assert candles[0].timestamp == "2026-07-09T10:00:00+00:00"
     assert candles[0].open == 3300.10
     assert candles[0].high == 3301.20
     assert candles[0].low == 3299.90

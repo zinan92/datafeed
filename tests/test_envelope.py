@@ -32,7 +32,7 @@ class TestBuildResponse:
         assert resp.provider == "binance_spot"
         assert resp.source_mode == "binance_spot_public"
         assert resp.served_from == "cache"
-        assert resp.latest_timestamp == "2026-03-28T11:59:00"
+        assert resp.latest_timestamp == "2026-03-28T11:59:00+00:00"
         assert resp.age_seconds is not None  # continuous source → age computed
 
     def test_is_synthetic_is_always_false(self):

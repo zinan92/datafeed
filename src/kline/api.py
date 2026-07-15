@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from time import monotonic
 
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 
@@ -24,6 +25,7 @@ from kline.provenance import (
     canonical_ticker_for_source,
     normalize_source,
     source_meta,
+    source_manifest,
 )
 from kline.quality import QualityReport, analyze_candles
 from kline.registry import get_adapter_for_source, get_store, provider_status
@@ -38,6 +40,7 @@ class RequestPolicy:
     cache_policy: CachePolicy
     quality_policy: QualityPolicy
     fallback_policy: FallbackPolicy
+    fallback_sources: tuple[str, ...]
     require_execution_venue: bool
 
     @property
@@ -61,6 +64,9 @@ def _build_response(
     extra_quality_flags: list[str] | None = None,
     reject_reason: str | None = None,
     access_issues: list[str] | None = None,
+    selected_source: str | None = None,
+    attempted_sources: list[str] | None = None,
+    instrument_id: str | None = None,
 ) -> CandleResponse:
     """Stamp provenance on each candle and wrap them in the trust envelope."""
     strict = policy.strict_quality if policy else False
@@ -76,6 +82,8 @@ def _build_response(
     ]
     return CandleResponse(
         ticker=ticker,
+        instrument_id=instrument_id or ticker,
+        provider_symbol=ticker,
         asset_class=asset_class,
         timeframe=timeframe,
         count=len(stamped),
@@ -83,6 +91,13 @@ def _build_response(
         provider=meta.name,
         source_mode=meta.source_mode,
         requested_source=policy.requested_source if policy else meta.source_mode,
+        selected_source=selected_source or meta.source_mode,
+        selection_reason=(
+            "requested_or_default"
+            if not policy or (selected_source or meta.source_mode) == policy.source
+            else "explicit_fallback"
+        ),
+        attempted_sources=attempted_sources or [selected_source or meta.source_mode],
         cache_policy=policy.cache_policy if policy else CachePolicy.ALLOW,
         quality_policy=policy.quality_policy if policy else QualityPolicy.STANDARD,
         fallback_policy=policy.fallback_policy if policy else FallbackPolicy.NONE,
@@ -113,6 +128,8 @@ def _error(
     report: QualityReport | None = None,
     reject_reason: str | None = None,
     access_issues: list[str] | None = None,
+    selected_source: str | None = None,
+    attempted_sources: list[str] | None = None,
 ) -> HTTPException:
     quality_flags = list(meta.quality_flags)
     if report:
@@ -127,6 +144,8 @@ def _error(
             provider=meta.name,
             source_mode=meta.source_mode,
             requested_source=policy.requested_source if policy else meta.source_mode,
+            selected_source=selected_source,
+            attempted_sources=attempted_sources or [],
             cache_policy=policy.cache_policy if policy else None,
             quality_policy=policy.quality_policy if policy else None,
             fallback_policy=policy.fallback_policy if policy else None,
@@ -180,6 +199,7 @@ def _resolve_policy(
     cache_policy: CachePolicy,
     quality: QualityPolicy,
     fallback_policy: FallbackPolicy,
+    fallback_sources: list[str],
     require_execution_venue: bool,
     profile: str | None,
     strict: bool,
@@ -223,12 +243,29 @@ def _resolve_policy(
     except KeyError as e:
         raise ValueError(f"Unknown source: {resolved_source}") from e
 
+    normalized_fallbacks: list[str] = []
+    if fallback_sources and resolved_fallback_policy != FallbackPolicy.EXPLICIT:
+        raise ValueError("fallback_sources requires fallback_policy=explicit")
+    if resolved_fallback_policy == FallbackPolicy.EXPLICIT and not fallback_sources:
+        raise ValueError("fallback_policy=explicit requires at least one fallback source")
+    for fallback_source in fallback_sources:
+        try:
+            normalized_fallback = normalize_source(fallback_source, asset_class)
+            source_meta(normalized_fallback, asset_class)
+        except (KeyError, ValueError) as error:
+            raise ValueError(f"Invalid fallback source: {fallback_source}") from error
+        if normalized_fallback != normalized_source and normalized_fallback not in normalized_fallbacks:
+            normalized_fallbacks.append(normalized_fallback)
+    if resolved_fallback_policy == FallbackPolicy.EXPLICIT and not normalized_fallbacks:
+        raise ValueError("fallback sources must differ from the primary source")
+
     return RequestPolicy(
         requested_source=requested_source,
         source=normalized_source,
         cache_policy=resolved_cache_policy,
         quality_policy=resolved_quality,
         fallback_policy=resolved_fallback_policy,
+        fallback_sources=tuple(normalized_fallbacks),
         require_execution_venue=resolved_require_execution_venue,
     )
 
@@ -279,76 +316,139 @@ async def _fetch_upstream_candles(
     policy: RequestPolicy,
 ) -> CandleResponse:
     """Fetch upstream under an explicit source/cache/quality policy."""
-    try:
-        adapter = get_adapter_for_source(policy.source, asset_class)
-    except ProviderError as e:
-        raise _error(
-            status_code=400,
-            error="provider_unavailable",
-            detail=str(e),
-            suggestions=e.suggestions,
-            meta=meta,
-            served_from="upstream",
-            policy=policy,
-            reject_reason="provider_unavailable",
-            access_issues=[str(e)],
-        ) from e
-    try:
-        candles = await adapter.fetch_candles(
-            ticker,
-            timeframe,
-            start=start,
-            end=end,
-            limit=limit,
-        )
-    except ProviderError as e:
+    attempted_sources: list[str] = []
+    failures: list[str] = []
+    candidates = (policy.source, *policy.fallback_sources)
+    last_meta = meta
+    last_error: ProviderError | None = None
+    last_report: QualityReport | None = None
+
+    for selected_source in candidates:
+        attempted_sources.append(selected_source)
+        selected_meta = source_meta(selected_source, asset_class)
+        last_meta = selected_meta
+        selected_ticker = canonical_ticker_for_source(selected_source, asset_class, ticker)
+        started_at = monotonic()
+        adapter: MarketDataPort | None = None
+        try:
+            adapter = get_adapter_for_source(selected_source, asset_class)
+            candles = await adapter.fetch_candles(
+                selected_ticker,
+                timeframe,
+                start=start,
+                end=end,
+                limit=limit,
+            )
+        except ProviderError as error:
+            last_error = error
+            failures.append(f"{selected_source}: {error}")
+            if adapter is not None:
+                _save_raw_if_available(
+                    adapter=adapter,
+                    ticker=selected_ticker,
+                    asset_class=asset_class,
+                    timeframe=timeframe,
+                    meta=selected_meta,
+                    served_from="upstream",
+                )
+            get_store().save_source_observation(
+                source_id=selected_source,
+                provider=selected_meta.name,
+                ticker=selected_ticker,
+                asset_class=asset_class,
+                timeframe=timeframe,
+                success=False,
+                candle_count=0,
+                latest_timestamp=None,
+                latency_ms=(monotonic() - started_at) * 1000,
+                quality_flags=list(selected_meta.quality_flags),
+                error=str(error),
+            )
+            continue
+
         _save_raw_if_available(
             adapter=adapter,
-            ticker=ticker,
+            ticker=selected_ticker,
             asset_class=asset_class,
             timeframe=timeframe,
-            meta=meta,
+            meta=selected_meta,
             served_from="upstream",
         )
+        report = analyze_candles(
+            candles, timeframe, selected_meta, strict=policy.strict_quality
+        )
+        last_report = report
+        get_store().save_source_observation(
+            source_id=selected_source,
+            provider=selected_meta.name,
+            ticker=selected_ticker,
+            asset_class=asset_class,
+            timeframe=timeframe,
+            success=report.reject_reason is None,
+            candle_count=len(candles),
+            latest_timestamp=report.latest_timestamp,
+            latency_ms=(monotonic() - started_at) * 1000,
+            quality_flags=_dedupe([*selected_meta.quality_flags, *report.quality_flags]),
+            error=report.reject_reason,
+        )
+        if report.reject_reason:
+            failures.append(f"{selected_source}: {report.reject_reason}")
+            continue
+
+        if candles:
+            get_store().save(
+                selected_ticker,
+                asset_class,
+                timeframe,
+                candles,
+                source_id=selected_source,
+            )
+        return _build_response(
+            selected_ticker,
+            asset_class,
+            timeframe,
+            candles,
+            selected_meta,
+            served_from="upstream",
+            policy=policy,
+            selected_source=selected_source,
+            attempted_sources=attempted_sources,
+            access_issues=failures if selected_source != policy.source else [],
+            instrument_id=source_manifest(
+                selected_source, asset_class
+            ).canonical_instrument_id(ticker),
+        )
+
+    if last_error:
+        final_reason = "all_sources_failed" if len(attempted_sources) > 1 else "upstream_error"
         raise _error(
             status_code=502,
             error="upstream_error",
-            detail=str(e),
-            suggestions=e.suggestions,
-            meta=meta,
+            detail=str(last_error),
+            suggestions=last_error.suggestions,
+            meta=last_meta,
             served_from="upstream",
             policy=policy,
-            reject_reason="upstream_error",
-            access_issues=[str(e)],
-        ) from e
-
-    _save_raw_if_available(
-        adapter=adapter,
-        ticker=ticker,
-        asset_class=asset_class,
-        timeframe=timeframe,
-        meta=meta,
-        served_from="upstream",
+            reject_reason=final_reason,
+            access_issues=failures,
+            attempted_sources=attempted_sources,
+        ) from last_error
+    final_reason = (
+        "all_sources_failed"
+        if len(attempted_sources) > 1
+        else (last_report.reject_reason if last_report else "data_blocked")
     )
-    report = analyze_candles(candles, timeframe, meta, strict=policy.strict_quality)
-    _block_if_quality_rejected(
-        report=report,
-        meta=meta,
-        policy=policy,
-        served_from="upstream",
-    )
-
-    if candles:
-        get_store().save(ticker, asset_class, timeframe, candles)
-
-    return _build_response(
-        ticker,
-        asset_class,
-        timeframe,
-        candles,
-        meta,
+    raise _error(
+        status_code=503,
+        error="data_blocked",
+        detail="All explicitly selected sources failed quality checks",
+        meta=last_meta,
         served_from="upstream",
         policy=policy,
+        report=last_report,
+        reject_reason=final_reason,
+        access_issues=failures,
+        attempted_sources=attempted_sources,
     )
 
 
@@ -368,7 +468,7 @@ async def get_candles(
     timeframe: Timeframe = Query(default=Timeframe.DAY),
     start: str | None = Query(default=None, description="Start date: YYYY-MM-DD"),
     end: str | None = Query(default=None, description="End date: YYYY-MM-DD"),
-    limit: int = Query(default=500, ge=1, le=2000),
+    limit: int = Query(default=500, ge=1, le=60000),
     refresh: bool = Query(default=False, description="Force fetch from source"),
     source: str = Query(default="auto", description="Source id, e.g. binance_usdm_futures"),
     cache_policy: CachePolicy = Query(default=CachePolicy.ALLOW),
@@ -378,6 +478,7 @@ async def get_candles(
     profile: str | None = Query(default=None, pattern="^(historical|realtime|execution_live)$"),
     strict: bool = Query(default=False, description="Compatibility shortcut for execution_live"),
     mode: str = Query(default="research", pattern="^(research|live)$"),
+    fallback_sources: list[str] | None = None,
 ) -> CandleResponse:
     """
     Get K-line candles for any asset.
@@ -398,6 +499,7 @@ async def get_candles(
             cache_policy=cache_policy,
             quality=quality,
             fallback_policy=fallback_policy,
+            fallback_sources=fallback_sources or [],
             require_execution_venue=require_execution_venue,
             profile=profile,
             strict=strict,
@@ -422,12 +524,23 @@ async def get_candles(
         ) from e
 
     _raise_if_execution_venue_required(meta, policy)
+    for fallback_source in policy.fallback_sources:
+        _raise_if_execution_venue_required(source_meta(fallback_source, asset_class), policy)
+    requested_ticker = ticker
     ticker = canonical_ticker_for_source(policy.source, asset_class, ticker)
 
     store = get_store()
 
     if policy.cache_policy in (CachePolicy.ALLOW, CachePolicy.REQUIRE):
-        cached = store.query(ticker, asset_class, timeframe, start=start, end=end, limit=limit)
+        cached = store.query(
+            ticker,
+            asset_class,
+            timeframe,
+            source_id=policy.source,
+            start=start,
+            end=end,
+            limit=limit,
+        )
         if cached:
             report = analyze_candles(cached, timeframe, meta, strict=policy.strict_quality)
             _block_if_quality_rejected(
@@ -444,6 +557,9 @@ async def get_candles(
                 meta,
                 served_from="cache",
                 policy=policy,
+                instrument_id=source_manifest(
+                    policy.source, asset_class
+                ).canonical_instrument_id(requested_ticker),
             )
         if policy.cache_policy == CachePolicy.REQUIRE:
             raise _error(
@@ -460,13 +576,13 @@ async def get_candles(
 
     return await _fetch_upstream_candles(
         asset_class=asset_class,
-        ticker=ticker,
         timeframe=timeframe,
         start=start,
         end=end,
         limit=limit,
         meta=meta,
         policy=policy,
+        ticker=requested_ticker,
     )
 
 
@@ -506,6 +622,7 @@ async def stream_candles(
         cache_policy=CachePolicy.BYPASS,
         quality_policy=quality,
         fallback_policy=FallbackPolicy.NONE,
+        fallback_sources=(),
         require_execution_venue=False,
     )
     ticker = canonical_ticker_for_source(normalized_source, asset_class, ticker)
@@ -531,7 +648,13 @@ async def stream_candles(
 
     try:
         async for candle in adapter.stream_candles(ticker, timeframe):
-            get_store().save(ticker, asset_class, timeframe, [candle])
+            get_store().save(
+                ticker,
+                asset_class,
+                timeframe,
+                [candle],
+                source_id=normalized_source,
+            )
             response = _build_response(
                 ticker,
                 asset_class,
@@ -606,11 +729,108 @@ async def get_instrument_definition(
 @router.get("/tickers")
 async def list_tickers(
     asset_class: AssetClass | None = Query(default=None),
+    source: str | None = Query(default=None),
 ) -> dict:
     """List all tickers with stored data."""
     store = get_store()
-    tickers = store.list_tickers(asset_class)
-    return {"count": len(tickers), "tickers": tickers}
+    source_id = normalize_source(source, asset_class) if source and asset_class else source
+    tickers = store.list_tickers(asset_class, source_id=source_id)
+    return {"count": len(tickers), "source_id": source_id, "tickers": tickers}
+
+
+@router.get("/compare/{asset_class}/{ticker}")
+async def compare_sources(
+    asset_class: AssetClass,
+    ticker: str,
+    timeframe: Timeframe = Query(default=Timeframe.MIN_5),
+    sources: list[str] = Query(...),
+    limit: int = Query(default=500, ge=1, le=5000),
+) -> dict:
+    """Compare already stored source-scoped candles without fetching or blending them."""
+    normalized_sources: list[str] = []
+    for source in sources:
+        try:
+            normalized = normalize_source(source, asset_class)
+            source_meta(normalized, asset_class)
+        except (KeyError, ValueError) as error:
+            raise HTTPException(status_code=400, detail=f"Invalid comparison source: {source}") from error
+        if normalized not in normalized_sources:
+            normalized_sources.append(normalized)
+    if len(normalized_sources) < 2:
+        raise HTTPException(status_code=400, detail="At least two distinct sources are required")
+
+    store = get_store()
+    series: dict[str, list[Candle]] = {}
+    provider_symbols: dict[str, str] = {}
+    for source in normalized_sources:
+        provider_symbol = canonical_ticker_for_source(source, asset_class, ticker)
+        provider_symbols[source] = provider_symbol
+        series[source] = store.query(
+            provider_symbol,
+            asset_class,
+            timeframe,
+            source_id=source,
+            limit=limit,
+        )
+
+    by_source = {
+        source: {candle.timestamp: candle for candle in candles}
+        for source, candles in series.items()
+    }
+    common_timestamps = sorted(set.intersection(*(set(rows) for rows in by_source.values())))
+    primary = normalized_sources[0]
+    comparisons = []
+    max_deviation_pct = 0.0
+    for timestamp in common_timestamps:
+        closes = {source: by_source[source][timestamp].close for source in normalized_sources}
+        primary_close = closes[primary]
+        deviations = {
+            source: (abs(close - primary_close) / primary_close * 100 if primary_close else 0.0)
+            for source, close in closes.items()
+        }
+        max_deviation_pct = max(max_deviation_pct, *deviations.values())
+        comparisons.append(
+            {
+                "timestamp": timestamp,
+                "closes": closes,
+                "deviation_pct_from_primary": deviations,
+            }
+        )
+    return {
+        "schema_version": "source-comparison-v1",
+        "instrument_id": source_manifest(primary, asset_class).canonical_instrument_id(ticker),
+        "asset_class": asset_class.value,
+        "timeframe": timeframe.value,
+        "primary_source": primary,
+        "sources": normalized_sources,
+        "provider_symbols": provider_symbols,
+        "source_counts": {source: len(candles) for source, candles in series.items()},
+        "overlap_count": len(common_timestamps),
+        "max_close_deviation_pct": max_deviation_pct,
+        "is_blended": False,
+        "comparisons": comparisons[-100:],
+    }
+
+
+@router.get("/sessions/{asset_class}/{ticker}")
+async def market_sessions(
+    asset_class: AssetClass,
+    ticker: str,
+    source: str = Query(...),
+    trading_date: str | None = Query(None),
+) -> dict:
+    """Return an adapter-owned market calendar/session receipt."""
+    try:
+        adapter = get_adapter_for_source(source, asset_class)
+        fetch = getattr(adapter, "fetch_market_sessions", None)
+        if fetch is None:
+            raise ProviderError(f"Source {source} does not expose market sessions")
+        return await fetch(ticker, trading_date=trading_date)
+    except ProviderError as error:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "market_sessions_unavailable", "detail": str(error), "source": source},
+        ) from error
 
 
 @router.get("/health")
@@ -618,9 +838,20 @@ async def health() -> dict:
     """Health check."""
     from kline import __version__
 
+    coverage = get_store().source_coverage()
+    for row in coverage:
+        try:
+            row["instrument_id"] = source_manifest(
+                str(row["source_id"]), AssetClass(str(row["asset_class"]))
+            ).canonical_instrument_id(str(row["ticker"]))
+        except (KeyError, ValueError):
+            row["instrument_id"] = str(row["ticker"])
     return {
         "status": "ok",
         "service": "kline",
         "version": __version__,
         "providers": provider_status(),
+        "storage": get_store().storage_health(),
+        "storage_coverage": coverage,
+        "latest_observations": get_store().latest_source_observations(),
     }

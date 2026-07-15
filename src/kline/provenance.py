@@ -82,6 +82,17 @@ BINANCE_USDM_FUTURES_META = ProviderMeta(
     supported_symbols=("XAUUSDT",),
 )
 
+FRED_META = ProviderMeta(
+    name="fred",
+    source_mode="fred_public_csv",
+    quality_flags=("public_api", "daily_factor", "research_only"),
+    continuous=False,
+    execution_venue=False,
+    realtime_supported=False,
+    market_type="economic_series",
+    supported_symbols=("DTWEXBGS", "DFII10", "GVZCLS", "DFF"),
+)
+
 _SOURCE_ALIASES = {
     "auto": "auto",
     "binance_spot": "binance_spot_public",
@@ -93,6 +104,8 @@ _SOURCE_ALIASES = {
     "yahoo_finance_futures": "yahoo_finance_futures",
     "tushare": "tushare_pro",
     "tushare_pro": "tushare_pro",
+    "fred": "fred_public_csv",
+    "fred_public_csv": "fred_public_csv",
 }
 
 _SOURCE_ASSET_CLASSES = {
@@ -123,6 +136,7 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         asset_class=AssetClass.COMMODITY,
         meta=BINANCE_USDM_FUTURES_META,
         ticker_aliases={"GOLD": "XAUUSDT", "XAUUSD": "XAUUSDT", "XAUUSDT": "XAUUSDT"},
+        canonical_instrument_ids={"GOLD": "GOLD", "XAUUSD": "GOLD", "XAUUSDT": "GOLD"},
     ),
     "yahoo_finance": SourceManifest(
         source_id="yahoo_finance",
@@ -135,6 +149,8 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         asset_class=AssetClass.COMMODITY,
         meta=_PROVIDER_META[AssetClass.COMMODITY],
         default_for_asset_class=True,
+        ticker_aliases={"GOLD": "GC=F", "XAUUSD": "GC=F", "GC=F": "GC=F"},
+        canonical_instrument_ids={"GOLD": "GOLD", "XAUUSD": "GOLD", "GC=F": "GOLD"},
     ),
     "tushare_pro": SourceManifest(
         source_id="tushare_pro",
@@ -144,11 +160,37 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
     ),
 }
 
+
+def fred_source_manifest(asset_class: AssetClass) -> SourceManifest:
+    aliases = {
+        "DXY": "DTWEXBGS",
+        "US10Y_REAL": "DFII10",
+        "GLD_FLOW": "GVZCLS",
+        "FED_CPI_EVENTS": "DFF",
+    }
+    return SourceManifest(
+        source_id=f"fred_public_csv_{asset_class.value}",
+        asset_class=asset_class,
+        meta=ProviderMeta(**{**FRED_META.__dict__, "source_mode": f"fred_public_csv_{asset_class.value}"}),
+        default_for_asset_class=True,
+        ticker_aliases=aliases,
+        canonical_instrument_ids={key: key for key in aliases},
+    )
+
 _EXTRA_SOURCE_MANIFESTS: dict[str, SourceManifest] = {}
 
 
 def provider_meta(asset_class: AssetClass) -> ProviderMeta:
-    return _PROVIDER_META[asset_class]
+    if asset_class in _PROVIDER_META:
+        return _PROVIDER_META[asset_class]
+    defaults = [
+        manifest
+        for manifest in all_source_manifests().values()
+        if manifest.asset_class == asset_class and manifest.default_for_asset_class
+    ]
+    if not defaults:
+        raise KeyError(f"No default source configured for {asset_class.value}")
+    return defaults[0].meta
 
 
 def default_source(asset_class: AssetClass) -> str:

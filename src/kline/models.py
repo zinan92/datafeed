@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import Boolean, Column, DateTime, Float, Index, Integer, String, Text, func
 from sqlalchemy.orm import DeclarativeBase
 
@@ -18,6 +19,13 @@ class AssetClass(str, Enum):
     US_STOCK = "us_stock"
     CRYPTO = "crypto"
     COMMODITY = "commodity"
+    FUTURES = "futures"
+    FOREX = "forex"
+    INDEX = "index"
+    ETF = "etf"
+    MACRO = "macro"
+    FLOW = "flow"
+    EVENT = "event"
 
 
 class Timeframe(str, Enum):
@@ -65,6 +73,17 @@ class Candle(BaseModel):
     provider: Optional[str] = None
     quality_flags: list[str] = Field(default_factory=list)
 
+    @field_validator("timestamp")
+    @classmethod
+    def normalize_timestamp(cls, value: str) -> str:
+        text = value.strip()
+        if "T" not in text and " " not in text:
+            return text
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc).replace(microsecond=0).isoformat()
+
 
 class CandleResponse(BaseModel):
     """API response envelope.
@@ -78,6 +97,8 @@ class CandleResponse(BaseModel):
     """
 
     ticker: str
+    instrument_id: str = ""
+    provider_symbol: str = ""
     asset_class: AssetClass
     timeframe: Timeframe
     count: int
@@ -86,6 +107,9 @@ class CandleResponse(BaseModel):
     provider: str = ""  # concrete upstream, e.g. "binance_spot", "yahoo_finance"
     source_mode: str = ""  # path label, e.g. "binance_spot_public"
     requested_source: str = "auto"
+    selected_source: str = ""
+    selection_reason: str = "requested_or_default"
+    attempted_sources: list[str] = Field(default_factory=list)
     cache_policy: CachePolicy = CachePolicy.ALLOW
     quality_policy: QualityPolicy = QualityPolicy.STANDARD
     fallback_policy: FallbackPolicy = FallbackPolicy.NONE
@@ -112,6 +136,8 @@ class ErrorResponse(BaseModel):
     provider: Optional[str] = None
     source_mode: Optional[str] = None
     requested_source: Optional[str] = None
+    selected_source: Optional[str] = None
+    attempted_sources: list[str] = Field(default_factory=list)
     cache_policy: Optional[CachePolicy] = None
     quality_policy: Optional[QualityPolicy] = None
     fallback_policy: Optional[FallbackPolicy] = None
@@ -187,6 +213,7 @@ class KlineRow(Base):
     __tablename__ = "klines"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
+    source_id = Column(String, nullable=False, default="legacy_unknown", server_default="legacy_unknown")
     ticker = Column(String, nullable=False)
     asset_class = Column(String, nullable=False)
     timeframe = Column(String, nullable=False)
@@ -201,8 +228,16 @@ class KlineRow(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     __table_args__ = (
-        Index("ix_kline_lookup", "ticker", "asset_class", "timeframe", "timestamp", unique=True),
-        Index("ix_kline_ticker_tf", "ticker", "timeframe"),
+        Index(
+            "ix_kline_lookup",
+            "source_id",
+            "ticker",
+            "asset_class",
+            "timeframe",
+            "timestamp",
+            unique=True,
+        ),
+        Index("ix_kline_ticker_tf", "source_id", "ticker", "timeframe"),
     )
 
     def to_candle(self) -> Candle:
@@ -238,4 +273,36 @@ class RawUpstreamResponse(Base):
 
     __table_args__ = (
         Index("ix_raw_response_lookup", "provider", "ticker", "timeframe", "created_at"),
+    )
+
+
+class SourceObservation(Base):
+    """Auditable result of one upstream source request."""
+
+    __tablename__ = "source_observations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source_id = Column(String, nullable=False)
+    provider = Column(String, nullable=False)
+    asset_class = Column(String, nullable=False)
+    ticker = Column(String, nullable=False)
+    timeframe = Column(String, nullable=False)
+    success = Column(Boolean, nullable=False)
+    served_from = Column(String, nullable=False, default="upstream")
+    candle_count = Column(Integer, nullable=False, default=0)
+    latest_timestamp = Column(String, nullable=True)
+    latency_ms = Column(Float, nullable=True)
+    error = Column(Text, nullable=True)
+    quality_flags = Column(Text, nullable=False, default="[]")
+    observed_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        Index("ix_source_observation_latest", "source_id", "observed_at"),
+        Index(
+            "ix_source_observation_instrument",
+            "source_id",
+            "ticker",
+            "timeframe",
+            "observed_at",
+        ),
     )

@@ -205,7 +205,13 @@ async def test_strict_empty_upstream_response_is_blocked(monkeypatch, store: Kli
 
 async def test_cache_policy_require_returns_cache_without_upstream(monkeypatch, store: KlineStore):
     cached = [_candle("2026-07-09T10:00:00", 101.0)]
-    store.save("BTC", AssetClass.CRYPTO, Timeframe.MIN_1, cached)
+    store.save(
+        "BTC",
+        AssetClass.CRYPTO,
+        Timeframe.MIN_1,
+        cached,
+        source_id="binance_spot_public",
+    )
     live = FakeAdapter([_candle(_fresh_ts(), 999.0)])
     monkeypatch.setattr("kline.api.get_store", lambda: store)
     monkeypatch.setattr("kline.api.get_adapter_for_source", lambda *_args: live)
@@ -257,6 +263,64 @@ async def test_realtime_profile_bypasses_cache_without_requiring_execution_venue
     assert response.require_execution_venue is False
     assert response.execution_venue is False
     assert response.candles[0].close == 120000.0
+
+
+async def test_explicit_fallback_is_visible_and_source_scoped(monkeypatch, store: KlineStore):
+    primary = FakeAdapter(error=ProviderError("primary unavailable"))
+    fallback = FakeAdapter([_candle("2026-07-15T10:00:00", 3333.0)])
+
+    def adapter_for_source(source, _asset_class):
+        return primary if source == "binance_usdm_futures" else fallback
+
+    monkeypatch.setattr("kline.api.get_store", lambda: store)
+    monkeypatch.setattr("kline.api.get_adapter_for_source", adapter_for_source)
+
+    response = await _get_candles(
+        asset_class=AssetClass.COMMODITY,
+        ticker="GOLD",
+        source="binance_usdm_futures",
+        cache_policy=CachePolicy.BYPASS,
+        fallback_policy=FallbackPolicy.EXPLICIT,
+        fallback_sources=["yahoo_finance_futures"],
+    )
+
+    assert response.selected_source == "yahoo_finance_futures"
+    assert response.selection_reason == "explicit_fallback"
+    assert response.attempted_sources == [
+        "binance_usdm_futures",
+        "yahoo_finance_futures",
+    ]
+    assert response.candles[0].close == 3333.0
+    assert response.instrument_id == "GOLD"
+    assert response.provider_symbol == "GC=F"
+    assert any("primary unavailable" in issue for issue in response.access_issues)
+    assert store.count(
+        "GC=F",
+        AssetClass.COMMODITY,
+        Timeframe.MIN_1,
+        source_id="yahoo_finance_futures",
+    ) == 1
+    assert store.count(
+        "XAUUSDT",
+        AssetClass.COMMODITY,
+        Timeframe.MIN_1,
+        source_id="binance_usdm_futures",
+    ) == 0
+
+
+async def test_explicit_fallback_requires_named_sources(store: KlineStore):
+    with pytest.raises(HTTPException) as exc:
+        await _get_candles(
+            asset_class=AssetClass.COMMODITY,
+            ticker="GOLD",
+            source="binance_usdm_futures",
+            fallback_policy=FallbackPolicy.EXPLICIT,
+            fallback_sources=[],
+        )
+
+    assert exc.value.status_code == 400
+    assert exc.value.detail["error"] == "invalid_policy"
+    assert "requires at least one" in exc.value.detail["detail"]
 
 
 async def test_require_execution_venue_rejects_non_execution_source(store: KlineStore):

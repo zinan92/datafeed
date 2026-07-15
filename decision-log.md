@@ -162,3 +162,127 @@ contract definition instead of duplicating precision and margin assumptions.
 
 - Provider tests assert exact XAUUSDT increments, minimums, currencies, margin
   conversion, missing fields, and raw response capture.
+
+## 2026-07-15 - Independent multi-source data plane foundation
+
+Objective: make datafeed the source-aware, auditable market-data boundary that trading
+consumers can use without direct exchange or private SQLite access.
+
+### Decisions
+
+- Upgraded normalized candle identity to include `source_id`. Two upstreams can now store
+  the same ticker/timestamp without overwriting each other.
+- Added an in-place SQLite schema migration. Pre-v0.3 rows are labeled
+  `legacy_unknown`; datafeed does not guess which upstream produced old rows.
+- Added config and package entry-point adapter discovery. A new source can ship as an
+  adapter package plus JSON config and environment-backed credentials without changing
+  API routing or the core registry.
+- Implemented caller-explicit fallback. `fallback_policy=explicit` is rejected unless
+  named fallback sources are provided, and responses expose `selected_source`,
+  `selection_reason`, and `attempted_sources`.
+- Persisted source observations and exposed source-scoped coverage through `/api/health`.
+  Added `/health-ui` as the browser-visible source health and provenance surface.
+
+### Gotchas
+
+- `legacy_unknown` rows remain queryable only through the legacy store API; source-scoped
+  API requests intentionally do not reuse them because their origin cannot be proven.
+- Entry-point/config adapters must use a lowercase stable `source_id` and implement the
+  complete `MarketDataPort`, including explicit unsupported behavior for streaming or
+  instrument definitions.
+- Explicit fallback does not imply semantic equivalence. Callers must only name sources
+  whose instrument mapping and market semantics are acceptable for that request.
+- Provider health means the latest observed request result, not merely registration.
+  A registered source remains `registered` until it has an actual observation.
+
+### Verification
+
+- `python3 -m pytest -q` -> 65 passed.
+- `python3 -m ruff check .` -> all checks passed.
+
+### Follow-up decisions in the same milestone
+
+- Added canonical `instrument_id` separate from each provider symbol. GOLD now remains
+  one canonical instrument while Binance uses `XAUUSDT` and Yahoo uses `GC=F`.
+- Added explicit asset-class extension points for futures, forex, index, ETF, and macro.
+  These classes fail closed until a default adapter is installed; datafeed does not invent
+  a provider for them.
+- Moved the Tiger COMEX futures quote path into a datafeed-owned adapter. It imports only
+  Tiger quote APIs and intentionally has no order client.
+- Migrated 329,353 proven-source legacy rows into datafeed: Binance GOLD 1m/5m and Tiger
+  MGCmain 1m. Unknown FRED rows were reported as skipped rather than mislabeled.
+- Canonicalized intraday timestamps to UTC `+00:00` and merged logical duplicates created
+  by old naive timestamps versus new timezone-aware timestamps.
+- Added `/api/compare/...` and the health UI comparison card. Binance XAUUSDT and Yahoo
+  GC=F coexist, are compared by canonical GOLD timestamps, and are never blended.
+
+### Additional gotchas
+
+- SQLite bulk upserts can exceed the build-dependent bind-variable limit. KlineStore now
+  chunks large saves into 500-row batches; the first migration attempt exposed this and
+  was safely retried.
+- Provider symbol and canonical instrument must never be collapsed into one field. Doing
+  so would make `GOLD`, `XAUUSDT`, `GC=F`, and `MGCmain` appear interchangeable when their
+  contracts and venue semantics differ.
+- Existing FRED macro rows are not yet migrated because no datafeed-owned FRED adapter and
+  manifest exists. They remain explicitly skipped, not silently assigned to another source.
+
+## 2026-07-15 - Binance USD-M daily candles for production grid context
+
+### Decisions
+
+- Added native `1d` support to the existing Binance USD-M Futures adapter. GOLD strategy
+  planning now receives D1 candles from the same `XAUUSDT` execution-venue source used by
+  intraday market data; no Yahoo, synthetic, or silent fallback was introduced.
+- Kept the normalized candle and provenance contracts unchanged. The new interval is an
+  additional explicit capability of `binance_usdm_futures`, not a derived or blended feed.
+
+### Gotchas
+
+- Binance's upstream futures kline API supports `1d`, but the adapter capability map had
+  stopped at `4h`. The trading console therefore showed healthy 1m prices while its
+  fail-closed StrategyPlan preview correctly refused to start without trusted D1 context.
+- A healthy realtime ticker is not sufficient proof that a strategy can start. Every fixed
+  planning timeframe (D1, 4H, 1H, 15m) must independently satisfy the trusted-source gate.
+
+### Verification
+
+- Binance provider/API/provenance focused tests: `24 passed`.
+- Live datafeed request returned 20 non-synthetic Binance USD-M `1d` candles for `XAUUSDT`.
+- Browser-visible downstream proof:
+  `/Users/wendy/park-io/008_codex session insights and decision logs/交易系统/evidence/goldbot-v5-start-ready-binance-d1-2026-07-15.png`.
+
+## 2026-07-15 - Multi-asset adapter completion and owner-side health
+
+### Decisions
+
+- Added datafeed-owned FRED adapters for macro, flow-proxy, and event-proxy daily
+  series. DXY, US10Y_REAL, GLD_FLOW, and FED_CPI_EVENTS now use the same candle,
+  provenance, storage, and health contracts as tradable instruments.
+- Added a configurable OANDA v20 adapter. Credentials are resolved by datafeed's
+  adapter config and never by trading-orchestrator.
+- Added Tiger market-session capability and `/api/sessions/...`; trading no longer
+  needs Tiger's quote SDK to determine market windows.
+- Added owner-side SQLite integrity to `/api/health`, without exposing the storage
+  path to consumers.
+- Binance range fetching now paginates in datafeed for explicit historical windows.
+
+### Gotchas
+
+- FRED series are daily observations and can be published with date lag. Their
+  `fresh` value remains unknown rather than applying a 24/7-market freshness rule.
+- A configured adapter and a healthy adapter are different states. Tiger and OANDA
+  remain absent/unavailable until their datafeed-owned credential config is enabled.
+- OANDA pricing credentials belong to the market-data adapter; OANDA account/order
+  credentials remain a separate execution concern.
+- Large Binance backfills must have explicit start/end windows. A latest-only request
+  without a start cannot safely page backward without changing semantics.
+
+### Verification
+
+- Full datafeed suite: `70 passed`; Ruff: all checks passed.
+- Owner storage receipt: integrity `ok`, 330k+ candles, six stored sources.
+- All 376 formerly skipped FRED rows were migrated with explicit source/asset identity;
+  the final legacy migration reports zero skipped rows.
+- Visual proof:
+  `/Users/wendy/park-io/008_codex session insights and decision logs/交易系统/evidence/2026-07-15-datafeed-source-health-final.png`.

@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from kline import __version__
 from kline.api import router
+from kline.health_ui import router as health_ui_router
 from kline.registry import init
 
 
@@ -32,5 +33,6 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(router, prefix="/api")
+    app.include_router(health_ui_router)
 
     return app

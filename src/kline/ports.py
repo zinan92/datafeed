@@ -37,10 +37,19 @@ class SourceManifest:
     meta: ProviderMeta
     default_for_asset_class: bool = False
     ticker_aliases: Mapping[str, str] = field(default_factory=dict)
+    canonical_instrument_ids: Mapping[str, str] = field(default_factory=dict)
 
     def canonical_ticker(self, ticker: str) -> str:
         normalized = ticker.upper().strip()
         return self.ticker_aliases.get(normalized, ticker)
+
+    def canonical_instrument_id(self, ticker: str) -> str:
+        normalized = ticker.upper().strip()
+        provider_symbol = self.canonical_ticker(normalized).upper().strip()
+        return self.canonical_instrument_ids.get(
+            normalized,
+            self.canonical_instrument_ids.get(provider_symbol, normalized),
+        )
 
 
 class MarketDataPort(Protocol):

@@ -1,0 +1,25 @@
+{
+  "adapters": [
+    {
+      "factory": "kline.providers.tiger:create_adapter",
+      "enabled": false,
+      "config": {
+        "source_id": "tiger_openapi_comex",
+        "props_path": "${TIGER_OPENAPI_CONFIG_PATH}",
+        "contract": "MGCmain",
+        "exchange": "COMEX",
+        "grab_quote_permission": false
+      }
+    },
+    {
+      "factory": "kline.providers.oanda:create_adapter",
+      "enabled": false,
+      "config": {
+        "source_id": "oanda_v20",
+        "token": "${OANDA_API_TOKEN}",
+        "base_url": "https://api-fxpractice.oanda.com",
+        "instrument": "XAU_USD"
+      }
+    }
+  ]
+}

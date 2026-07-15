@@ -27,6 +27,15 @@ _TF_MAP = {
     Timeframe.MIN_30: "30m",
     Timeframe.HOUR_1: "1h",
     Timeframe.HOUR_4: "4h",
+    Timeframe.DAY: "1d",
+}
+_TF_MILLIS = {
+    Timeframe.MIN_1: 60_000,
+    Timeframe.MIN_5: 300_000,
+    Timeframe.MIN_15: 900_000,
+    Timeframe.MIN_30: 1_800_000,
+    Timeframe.HOUR_1: 3_600_000,
+    Timeframe.HOUR_4: 14_400_000,
 }
 
 _ALIASES = {
@@ -131,52 +140,67 @@ class BinanceUsdmFuturesProvider:
             )
 
         symbol = _normalize_symbol(ticker)
-        params: dict[str, Any] = {"symbol": symbol, "interval": interval, "limit": min(limit, 1500)}
-        if start:
-            params["startTime"] = _to_millis(start)
-        if end:
-            params["endTime"] = _to_millis(end)
-
         client_kwargs: dict[str, Any] = {"timeout": self._timeout}
         if self._transport is not None:
             client_kwargs["transport"] = self._transport
 
+        requested = max(1, limit)
+        cursor = _to_millis(start) if start else None
+        end_ms = _to_millis(end) if end else None
+        raw_pages: list[list[Any]] = []
         async with httpx.AsyncClient(**client_kwargs) as client:
-            try:
-                resp = await client.get(BINANCE_USDM_KLINE_URL, params=params)
-            except httpx.RequestError as e:
-                self.last_raw_response = {
-                    "request_params": params,
-                    "response_body": None,
-                    "status_code": None,
-                    "error": str(e),
+            while len(raw_pages) == 0 or (cursor is not None and sum(map(len, raw_pages)) < requested):
+                remaining = requested - sum(map(len, raw_pages))
+                params: dict[str, Any] = {
+                    "symbol": symbol,
+                    "interval": interval,
+                    "limit": min(max(1, remaining), 1500),
                 }
-                raise ProviderError(
-                    f"Binance USD-M Futures request failed: {e}",
-                    suggestions=["Check network access to fapi.binance.com"],
-                ) from e
+                if cursor is not None:
+                    params["startTime"] = cursor
+                if end_ms is not None:
+                    params["endTime"] = end_ms
+                try:
+                    resp = await client.get(BINANCE_USDM_KLINE_URL, params=params)
+                except httpx.RequestError as e:
+                    self.last_raw_response = {
+                        "request_params": params,
+                        "response_body": None,
+                        "status_code": None,
+                        "error": str(e),
+                    }
+                    raise ProviderError(
+                        f"Binance USD-M Futures request failed: {e}",
+                        suggestions=["Check network access to fapi.binance.com"],
+                    ) from e
+                try:
+                    data = resp.json()
+                except ValueError:
+                    data = resp.text
+                if resp.status_code >= 400:
+                    raise ProviderError(
+                        f"Binance USD-M Futures API error {resp.status_code}: {data}",
+                        suggestions=["Verify XAUUSDT is available on Binance USD-M Futures"],
+                    )
+                if not isinstance(data, list):
+                    raise ProviderError("Binance USD-M Futures returned a non-list kline payload")
+                raw_pages.append(data)
+                if cursor is None or not data or len(data) < params["limit"]:
+                    break
+                next_cursor = int(data[-1][0]) + _TF_MILLIS[timeframe]
+                if next_cursor <= cursor or (end_ms is not None and next_cursor > end_ms):
+                    break
+                cursor = next_cursor
 
-        try:
-            data = resp.json()
-        except ValueError:
-            data = resp.text
-
+        flat_data = [item for page in raw_pages for item in page]
         self.last_raw_response = {
-            "request_params": params,
-            "response_body": data,
-            "status_code": resp.status_code,
+            "request_params": {"symbol": symbol, "interval": interval, "start": start, "end": end, "limit": limit},
+            "response_body": flat_data,
+            "status_code": 200,
             "error": None,
+            "page_count": len(raw_pages),
         }
-
-        if resp.status_code >= 400:
-            raise ProviderError(
-                f"Binance USD-M Futures API error {resp.status_code}: {data}",
-                suggestions=["Verify XAUUSDT is available on Binance USD-M Futures"],
-            )
-        if not isinstance(data, list):
-            raise ProviderError("Binance USD-M Futures returned a non-list kline payload")
-
-        candles = [_candle_from_rest_item(item) for item in data]
+        candles = [_candle_from_rest_item(item) for item in flat_data]
         logger.info("Fetched %s Binance USD-M Futures candles for %s", len(candles), symbol)
         return candles
 
