@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, Mapping, Protocol
 
-from kline.models import AssetClass, Candle, Timeframe
+from kline.models import AssetClass, Candle, InstrumentDefinition, Timeframe
 from kline.providers.base import Provider, ProviderError
 
 
@@ -37,10 +37,19 @@ class SourceManifest:
     meta: ProviderMeta
     default_for_asset_class: bool = False
     ticker_aliases: Mapping[str, str] = field(default_factory=dict)
+    canonical_instrument_ids: Mapping[str, str] = field(default_factory=dict)
 
     def canonical_ticker(self, ticker: str) -> str:
         normalized = ticker.upper().strip()
         return self.ticker_aliases.get(normalized, ticker)
+
+    def canonical_instrument_id(self, ticker: str) -> str:
+        normalized = ticker.upper().strip()
+        provider_symbol = self.canonical_ticker(normalized).upper().strip()
+        return self.canonical_instrument_ids.get(
+            normalized,
+            self.canonical_instrument_ids.get(provider_symbol, normalized),
+        )
 
 
 class MarketDataPort(Protocol):
@@ -76,6 +85,9 @@ class MarketDataPort(Protocol):
         ticker: str,
         timeframe: Timeframe,
     ) -> AsyncIterator[Candle]:
+        ...
+
+    async def fetch_instrument_definition(self, ticker: str) -> InstrumentDefinition:
         ...
 
 
@@ -133,3 +145,13 @@ class ProviderBackedMarketDataAdapter:
         canonical = self.canonical_ticker(ticker)
         async for candle in stream(canonical, timeframe):
             yield candle
+
+    async def fetch_instrument_definition(self, ticker: str) -> InstrumentDefinition:
+        fetch = getattr(self._provider, "fetch_instrument_definition", None)
+        if fetch is None:
+            raise ProviderError(
+                f"Source {self.manifest.source_id} does not expose instrument definitions",
+                suggestions=["Choose an execution source with instrument metadata"],
+            )
+        canonical = self.canonical_ticker(ticker)
+        return await fetch(canonical)

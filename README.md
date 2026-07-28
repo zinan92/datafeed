@@ -25,7 +25,10 @@ fail timeframe not supported → supported list
 fail A-share no token     → setup instructions
 ```
 
-Sources: `tushare_pro`, `yahoo_finance`, `yahoo_finance_futures`, `binance_spot_public`, `binance_usdm_futures`
+Built-in sources: `tushare_pro`, `yahoo_finance`, `yahoo_finance_futures`,
+`binance_spot_public`, `binance_usdm_futures`, and the FRED macro/flow/event adapters.
+Tiger OpenAPI and OANDA v20 are credential-backed config adapters; see
+`configs/adapters.example.json`.
 
 ## Ports And Adapters
 
@@ -47,6 +50,9 @@ MarketDataPort
         ├─ Binance Spot adapter
         ├─ Yahoo adapter
         ├─ TuShare adapter
+        ├─ FRED macro / flow / event adapters
+        ├─ Tiger quote + market-session adapter
+        ├─ OANDA v20 pricing adapter
         └─ any new broker adapter
 ```
 
@@ -61,9 +67,23 @@ MarketDataPort
    - `realtime_supported`
    - `quality_flags`
    - `ticker_aliases`
-3. 调用 `register_adapter(adapter)`。
+3. 通过 Python entry point `kline.market_data_adapters` 安装，或在 JSON 配置中声明 factory。
 
-API 主流程不需要为新 broker 改分支。请求只需要：
+API 主流程不需要为新 broker 改分支，也不需要修改 registry。配置文件可通过
+`KLINE_ADAPTER_CONFIG_PATH` 指定，敏感值使用 `${ENV_VAR}`，启动时缺失会 fail closed。
+
+```json
+{
+  "adapters": [
+    {
+      "factory": "my_broker.datafeed:create_adapter",
+      "config": {"account": "paper", "token": "${MY_BROKER_TOKEN}"}
+    }
+  ]
+}
+```
+
+请求只需要：
 
 ```bash
 curl "localhost:8100/api/candles/crypto/BTC?source=fake_broker_feed&cache_policy=bypass"
@@ -78,7 +98,7 @@ datafeed 本体只负责数据。它不判断“研究”或“交易”，而�
 | Source | `source=auto` 或具体 source id | 选择上游，如 `binance_usdm_futures` |
 | Cache | `cache_policy=allow|bypass|require` | 是否允许、跳过、或只读 SQLite cache |
 | Quality | `quality=standard|strict` | `strict` 会检查 empty/stale/gap/duplicate/out-of-order 并 blocked |
-| Fallback | `fallback_policy=none|explicit` | 当前不做静默 fallback；字段保留给未来显式 fallback |
+| Fallback | `fallback_policy=none|explicit` | 默认不 fallback；`explicit` 只尝试调用方列出的 `fallback_sources` |
 | Execution venue | `require_execution_venue=true|false` | 要求 source 必须是执行场所 |
 
 常用 profile：
@@ -101,6 +121,7 @@ datafeed 本体只负责数据。它不判断“研究”或“交易”，而�
 - `cache_policy=bypass` / `profile=realtime` / `profile=execution_live` 不读 cache。
 - `quality=strict` 下，上游失败、空数据、陈旧、gap、乱序都返回错误/blocked envelope。
 - `require_execution_venue=true` 会拒绝 Yahoo、TuShare、Binance Spot 等非执行场所 source。
+- normalized storage 以 `source_id + ticker + asset_class + timeframe + timestamp` 隔离；同一标的多源不会互相覆盖。
 
 ```bash
 # 历史/回放：允许 cache
@@ -112,8 +133,14 @@ curl "localhost:8100/api/candles/crypto/BTC?timeframe=1m&source=binance_spot_pub
 # 执行场所实时：Binance USD-M Futures XAUUSDT
 curl "localhost:8100/api/candles/commodity/XAUUSDT?timeframe=1m&profile=execution_live&limit=200"
 
+# 显式 fallback：主源失败后只尝试调用方点名的源，响应记录 selected/attempted sources
+curl "localhost:8100/api/candles/commodity/GOLD?timeframe=1m&source=binance_usdm_futures&cache_policy=bypass&fallback_policy=explicit&fallback_sources=yahoo_finance_futures"
+
 # WebSocket 实时 candle update
 ws://localhost:8100/api/ws/candles/commodity/XAUUSDT?timeframe=1m&source=binance_usdm_futures
+
+# 浏览器可见的来源健康、最近请求和 source-scoped storage coverage
+http://localhost:8100/health-ui
 ```
 
 ## 示例输出
@@ -234,6 +261,7 @@ python -m kline
 | `WS` | `/api/ws/candles/{asset_class}/{ticker}` | 实时 candle update；当前支持 Binance USD-M Futures |
 | `GET` | `/api/tickers` | 列出本地已缓存的 ticker |
 | `GET` | `/api/health` | 健康检查 + provider availability |
+| `GET` | `/api/sessions/{asset_class}/{ticker}` | 获取 adapter-owned market sessions |
 
 ### 参数
 
@@ -338,6 +366,7 @@ capability:
     - "source identity and cache/quality/fallback policies are visible in every response"
     - "profile=realtime skips cache and applies strict quality checks"
     - "profile=execution_live uses Binance USD-M Futures XAUUSDT, skips cache, applies strict quality checks, and requires execution_venue=true"
+    - "instrument-definition-v1 exposes upstream price/quantity constraints and reports unavailable fee or multiplier fields instead of inventing values"
   fail:
     - "ticker not found → suggestions list"
     - "cache_policy=require + no cache → cache_miss"
@@ -347,6 +376,16 @@ capability:
   sources: [tushare_pro, yahoo_finance, yahoo_finance_futures, binance_spot_public, binance_usdm_futures]
 api_base_url: http://localhost:8100
 endpoints:
+  - path: /api/instruments/{asset_class}/{ticker}
+    method: GET
+    description: "Get a versioned upstream execution instrument definition"
+    params:
+      - name: source
+        type: string
+        default: auto
+      - name: require_execution_venue
+        type: boolean
+        default: false
   - path: /api/candles/{asset_class}/{ticker}
     method: GET
     description: "Get OHLCV candles under explicit source/cache/quality policy"

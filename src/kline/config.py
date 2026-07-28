@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     # Provider timeouts (seconds)
     request_timeout: int = 30
 
+    # Optional third-party adapter configuration. The file is JSON and may use
+    # ${ENV_VAR} placeholders so credentials never need to be committed.
+    adapter_config_path: str = ""
+    load_entrypoint_adapters: bool = True
+
     model_config = {"env_prefix": "KLINE_", "env_file": ".env", "extra": "ignore"}
 
 

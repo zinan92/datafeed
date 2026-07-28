@@ -13,6 +13,26 @@ class TestCandle:
         c = Candle(timestamp="2026-03-28", open=100, high=105, low=99, close=103, volume=1000, amount=50000)
         assert c.amount == 50000
 
+    def test_intraday_timestamp_is_canonical_utc(self):
+        naive = Candle(
+            timestamp="2026-07-15T10:00:00",
+            open=1,
+            high=1,
+            low=1,
+            close=1,
+            volume=1,
+        )
+        zulu = Candle(
+            timestamp="2026-07-15T10:00:00Z",
+            open=1,
+            high=1,
+            low=1,
+            close=1,
+            volume=1,
+        )
+        assert naive.timestamp == "2026-07-15T10:00:00+00:00"
+        assert zulu.timestamp == naive.timestamp
+
 
 class TestCandleResponse:
     def test_response_envelope(self):

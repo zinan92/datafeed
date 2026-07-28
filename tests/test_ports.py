@@ -101,6 +101,8 @@ async def test_registered_broker_adapter_fits_without_api_changes(monkeypatch, t
     assert adapter.received_ticker == "BTCUSD"
     assert response.provider == "fake_broker"
     assert response.source_mode == "fake_broker_feed"
+    assert response.instrument_id == "BTC"
+    assert response.provider_symbol == "BTCUSD"
     assert response.execution_venue is True
     assert response.require_execution_venue is True
     assert response.candles[0].close == 123.0
