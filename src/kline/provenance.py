@@ -90,7 +90,7 @@ FRED_META = ProviderMeta(
     execution_venue=False,
     realtime_supported=False,
     market_type="economic_series",
-    supported_symbols=("DTWEXBGS", "DFII10", "GVZCLS", "DFF"),
+    supported_symbols=("DTWEXBGS", "DGS2", "DGS10", "T10Y2Y", "DFII10", "GVZCLS", "DFF"),
 )
 
 _SOURCE_ALIASES = {
@@ -101,6 +101,8 @@ _SOURCE_ALIASES = {
     "binance_usdm_futures": "binance_usdm_futures",
     "yahoo": "yahoo",
     "yahoo_finance": "yahoo_finance",
+    "yahoo_finance_index": "yahoo_finance_index",
+    "yahoo_finance_etf": "yahoo_finance_etf",
     "yahoo_finance_futures": "yahoo_finance_futures",
     "tushare": "tushare_pro",
     "tushare_pro": "tushare_pro",
@@ -114,6 +116,11 @@ _SOURCE_ASSET_CLASSES = {
     "yahoo_finance": AssetClass.US_STOCK,
     "yahoo_finance_futures": AssetClass.COMMODITY,
     "tushare_pro": AssetClass.A_SHARE,
+    "yahoo_finance_index": AssetClass.INDEX,
+    "yahoo_finance_etf": AssetClass.ETF,
+    "fred_public_csv_macro": AssetClass.MACRO,
+    "fred_public_csv_flow": AssetClass.FLOW,
+    "fred_public_csv_event": AssetClass.EVENT,
 }
 
 _SOURCE_META = {
@@ -123,6 +130,25 @@ _SOURCE_META = {
     "yahoo_finance_futures": _PROVIDER_META[AssetClass.COMMODITY],
     "tushare_pro": _PROVIDER_META[AssetClass.A_SHARE],
 }
+
+_YAHOO_INDEX_META = ProviderMeta(
+    name="yahoo_finance",
+    source_mode="yahoo_finance_index",
+    quality_flags=("delayed_possible", "market_hours", "research_only"),
+    continuous=False,
+    execution_venue=False,
+    realtime_supported=False,
+    market_type="index",
+)
+_YAHOO_ETF_META = ProviderMeta(
+    name="yahoo_finance",
+    source_mode="yahoo_finance_etf",
+    quality_flags=("delayed_possible", "market_hours", "research_only"),
+    continuous=False,
+    execution_venue=False,
+    realtime_supported=False,
+    market_type="etf",
+)
 
 _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
     "binance_spot_public": SourceManifest(
@@ -158,12 +184,27 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         meta=_PROVIDER_META[AssetClass.A_SHARE],
         default_for_asset_class=True,
     ),
+    "yahoo_finance_index": SourceManifest(
+        source_id="yahoo_finance_index",
+        asset_class=AssetClass.INDEX,
+        meta=_YAHOO_INDEX_META,
+        default_for_asset_class=True,
+    ),
+    "yahoo_finance_etf": SourceManifest(
+        source_id="yahoo_finance_etf",
+        asset_class=AssetClass.ETF,
+        meta=_YAHOO_ETF_META,
+        default_for_asset_class=True,
+    ),
 }
 
 
 def fred_source_manifest(asset_class: AssetClass) -> SourceManifest:
     aliases = {
         "DXY": "DTWEXBGS",
+        "US2Y": "DGS2",
+        "US10Y": "DGS10",
+        "US2S10S": "T10Y2Y",
         "US10Y_REAL": "DFII10",
         "GLD_FLOW": "GVZCLS",
         "FED_CPI_EVENTS": "DFF",
@@ -200,14 +241,31 @@ def default_source(asset_class: AssetClass) -> str:
 def normalize_source(source: str, asset_class: AssetClass) -> str:
     source_key = source.strip().lower()
     if source_key in _EXTRA_SOURCE_MANIFESTS:
-        return source_key
+        extra = _EXTRA_SOURCE_MANIFESTS[source_key]
+        if extra.asset_class == asset_class:
+            return source_key
+        # The generic yahoo source is registered for US stocks at startup;
+        # preserve asset-class-specific aliases for indexes and ETFs.
+        if source_key not in {"yahoo_finance", "yahoo"}:
+            return source_key
     normalized = _SOURCE_ALIASES.get(source_key)
     if normalized is None:
         raise KeyError(source)
     if normalized == "auto":
         return default_source(asset_class)
     if normalized == "yahoo":
-        return "yahoo_finance_futures" if asset_class == AssetClass.COMMODITY else "yahoo_finance"
+        if asset_class == AssetClass.COMMODITY:
+            return "yahoo_finance_futures"
+        if asset_class == AssetClass.INDEX:
+            return "yahoo_finance_index"
+        if asset_class == AssetClass.ETF:
+            return "yahoo_finance_etf"
+        return "yahoo_finance"
+    if normalized == "yahoo_finance":
+        if asset_class == AssetClass.INDEX:
+            return "yahoo_finance_index"
+        if asset_class == AssetClass.ETF:
+            return "yahoo_finance_etf"
     return normalized
 
 
