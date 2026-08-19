@@ -39,6 +39,23 @@ async def test_fred_treasury_curve_aliases_and_basis_point_scale():
     assert bars[0].open == bars[0].high == bars[0].low == bars[0].close
 
 
+@pytest.mark.asyncio
+async def test_fred_weekly_aggregation_preserves_last_level_and_semantics():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            text="observation_date,DGS2\n2026-08-10,4.1\n2026-08-12,4.2\n2026-08-14,4.3\n2026-08-17,4.4\n",
+            request=request,
+        )
+
+    provider = FredCsvProvider(transport=httpx.MockTransport(handler))
+    bars = await provider.fetch("DGS2", Timeframe.WEEK, start="2026-08-10", limit=10)
+    assert len(bars) == 2
+    assert bars[0].timestamp == "2026-08-14T00:00:00+00:00"
+    assert bars[0].open == bars[0].high == bars[0].low == bars[0].close == 4.3
+    assert bars[1].close == 4.4
+
+
 def test_market_hours_weekend_gap_is_not_blocked_as_intraday_gap():
     meta = ProviderMeta(
         name="test", source_mode="market_hours", quality_flags=(), continuous=False,
