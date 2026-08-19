@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from csv import DictReader
-from datetime import date
+from datetime import date, timedelta
 from io import StringIO
 
 import httpx
@@ -38,7 +38,7 @@ class FredCsvProvider:
                 end=end,
                 limit=max(limit * 7, 500),
             )
-            return _aggregate_weekly_levels(daily)[-max(1, limit):]
+            return _aggregate_weekly_levels(daily, end=end)[-max(1, limit):]
         if timeframe != Timeframe.DAY:
             raise ProviderError("FRED supports daily and weekly observations only")
         series_id = ticker.upper().strip()
@@ -86,7 +86,7 @@ class FredCsvProvider:
         return candles[-max(1, limit) :]
 
 
-def _aggregate_weekly_levels(candles: list[Candle]) -> list[Candle]:
+def _aggregate_weekly_levels(candles: list[Candle], *, end: str | None = None) -> list[Candle]:
     """Aggregate daily FRED levels to completed ISO weeks.
 
     Treasury yields and curve spreads are levels, not OHLC prices.  The
@@ -94,13 +94,17 @@ def _aggregate_weekly_levels(candles: list[Candle]) -> list[Candle]:
     never invents a high/low range or a bond-price candle.
     """
 
+    cutoff = date.fromisoformat(end[:10]) if end else date.today()
     groups: dict[tuple[int, int], list[Candle]] = {}
     for candle in candles:
         trading_date = date.fromisoformat(candle.timestamp[:10])
         iso = trading_date.isocalendar()
         groups.setdefault((int(iso.year), int(iso.week)), []).append(candle)
     output: list[Candle] = []
-    for rows in groups.values():
+    for (iso_year, iso_week), rows in groups.items():
+        week_monday = date.fromisocalendar(iso_year, iso_week, 1)
+        if week_monday + timedelta(days=4) > cutoff:
+            continue
         rows.sort(key=lambda item: item.timestamp)
         value = rows[-1].close
         output.append(Candle(timestamp=rows[-1].timestamp, open=value, high=value, low=value, close=value, volume=0))
