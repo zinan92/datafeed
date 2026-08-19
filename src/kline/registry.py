@@ -41,6 +41,8 @@ def init(settings: Settings | None = None) -> None:
 
     # Always available
     _providers[AssetClass.US_STOCK] = USStockProvider()
+    _providers[AssetClass.INDEX] = USStockProvider()
+    _providers[AssetClass.ETF] = USStockProvider()
     _providers[AssetClass.CRYPTO] = CryptoProvider(timeout=s.request_timeout)
     _providers[AssetClass.COMMODITY] = CommodityProvider()
     _live_providers["binance_usdm_futures"] = BinanceUsdmFuturesProvider(timeout=s.request_timeout)
@@ -49,6 +51,18 @@ def init(settings: Settings | None = None) -> None:
         ProviderBackedMarketDataAdapter(
             source_manifest("yahoo_finance", AssetClass.US_STOCK),
             _providers[AssetClass.US_STOCK],
+        )
+    )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("yahoo_finance_index", AssetClass.INDEX),
+            _providers[AssetClass.INDEX],
+        )
+    )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("yahoo_finance_etf", AssetClass.ETF),
+            _providers[AssetClass.ETF],
         )
     )
     for factor_asset_class in (AssetClass.MACRO, AssetClass.FLOW, AssetClass.EVENT):

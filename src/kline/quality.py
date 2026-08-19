@@ -76,7 +76,7 @@ def analyze_candles(
                 if "out_of_order" not in flags:
                     flags.append("out_of_order")
                     issues.append("candles are not strictly sorted oldest to newest")
-            elif (meta.continuous or strict) and delta > expected * 1.5:
+            elif meta.continuous and delta > expected * 1.5:
                 if "gap" not in flags:
                     flags.append("gap")
                     issues.append("one or more candle intervals are missing")

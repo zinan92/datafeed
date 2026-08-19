@@ -17,10 +17,13 @@ _TF_MAP = {
     Timeframe.DAY: "D",
     Timeframe.WEEK: "W",
 }
+_INDEX_CODES = {"000001.SH", "000688.SH", "000015.SH"}
 
 
 def _to_tushare_code(ticker: str) -> str:
     """Convert 6-digit code to TuShare format: 000001 → 000001.SZ"""
+    if "." in ticker:
+        return ticker.upper().strip()
     if ticker.startswith("6"):
         return f"{ticker}.SH"
     if ticker.startswith(("4", "8")):
@@ -69,11 +72,18 @@ class AShareProvider:
             end_date = date.today().strftime("%Y%m%d")
 
         try:
-            df = self._pro.daily(
-                ts_code=ts_code,
-                start_date=start_date,
-                end_date=end_date,
-            )
+            if ts_code in _INDEX_CODES:
+                df = self._pro.index_daily(
+                    ts_code=ts_code,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            else:
+                df = self._pro.daily(
+                    ts_code=ts_code,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
         except Exception as e:
             raise ProviderError(
                 f"TuShare request failed for {ticker}: {e}",
@@ -108,8 +118,35 @@ class AShareProvider:
         # TuShare returns newest-first, we want oldest-first
         candles.sort(key=lambda c: c.timestamp)
 
+        if timeframe == Timeframe.WEEK:
+            candles = _aggregate_weekly(candles)
+
         if limit and len(candles) > limit:
             candles = candles[-limit:]
 
         logger.info(f"Fetched {len(candles)} candles for {ticker} ({timeframe.value})")
         return candles
+
+
+def _aggregate_weekly(candles: list[Candle]) -> list[Candle]:
+    """Aggregate sorted daily candles into completed Monday-Friday weeks."""
+    groups: dict[tuple[int, int], list[Candle]] = {}
+    for candle in candles:
+        day = date.fromisoformat(candle.timestamp[:10])
+        key = day.isocalendar()[:2]
+        groups.setdefault((int(key[0]), int(key[1])), []).append(candle)
+    output: list[Candle] = []
+    for rows in groups.values():
+        rows.sort(key=lambda item: item.timestamp)
+        output.append(
+            Candle(
+                timestamp=rows[-1].timestamp,
+                open=rows[0].open,
+                high=max(row.high for row in rows),
+                low=min(row.low for row in rows),
+                close=rows[-1].close,
+                volume=sum(row.volume for row in rows),
+                amount=sum(row.amount or 0 for row in rows),
+            )
+        )
+    return output

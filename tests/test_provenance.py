@@ -35,11 +35,12 @@ class TestProviderMeta:
         for asset_class in (
             AssetClass.FUTURES,
             AssetClass.FOREX,
-            AssetClass.INDEX,
-            AssetClass.ETF,
         ):
             with pytest.raises(KeyError, match="No default source configured"):
                 provider_meta(asset_class)
+
+        for asset_class in (AssetClass.INDEX, AssetClass.ETF):
+            assert provider_meta(asset_class).name == "yahoo_finance"
 
     def test_fred_factor_asset_classes_have_explicit_defaults_after_registration(self):
         from kline.registry import init

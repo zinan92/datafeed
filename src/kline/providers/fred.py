@@ -50,6 +50,7 @@ class FredCsvProvider:
             "body_preview": response.text[:500],
         }
         candles: list[Candle] = []
+        scale = 100.0 if series_id == "T10Y2Y" else 1.0
         for row in DictReader(StringIO(response.text)):
             raw = str(row.get(series_id, "")).strip()
             observation_date = str(row.get("observation_date", "")).strip()
@@ -59,7 +60,7 @@ class FredCsvProvider:
                 continue
             if end and observation_date > end[:10]:
                 continue
-            value = float(raw)
+            value = float(raw) * scale
             candles.append(
                 Candle(
                     timestamp=f"{observation_date}T00:00:00+00:00",
