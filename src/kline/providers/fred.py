@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from csv import DictReader
+from datetime import date
 from io import StringIO
 
 import httpx
@@ -18,7 +19,7 @@ class FredCsvProvider:
         self.last_raw_response: dict | None = None
 
     def supported_timeframes(self) -> list[Timeframe]:
-        return [Timeframe.DAY]
+        return [Timeframe.DAY, Timeframe.WEEK]
 
     async def fetch(
         self,
@@ -29,8 +30,17 @@ class FredCsvProvider:
         end: str | None = None,
         limit: int = 500,
     ) -> list[Candle]:
+        if timeframe == Timeframe.WEEK:
+            daily = await self.fetch(
+                ticker,
+                Timeframe.DAY,
+                start=start,
+                end=end,
+                limit=max(limit * 7, 500),
+            )
+            return _aggregate_weekly_levels(daily)[-max(1, limit):]
         if timeframe != Timeframe.DAY:
-            raise ProviderError("FRED supports daily observations only")
+            raise ProviderError("FRED supports daily and weekly observations only")
         series_id = ticker.upper().strip()
         url = "https://fred.stlouisfed.org/graph/fredgraph.csv"
         try:
@@ -74,3 +84,24 @@ class FredCsvProvider:
         if not candles:
             raise ProviderError(f"FRED returned no usable observations for {series_id}")
         return candles[-max(1, limit) :]
+
+
+def _aggregate_weekly_levels(candles: list[Candle]) -> list[Candle]:
+    """Aggregate daily FRED levels to completed ISO weeks.
+
+    Treasury yields and curve spreads are levels, not OHLC prices.  The
+    weekly output therefore repeats the last observed level in the week and
+    never invents a high/low range or a bond-price candle.
+    """
+
+    groups: dict[tuple[int, int], list[Candle]] = {}
+    for candle in candles:
+        trading_date = date.fromisoformat(candle.timestamp[:10])
+        iso = trading_date.isocalendar()
+        groups.setdefault((int(iso.year), int(iso.week)), []).append(candle)
+    output: list[Candle] = []
+    for rows in groups.values():
+        rows.sort(key=lambda item: item.timestamp)
+        value = rows[-1].close
+        output.append(Candle(timestamp=rows[-1].timestamp, open=value, high=value, low=value, close=value, volume=0))
+    return sorted(output, key=lambda item: item.timestamp)
