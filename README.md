@@ -22,10 +22,12 @@ fail ticker not found     → search suggestions
 cache hit                 → cached candles, tagged served_from=cache + age_seconds
 realtime strict failure   → error / blocked envelope, never hidden fallback
 fail timeframe not supported → supported list
-fail A-share no token     → setup instructions
+fail TuShare-only A-share no token → setup instructions; Phase 1 indices need no token
 ```
 
-Built-in sources: `tushare_pro`, `yahoo_finance`, `yahoo_finance_index`, `yahoo_finance_etf`, `yahoo_finance_futures`,
+Built-in sources: `tushare_pro`, `tencent_kline`, `sina_index`,
+`treasury_official_csv`, `treasury_official_csv_derived`, `yahoo_finance`,
+`yahoo_finance_index`, `yahoo_finance_etf`, `yahoo_finance_futures`,
 `binance_spot_public`, `binance_usdm_futures`, and the FRED macro/flow/event adapters.
 Tiger OpenAPI and OANDA v20 are credential-backed config adapters; see
 `configs/adapters.example.json`.
@@ -50,6 +52,9 @@ MarketDataPort
         ├─ Binance Spot adapter
         ├─ Yahoo adapter
         ├─ TuShare adapter
+        ├─ Tencent A-share index adapter
+        ├─ Sina A-share index fallback adapter
+        ├─ Official U.S. Treasury yield adapter
         ├─ FRED macro / flow / event adapters
         ├─ Tiger quote + market-session adapter
         ├─ OANDA v20 pricing adapter
@@ -101,6 +106,51 @@ datafeed 本体只负责数据。它不判断“研究”或“交易”，而�
 | Fallback | `fallback_policy=none|explicit` | 默认不 fallback；`explicit` 只尝试调用方列出的 `fallback_sources` |
 | Execution venue | `require_execution_venue=true|false` | 要求 source 必须是执行场所 |
 
+### Weekly Macro Phase 1 source map
+
+| Asset group | Canonical symbols | Daily / weekly source | 4H source | Explicit fallback |
+|---|---|---|---|---|
+| Shanghai Composite, STAR 50, Shanghai Dividend | `sh000001`, `sh000688`, `sh000015` | Tencent `tencent_kline` | — | Sina `sina_index` |
+| DXY, S&P 500, Nasdaq, VIX, Nikkei, KOSPI | `DX-Y.NYB`, `^GSPC`, `^IXIC`, `^VIX`, `^N225`, `^KS11` | Yahoo `yahoo_finance_index` | DXY only | none |
+| U.S. 2Y, U.S. 10Y, 2s10s | `DGS2`, `DGS10`, `T10Y2Y` | Official Treasury CSV | — | none |
+| U.S. dividend | `SCHD` | Yahoo `yahoo_finance_etf` | — | none |
+| Bitcoin | `BTC` / provider `BTCUSDT` | Binance Spot | native Binance 4H | none |
+| WTI, Gold, Silver | `CL=F`, `GC=F`, `SI=F` | Yahoo futures | Yahoo 1H → 4H | none |
+
+For the three A-share indices, fallback is never implicit. A caller must send
+`fallback_policy=explicit&fallback_sources=sina_index`; the response then
+records `attempted_sources`, `selected_source`, `selection_reason`, provider
+symbol, endpoint and any primary-source failure. Every other Phase 1 asset
+keeps `fallback_policy=none`.
+
+### Timeframe contract
+
+- Native 4H data is passed through as `raw_timeframe=4h` and
+  `timeframe_origin=native`; it is never aggregated a second time.
+- Yahoo 1H → 4H responses retain `raw_timeframe=1h`,
+  `timeframe_origin=aggregated`, the fixed bucket rule, UTC anchor and dropped
+  incomplete bucket count.
+- Daily → weekly responses retain `raw_timeframe=1d`, completed-week rule,
+  bucket timezone and input source identity.
+
+## Canonical local runtime
+
+The current local service is launchd-managed as `com.wendy.datafeed`:
+
+```text
+runtime root: /Users/wendy/datafeed-runtime
+listen:       http://127.0.0.1:8100
+build:        5cd7472036dec95e4eaf5e8f1e0b71b7b4c65eb0
+health:       http://127.0.0.1:8100/api/health
+docs:         http://127.0.0.1:8100/docs
+```
+
+The health envelope exposes `runtime_root`, `module_root`, `build_sha`,
+`registry_version`, `database_path` and `identity_status`. Provider
+`available=false` with `availability_basis=not_live_probed` means capability
+registration has not itself performed a live probe; an actual request remains
+the source of truth for readiness.
+
 常用 profile：
 
 | Profile | 等价策略 | 用途 |
@@ -126,6 +176,9 @@ datafeed 本体只负责数据。它不判断“研究”或“交易”，而�
   candle cache until the transformation receipt has a storage schema; `allow`
   may fetch upstream, while `require` returns `cache_miss`.
 - `quality=strict` 下，上游失败、空数据、陈旧、gap、乱序都返回错误/blocked envelope。
+- `fallback_policy=explicit` 只尝试调用方明确列出的备用 source；没有 silent
+  source switch。响应中的 `requested_source`、`attempted_sources`、
+  `selected_source` 和 `selection_reason` 必须能还原选择过程。
 - `require_execution_venue=true` 会拒绝 Yahoo、TuShare、Binance Spot 等非执行场所 source。
 - normalized storage 以 `source_id + ticker + asset_class + timeframe + timestamp` 隔离；同一标的多源不会互相覆盖。
 
@@ -141,6 +194,9 @@ curl "localhost:8100/api/candles/commodity/XAUUSDT?timeframe=1m&profile=executio
 
 # 显式 fallback：主源失败后只尝试调用方点名的源，响应记录 selected/attempted sources
 curl "localhost:8100/api/candles/commodity/GOLD?timeframe=1m&source=binance_usdm_futures&cache_policy=bypass&fallback_policy=explicit&fallback_sources=yahoo_finance_futures"
+
+# Weekly Macro A-share index：Tencent 主源，Sina 显式 fallback
+curl "localhost:8100/api/candles/index/sh000001?timeframe=1w&source=tencent_kline&cache_policy=bypass&quality=strict&fallback_policy=explicit&fallback_sources=sina_index&limit=3"
 
 # WebSocket 实时 candle update
 ws://localhost:8100/api/ws/candles/commodity/XAUUSDT?timeframe=1m&source=binance_usdm_futures
@@ -211,8 +267,8 @@ $ curl "localhost:8100/api/candles/us_stock/AAPL?timeframe=1d&limit=3"
 > `cache_policy=allow` 命中 cache 时不会自动回源刷新，但 `served_from` + `age_seconds` + `fresh` 让陈旧数据可见。实时路径应使用 `cache_policy=bypass` 或 `profile=realtime`。
 
 ```bash
-# A股日线 (需要 TuShare token)
-$ curl "localhost:8100/api/candles/a_share/000001?timeframe=1d"
+# Phase 1 A股指数日线（无需 TuShare token；Tencent 主源 + Sina 显式 fallback）
+$ curl "localhost:8100/api/candles/index/sh000001?timeframe=1d&source=tencent_kline&cache_policy=bypass&quality=strict&fallback_policy=explicit&fallback_sources=sina_index"
 
 # 加密货币 1 小时线
 $ curl "localhost:8100/api/candles/crypto/BTC?timeframe=1h&limit=100"
@@ -253,9 +309,10 @@ cd datafeed
 python -m venv .venv && source .venv/bin/activate
 pip install -e .
 
-# 3. 配置 A 股数据源 (可选，美股/加密/商品无需配置)
+# 3. 可选：配置 TuShare（仅用于非 Phase 1 的 A-share equity adapter）
 cp .env.example .env
-# 编辑 .env 填入 TUSHARE_TOKEN (免费申请: tushare.pro)
+# 编辑 .env 填入 KLINE_TUSHARE_TOKEN（如果确实使用 TuShare）
+# Phase 1 的三个指数 sh000001/sh000688/sh000015 不需要 TuShare token。
 
 # 4. 启动服务
 python -m kline
@@ -282,10 +339,11 @@ python -m kline
 | `start` | query | — | 起始日期 `YYYY-MM-DD` |
 | `end` | query | — | 结束日期 `YYYY-MM-DD` |
 | `limit` | query | `500` | 返回蜡烛数量上限 (1-2000) |
-| `source` | query | `auto` | `auto` / `tushare_pro` / `yahoo_finance` / `yahoo_finance_index` / `yahoo_finance_etf` / `yahoo_finance_futures` / `binance_spot_public` / `binance_usdm_futures` |
+| `source` | query | `auto` | `auto` / `tushare_pro` / `tencent_kline` / `sina_index` / `treasury_official_csv` / `treasury_official_csv_derived` / Yahoo / Binance / FRED source ids |
 | `cache_policy` | query | `allow` | `allow` / `bypass` / `require` |
 | `quality` | query | `standard` | `standard` / `strict` |
-| `fallback_policy` | query | `none` | `none` / `explicit`；当前没有静默 fallback |
+| `fallback_policy` | query | `none` | `none` / `explicit`；explicit 时必须同时传 `fallback_sources` |
+| `fallback_sources` | query | — | 可重复 query 参数；例如 `fallback_sources=sina_index` |
 | `require_execution_venue` | query | `false` | `true` 会拒绝非执行场所 source |
 | `profile` | query | — | `historical` / `realtime` / `execution_live` |
 | `refresh` | query | `false` | 兼容参数；`true` 等价 `cache_policy=bypass` |
@@ -309,6 +367,10 @@ python -m kline
 | Source | Asset class | Provider | Market type | Realtime | Execution venue | 支持 Timeframe |
 |--------|-------------|----------|-------------|----------|-----------------|---------------|
 | `tushare_pro` | `a_share` | TuShare Pro | equity | false | false | 1d, 1w |
+| `tencent_kline` | `index` | Tencent Finance | A-share index | false | false | sh000001/sh000688/sh000015: 1d, 1w |
+| `sina_index` | `index` | Sina Finance | A-share index fallback | false | false | sh000001/sh000688/sh000015: 1d, 1w |
+| `treasury_official_csv` | `macro` | U.S. Treasury | yield level | false | false | DGS2/DGS10: 1d, 1w |
+| `treasury_official_csv_derived` | `macro` | U.S. Treasury | 2s10s derived spread | false | false | T10Y2Y: 1d, 1w |
 | `yahoo_finance` | `us_stock` | Yahoo Finance | equity | false | false | 1m, 5m, 15m, 30m, 1h, 1d, 1w |
 | `yahoo_finance_index` | `index` | Yahoo Finance | index | false | false | DX-Y.NYB: 1d, 1w, 4h; ^GSPC/^IXIC/^VIX/^N225/^KS11: 1d, 1w |
 | `yahoo_finance_etf` | `etf` | Yahoo Finance | ETF | false | false | SCHD: 1d, 1w |
@@ -340,7 +402,9 @@ kline/
 │   ├── config.py           # 环境变量配置
 │   └── providers/
 │       ├── base.py         # Provider Protocol 接口
-│       ├── ashare.py       # TuShare Pro (A股)
+│       ├── ashare.py       # TuShare + Tencent index (A股)
+│       ├── sina.py         # Sina A-share index fallback
+│       ├── treasury.py     # Official Treasury levels and 2s10s
 │       ├── us.py           # Yahoo Finance (美股)
 │       ├── crypto.py       # Binance 公开 API (加密货币)
 │       ├── commodity.py    # Yahoo Finance 期货 + 别名
@@ -355,7 +419,7 @@ kline/
 
 | 变量 | 说明 | 必填 | 默认值 |
 |------|------|------|--------|
-| `KLINE_TUSHARE_TOKEN` | TuShare Pro token (A股数据) | A股必填 | — |
+| `KLINE_TUSHARE_TOKEN` | TuShare Pro token（非 Phase 1 A-share equity 可选） | 否 | — |
 | `KLINE_DB_PATH` | SQLite 数据库路径 | 否 | `data/kline.db` |
 | `KLINE_PORT` | 服务端口 | 否 | `8100` |
 | `KLINE_REQUEST_TIMEOUT` | 上游请求超时 (秒) | 否 | `30` |
@@ -383,8 +447,8 @@ capability:
     - "cache_policy=require + no cache → cache_miss"
     - "quality=strict + source down/empty/stale/gap/out-of-order → error or blocked envelope"
     - "timeframe not supported → supported timeframes list"
-    - "A-share no token → setup instructions"
-  sources: [tushare_pro, yahoo_finance, yahoo_finance_index, yahoo_finance_etf, yahoo_finance_futures, binance_spot_public, binance_usdm_futures]
+    - "TuShare-only A-share request without token → setup instructions; Phase 1 index sources do not require TuShare"
+  sources: [tushare_pro, tencent_kline, sina_index, treasury_official_csv, treasury_official_csv_derived, yahoo_finance, yahoo_finance_index, yahoo_finance_etf, yahoo_finance_futures, binance_spot_public, binance_usdm_futures, fred_public_csv_macro, fred_public_csv_flow, fred_public_csv_event]
 api_base_url: http://localhost:8100
 endpoints:
   - path: /api/instruments/{asset_class}/{ticker}
