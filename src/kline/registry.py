@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from kline.config import Settings, ensure_data_dir, get_settings
-from kline.models import AssetClass
+from kline.models import AssetClass, Timeframe
 from kline.plugin_loader import load_configured_adapters, load_entrypoint_adapters
 from kline.ports import MarketDataPort, ProviderBackedMarketDataAdapter
 from kline.providers.ashare import AShareProvider
@@ -189,6 +189,19 @@ def provider_status() -> dict:
     for source_id, manifest in all_source_manifests().items():
         meta = manifest.meta
         adapter = _adapters.get(source_id)
+        if manifest.symbol_timeframes:
+            common = set.intersection(
+                *(set(timeframes) for timeframes in manifest.symbol_timeframes.values())
+            )
+            supported_timeframes = [
+                timeframe.value for timeframe in Timeframe if timeframe in common
+            ]
+        else:
+            supported_timeframes = (
+                [timeframe.value for timeframe in adapter.supported_timeframes()]
+                if adapter
+                else []
+            )
         sources[source_id] = {
             "available": adapter is not None,
             "asset_class": manifest.asset_class.value,
@@ -198,9 +211,11 @@ def provider_status() -> dict:
             "realtime_supported": meta.realtime_supported,
             "execution_venue": meta.execution_venue,
             "supported_symbols": list(meta.supported_symbols),
-            "supported_timeframes": [t.value for t in adapter.supported_timeframes()]
-            if adapter
-            else [],
+            "supported_timeframes": supported_timeframes,
+            "supported_timeframes_by_symbol": {
+                symbol: [timeframe.value for timeframe in timeframes]
+                for symbol, timeframes in manifest.symbol_timeframes.items()
+            },
             "quality_flags": list(meta.quality_flags),
         }
 

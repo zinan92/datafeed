@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import Boolean, Column, DateTime, Float, Index, Integer, String, Text, func
@@ -85,6 +85,14 @@ class Candle(BaseModel):
         return parsed.astimezone(timezone.utc).replace(microsecond=0).isoformat()
 
 
+class TimeframeTransform(BaseModel):
+    """How the public timeframe was produced from the upstream bars."""
+
+    raw_timeframe: Timeframe
+    timeframe_origin: Literal["native", "aggregated"]
+    aggregation: dict[str, Any] = Field(default_factory=dict)
+
+
 class CandleResponse(BaseModel):
     """API response envelope.
 
@@ -102,6 +110,10 @@ class CandleResponse(BaseModel):
     asset_class: AssetClass
     timeframe: Timeframe
     count: int
+    raw_timeframe: Optional[Timeframe] = None
+    timeframe_origin: Optional[Literal["native", "aggregated"]] = None
+    aggregation: dict[str, Any] = Field(default_factory=dict)
+    source_identity: dict[str, Any] = Field(default_factory=dict)
     # ── provenance / trust envelope ──
     schema_version: str = "kline-candles-v1"
     provider: str = ""  # concrete upstream, e.g. "binance_spot", "yahoo_finance"
@@ -135,6 +147,12 @@ class ErrorResponse(BaseModel):
     suggestions: Optional[list[str]] = None
     provider: Optional[str] = None
     source_mode: Optional[str] = None
+    provider_symbol: Optional[str] = None
+    timeframe: Optional[Timeframe] = None
+    raw_timeframe: Optional[Timeframe] = None
+    timeframe_origin: Optional[Literal["native", "aggregated"]] = None
+    aggregation: dict[str, Any] = Field(default_factory=dict)
+    source_identity: dict[str, Any] = Field(default_factory=dict)
     requested_source: Optional[str] = None
     selected_source: Optional[str] = None
     attempted_sources: list[str] = Field(default_factory=list)
