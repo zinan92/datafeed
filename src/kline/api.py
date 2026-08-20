@@ -874,7 +874,7 @@ async def stream_candles(
 
     try:
         async for candle in adapter.stream_candles(ticker, timeframe):
-            if timeframe not in (Timeframe.DAY, Timeframe.HOUR_4, Timeframe.WEEK):
+            if policy.cache_policy != CachePolicy.BYPASS and timeframe not in (Timeframe.DAY, Timeframe.HOUR_4, Timeframe.WEEK):
                 get_store().save(
                     ticker,
                     asset_class,

@@ -267,5 +267,5 @@ def runtime_status() -> dict[str, str]:
         "build_sha": build_sha,
         "registry_version": PHASE1_SOURCE_REGISTRY_VERSION,
         "database_path": str(Path(settings.db_path).resolve()),
-        "identity_status": "verified" if build_sha != "unknown" else "partial",
+        "identity_status": "declared" if build_sha != "unknown" else "unknown",
     }

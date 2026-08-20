@@ -162,6 +162,8 @@ def _health_contract_issues(status: int, health: Any, db_path: str | None = None
             issues.append(f"health_source_availability_basis_invalid:{source}")
         elif type(entry.get("available")) is not bool:
             issues.append(f"health_source_available_invalid:{source}")
+        elif entry.get("availability_basis") == "not_live_probed" and entry.get("available") is not False:
+            issues.append(f"health_source_not_live_status_invalid:{source}")
     return issues
 
 
@@ -266,7 +268,10 @@ def main() -> int:
     args = parser.parse_args()
     receipt = verify(args.base_url, timeout=args.timeout, limit=args.limit, db_path=args.db_path)
     print(json.dumps(receipt, ensure_ascii=False, indent=2))
-    return 0 if not receipt["health_contract_issues"] and receipt["database_unchanged"] is True else 1
+    total_cells = sum(receipt["counts"].values())
+    has_ready = receipt["counts"]["ready"] > 0
+    matrix_valid = len(receipt["cells"]) == 39 and total_cells == 39 and has_ready
+    return 0 if not receipt["health_contract_issues"] and receipt["database_unchanged"] is True and matrix_valid else 1
 
 
 if __name__ == "__main__":

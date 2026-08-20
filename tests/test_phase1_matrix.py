@@ -129,7 +129,7 @@ async def test_health_exposes_runtime_and_registry_identity(tmp_path, monkeypatc
 
     assert payload["runtime"]["build_sha"] == "test-phase1-sha"
     assert payload["runtime"]["registry_version"] == "weekly-macro-phase1-source-registry-v1"
-    assert payload["runtime"]["identity_status"] == "verified"
+    assert payload["runtime"]["identity_status"] == "declared"
     assert payload["runtime"]["database_path"].endswith("health.db")
     assert payload["providers"]["sources"]["tencent_kline"]["availability_basis"] == "not_live_probed"
     assert payload["providers"]["sources"]["treasury_official_csv"]["availability_basis"] == "not_live_probed"
