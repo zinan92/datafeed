@@ -412,12 +412,14 @@ async def test_explicit_fallback_is_visible_and_source_scoped(monkeypatch, store
     assert response.instrument_id == "GOLD"
     assert response.provider_symbol == "GC=F"
     assert any("primary unavailable" in issue for issue in response.access_issues)
+    # bypass is read-only: explicit fallback remains visible in the envelope,
+    # but neither attempted source writes cache rows.
     assert store.count(
         "GC=F",
         AssetClass.COMMODITY,
         Timeframe.MIN_1,
         source_id="yahoo_finance_futures",
-    ) == 1
+    ) == 0
     assert store.count(
         "XAUUSDT",
         AssetClass.COMMODITY,

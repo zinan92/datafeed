@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 from kline.config import Settings, ensure_data_dir, get_settings
 from kline.models import AssetClass, Timeframe
 from kline.plugin_loader import load_configured_adapters, load_entrypoint_adapters
@@ -20,10 +23,12 @@ from kline.provenance import (
     register_source_manifest,
     source_manifest,
     fred_source_manifest,
+    PHASE1_SOURCE_REGISTRY_VERSION,
 )
 from kline.store import KlineStore
 
 _store: KlineStore | None = None
+_settings: Settings | None = None
 _providers: dict[AssetClass, Provider] = {}
 _live_providers: dict[str, Provider] = {}
 _adapters: dict[str, MarketDataPort] = {}
@@ -31,8 +36,9 @@ _adapters: dict[str, MarketDataPort] = {}
 
 def init(settings: Settings | None = None) -> None:
     """Initialize store and providers. Called once at app startup."""
-    global _store, _providers, _live_providers, _adapters
+    global _store, _providers, _live_providers, _adapters, _settings
     s = settings or get_settings()
+    _settings = s
     ensure_data_dir(s)
 
     _store = KlineStore(s.db_path)
@@ -224,7 +230,9 @@ def provider_status() -> dict:
                 else []
             )
         sources[source_id] = {
-            "available": adapter is not None,
+            "available": False,
+            "configured": adapter is not None,
+            "availability_basis": "not_live_probed",
             "asset_class": manifest.asset_class.value,
             "provider": meta.name,
             "source_mode": meta.source_mode,
@@ -241,3 +249,23 @@ def provider_status() -> dict:
         }
 
     return {"sources": sources}
+
+
+def runtime_status() -> dict[str, str]:
+    """Return runtime/build identity without probing or mutating external state."""
+
+    from kline import __version__
+
+    settings = _settings or get_settings()
+    build_sha = os.environ.get("KLINE_BUILD_SHA", "").strip() or "unknown"
+    runtime_root = os.environ.get("KLINE_RUNTIME_ROOT", "").strip()
+    return {
+        "service_version": __version__,
+        "runtime_root": runtime_root or str(Path.cwd().resolve()),
+        "module_root": str(Path(__file__).resolve().parents[2]),
+        "working_directory": str(Path.cwd().resolve()),
+        "build_sha": build_sha,
+        "registry_version": PHASE1_SOURCE_REGISTRY_VERSION,
+        "database_path": str(Path(settings.db_path).resolve()),
+        "identity_status": "declared" if build_sha != "unknown" else "unknown",
+    }

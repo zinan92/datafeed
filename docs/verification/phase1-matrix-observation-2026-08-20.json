@@ -1,0 +1,1874 @@
+{
+  "schema_version": "phase1-matrix-receipt-v1",
+  "matrix_version": "weekly-macro-phase1-39-cell-v1",
+  "observed_at": "2026-08-20T06:59:24.637888+00:00",
+  "base_url": "http://127.0.0.1:18103",
+  "health_http_status": 200,
+  "health_contract_issues": [],
+  "runtime": {
+    "service_version": "0.3.0",
+    "runtime_root": "/Users/wendy/.codex/worktrees/datafeed-issue-13",
+    "module_root": "/Users/wendy/.codex/worktrees/datafeed-issue-13",
+    "working_directory": "/Users/wendy/.codex/worktrees/datafeed-issue-13",
+    "build_sha": "072b9ae",
+    "registry_version": "weekly-macro-phase1-source-registry-v1",
+    "database_path": "/private/tmp/datafeed-phase1-matrix.uvlJjN/kline.db",
+    "identity_status": "declared"
+  },
+  "counts": {
+    "ready": 31,
+    "unavailable": 0,
+    "blocked": 8
+  },
+  "database_before": {
+    "exists": true,
+    "verified": true,
+    "counts": {
+      "klines": 0,
+      "source_observations": 0,
+      "raw_upstream_responses": 0
+    }
+  },
+  "database_after": {
+    "exists": true,
+    "verified": true,
+    "counts": {
+      "klines": 0,
+      "source_observations": 0,
+      "raw_upstream_responses": 0
+    }
+  },
+  "database_unchanged": true,
+  "receipt_code_sha": "072b9ae",
+  "health": {
+    "status": "ok",
+    "service": "kline",
+    "version": "0.3.0",
+    "runtime": {
+      "service_version": "0.3.0",
+      "runtime_root": "/Users/wendy/.codex/worktrees/datafeed-issue-13",
+      "module_root": "/Users/wendy/.codex/worktrees/datafeed-issue-13",
+      "working_directory": "/Users/wendy/.codex/worktrees/datafeed-issue-13",
+        "build_sha": "072b9ae",
+      "registry_version": "weekly-macro-phase1-source-registry-v1",
+      "database_path": "/private/tmp/datafeed-phase1-matrix.uvlJjN/kline.db",
+      "identity_status": "declared"
+    },
+    "providers": {
+      "sources": {
+        "binance_spot_public": {
+          "available": false,
+          "configured": true,
+          "availability_basis": "not_live_probed",
+          "asset_class": "crypto",
+          "provider": "binance_spot",
+          "source_mode": "binance_spot_public",
+          "market_type": "spot",
+          "realtime_supported": true,
+          "execution_venue": false,
+          "supported_symbols": [],
+          "supported_timeframes": [
+            "1m",
+            "5m",
+            "15m",
+            "30m",
+            "1h",
+            "4h",
+            "1d",
+            "1w"
+          ],
+          "supported_timeframes_by_symbol": {
+            "BTC": [
+              "1m",
+              "5m",
+              "15m",
+              "30m",
+              "1h",
+              "4h",
+              "1d",
+              "1w"
+            ],
+            "BTCUSDT": [
+              "1m",
+              "5m",
+              "15m",
+              "30m",
+              "1h",
+              "4h",
+              "1d",
+              "1w"
+            ]
+          },
+          "quality_flags": [
+            "public_api",
+            "spot",
+            "research_only",
+            "not_execution_venue"
+          ]
+        },
+        "binance_usdm_futures": {
+          "available": false,
+          "configured": true,
+          "availability_basis": "not_live_probed",
+          "asset_class": "commodity",
+          "provider": "binance_usdm_futures",
+          "source_mode": "binance_usdm_futures",
+          "market_type": "usd_m_futures",
+          "realtime_supported": true,
+          "execution_venue": true,
+          "supported_symbols": [
+            "XAUUSDT"
+          ],
+          "supported_timeframes": [
+            "1m",
+            "5m",
+            "15m",
+            "30m",
+            "1h",
+            "4h",
+            "1d"
+          ],
+          "supported_timeframes_by_symbol": {},
+          "quality_flags": [
+            "public_api",
+            "usd_m_futures",
+            "live",
+            "execution_venue"
+          ]
+        },
+        "yahoo_finance": {
+          "available": false,
+          "configured": true,
+          "availability_basis": "not_live_probed",
+          "asset_class": "us_stock",
+          "provider": "yahoo_finance",
+          "source_mode": "yahoo_finance",
+          "market_type": "equity",
+          "realtime_supported": false,
+          "execution_venue": false,
+          "supported_symbols": [],
+          "supported_timeframes": [
+            "1m",
+            "5m",
+            "15m",
+            "30m",
+            "1h",
+            "1d",
+            "1w",
+            "4h"
+          ],
+          "supported_timeframes_by_symbol": {},
+          "quality_flags": [
+            "delayed_possible",
+            "market_hours",
+            "research_only"
+          ]
+        },
+        "yahoo_finance_futures": {
+          "available": false,
+          "configured": true,
+          "availability_basis": "not_live_probed",
+          "asset_class": "commodity",
+          "provider": "yahoo_finance",
+          "source_mode": "yahoo_finance_futures",
+          "market_type": "futures_continuous_contract",
+          "realtime_supported": false,
+          "execution_venue": false,
+          "supported_symbols": [
+            "CL=F",
+            "GC=F",
+            "SI=F"
+          ],
+          "supported_timeframes": [
+            "1d",
+            "1w"
+          ],
+          "supported_timeframes_by_symbol": {
+            "CL=F": [
+              "1m",
+              "5m",
+              "15m",
+              "30m",
+              "1h",
+              "4h",
+              "1d",
+              "1w"
+            ],
+            "GC=F": [
+              "1m",
+              "5m",
+              "15m",
+              "30m",
+              "1h",
+              "4h",
+              "1d",
+              "1w"
+            ],
+            "SI=F": [
+              "1m",
+              "5m",
+              "15m",
+              "30m",
+              "1h",
+              "4h",
+              "1d",
+              "1w"
+            ],
+            "BZ=F": [
+              "1d",
+              "1w"
+            ],
+            "NG=F": [
+              "1d",
+              "1w"
+            ],
+            "HG=F": [
+              "1d",
+              "1w"
+            ],
+            "PL=F": [
+              "1d",
+              "1w"
+            ],
+            "ZC=F": [
+              "1d",
+              "1w"
+            ],
+            "ZW=F": [
+              "1d",
+              "1w"
+            ],
+            "ZS=F": [
+              "1d",
+              "1w"
+            ]
+          },
+          "quality_flags": [
+            "continuous_contract",
+            "market_hours",
+            "research_only"
+          ]
+        },
+        "tushare_pro": {
+          "available": false,
+          "configured": false,
+          "availability_basis": "not_live_probed",
+          "asset_class": "a_share",
+          "provider": "tushare",
+          "source_mode": "tushare_pro",
+          "market_type": "equity",
+          "realtime_supported": false,
+          "execution_venue": false,
+          "supported_symbols": [],
+          "supported_timeframes": [],
+          "supported_timeframes_by_symbol": {},
+          "quality_flags": [
+            "eod",
+            "market_hours",
+            "research_only"
+          ]
+        },
+        "tencent_kline": {
+          "available": false,
+          "configured": true,
+          "availability_basis": "not_live_probed",
+          "asset_class": "index",
+          "provider": "tencent_finance",
+          "source_mode": "tencent_kline",
+          "market_type": "index",
+          "realtime_supported": false,
+          "execution_venue": false,
+          "supported_symbols": [
+            "sh000001",
+            "sh000688",
+            "sh000015"
+          ],
+          "supported_timeframes": [
+            "1d",
+            "1w"
+          ],
+          "supported_timeframes_by_symbol": {
+            "SH000001": [
+              "1d",
+              "1w"
+            ],
+            "SH000688": [
+              "1d",
+              "1w"
+            ],
+            "SH000015": [
+              "1d",
+              "1w"
+            ]
+          },
+          "quality_flags": [
+            "public_api",
+            "market_hours",
+            "research_only"
+          ]
+        },
+        "treasury_official_csv": {
+          "available": false,
+          "configured": true,
+          "availability_basis": "not_live_probed",
+          "asset_class": "macro",
+          "provider": "treasury_official",
+          "source_mode": "treasury_official_csv",
+          "market_type": "treasury_par_yield",
+          "realtime_supported": false,
+          "execution_venue": false,
+          "supported_symbols": [
+            "2 Yr",
+            "10 Yr"
+          ],
+          "supported_timeframes": [
+            "1d",
+            "1w"
+          ],
+          "supported_timeframes_by_symbol": {
+            "2 YR": [
+              "1d",
+              "1w"
+            ],
+            "10 YR": [
+              "1d",
+              "1w"
+            ]
+          },
+          "quality_flags": [
+            "official_api",
+            "daily_level",
+            "research_only"
+          ]
+        },
+        "treasury_official_csv_derived": {
+          "available": false,
+          "configured": true,
+          "availability_basis": "not_live_probed",
+          "asset_class": "macro",
+          "provider": "treasury_official",
+          "source_mode": "treasury_official_csv_derived",
+          "market_type": "treasury_curve_spread",
+          "realtime_supported": false,
+          "execution_venue": false,
+          "supported_symbols": [
+            "10 Yr-2 Yr"
+          ],
+          "supported_timeframes": [
+            "1d",
+            "1w"
+          ],
+          "supported_timeframes_by_symbol": {
+            "10 YR-2 YR": [
+              "1d",
+              "1w"
+            ]
+          },
+          "quality_flags": [
+            "official_api",
+            "derived_level",
+            "research_only"
+          ]
+        },
+        "yahoo_finance_index": {
+          "available": false,
+          "configured": true,
+          "availability_basis": "not_live_probed",
+          "asset_class": "index",
+          "provider": "yahoo_finance",
+          "source_mode": "yahoo_finance_index",
+          "market_type": "index",
+          "realtime_supported": false,
+          "execution_venue": false,
+          "supported_symbols": [
+            "DX-Y.NYB",
+            "^GSPC",
+            "^IXIC",
+            "^VIX",
+            "^N225",
+            "^KS11"
+          ],
+          "supported_timeframes": [
+            "1d",
+            "1w"
+          ],
+          "supported_timeframes_by_symbol": {
+            "DX-Y.NYB": [
+              "1d",
+              "1w",
+              "4h"
+            ],
+            "^GSPC": [
+              "1d",
+              "1w"
+            ],
+            "^IXIC": [
+              "1d",
+              "1w"
+            ],
+            "^VIX": [
+              "1d",
+              "1w"
+            ],
+            "^N225": [
+              "1d",
+              "1w"
+            ],
+            "^KS11": [
+              "1d",
+              "1w"
+            ]
+          },
+          "quality_flags": [
+            "delayed_possible",
+            "market_hours",
+            "research_only"
+          ]
+        },
+        "yahoo_finance_etf": {
+          "available": false,
+          "configured": true,
+          "availability_basis": "not_live_probed",
+          "asset_class": "etf",
+          "provider": "yahoo_finance",
+          "source_mode": "yahoo_finance_etf",
+          "market_type": "etf",
+          "realtime_supported": false,
+          "execution_venue": false,
+          "supported_symbols": [
+            "SCHD"
+          ],
+          "supported_timeframes": [
+            "1d",
+            "1w"
+          ],
+          "supported_timeframes_by_symbol": {
+            "SCHD": [
+              "1d",
+              "1w"
+            ]
+          },
+          "quality_flags": [
+            "delayed_possible",
+            "market_hours",
+            "research_only"
+          ]
+        },
+        "fred_public_csv_macro": {
+          "available": false,
+          "configured": true,
+          "availability_basis": "not_live_probed",
+          "asset_class": "macro",
+          "provider": "fred",
+          "source_mode": "fred_public_csv_macro",
+          "market_type": "economic_series",
+          "realtime_supported": false,
+          "execution_venue": false,
+          "supported_symbols": [
+            "DTWEXBGS",
+            "DGS2",
+            "DGS10",
+            "T10Y2Y",
+            "DFII10",
+            "GVZCLS",
+            "DFF"
+          ],
+          "supported_timeframes": [
+            "1d",
+            "1w"
+          ],
+          "supported_timeframes_by_symbol": {},
+          "quality_flags": [
+            "public_api",
+            "daily_factor",
+            "research_only"
+          ]
+        },
+        "fred_public_csv_flow": {
+          "available": false,
+          "configured": true,
+          "availability_basis": "not_live_probed",
+          "asset_class": "flow",
+          "provider": "fred",
+          "source_mode": "fred_public_csv_flow",
+          "market_type": "economic_series",
+          "realtime_supported": false,
+          "execution_venue": false,
+          "supported_symbols": [
+            "DTWEXBGS",
+            "DGS2",
+            "DGS10",
+            "T10Y2Y",
+            "DFII10",
+            "GVZCLS",
+            "DFF"
+          ],
+          "supported_timeframes": [
+            "1d",
+            "1w"
+          ],
+          "supported_timeframes_by_symbol": {},
+          "quality_flags": [
+            "public_api",
+            "daily_factor",
+            "research_only"
+          ]
+        },
+        "fred_public_csv_event": {
+          "available": false,
+          "configured": true,
+          "availability_basis": "not_live_probed",
+          "asset_class": "event",
+          "provider": "fred",
+          "source_mode": "fred_public_csv_event",
+          "market_type": "economic_series",
+          "realtime_supported": false,
+          "execution_venue": false,
+          "supported_symbols": [
+            "DTWEXBGS",
+            "DGS2",
+            "DGS10",
+            "T10Y2Y",
+            "DFII10",
+            "GVZCLS",
+            "DFF"
+          ],
+          "supported_timeframes": [
+            "1d",
+            "1w"
+          ],
+          "supported_timeframes_by_symbol": {},
+          "quality_flags": [
+            "public_api",
+            "daily_factor",
+            "research_only"
+          ]
+        }
+      }
+    },
+    "storage": {
+      "status": "ok",
+      "integrity": "ok",
+      "candle_rows": 0,
+      "source_count": 0
+    },
+    "storage_coverage": [],
+    "latest_observations": []
+  },
+  "read_only_tool": true,
+  "cells": [
+    {
+      "asset_key": "dxy",
+      "timeframe": "1d",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_index",
+      "provider_symbol": "DX-Y.NYB",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_index"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_index",
+        "provider_symbol": "DX-Y.NYB",
+        "timeframe": "1d",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        }
+      }
+    },
+    {
+      "asset_key": "dxy",
+      "timeframe": "1w",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_index",
+      "provider_symbol": "DX-Y.NYB",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_index"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_index",
+        "provider_symbol": "DX-Y.NYB",
+        "timeframe": "1w",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "completed_iso_week",
+          "input_timeframe": "1d",
+          "bucket_timezone": "UTC"
+        }
+      }
+    },
+    {
+      "asset_key": "dxy",
+      "timeframe": "4h",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_index",
+      "provider_symbol": "DX-Y.NYB",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_index"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_index",
+        "provider_symbol": "DX-Y.NYB",
+        "timeframe": "4h",
+        "raw_timeframe": "1h",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "fixed_4h",
+          "input_timeframe": "1h",
+          "bucket_timezone": "UTC",
+          "anchor_hour": 0,
+          "anchor_minute": 0,
+          "dropped_incomplete_buckets": 4
+        }
+      }
+    },
+    {
+      "asset_key": "us2y",
+      "timeframe": "1d",
+      "status": "ready",
+      "http_status": 200,
+      "source": "treasury_official_csv",
+      "provider_symbol": "2 Yr",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "treasury_official_csv"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "treasury_official",
+        "source_mode": "treasury_official_csv",
+        "provider_symbol": "2 Yr",
+        "timeframe": "1d",
+        "source_id": "treasury_official_csv",
+        "endpoint": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/{year}/all",
+        "dataset": "daily_treasury_yield_curve",
+        "series_kind": "rate_level",
+        "unit": "percent",
+        "observation_count": 3,
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        }
+      }
+    },
+    {
+      "asset_key": "us2y",
+      "timeframe": "1w",
+      "status": "ready",
+      "http_status": 200,
+      "source": "treasury_official_csv",
+      "provider_symbol": "2 Yr",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "treasury_official_csv"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "treasury_official",
+        "source_mode": "treasury_official_csv",
+        "provider_symbol": "2 Yr",
+        "timeframe": "1w",
+        "source_id": "treasury_official_csv",
+        "endpoint": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/{year}/all",
+        "dataset": "daily_treasury_yield_curve",
+        "series_kind": "rate_level",
+        "unit": "percent",
+        "observation_count": 3,
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "level_last_observation",
+          "rule": "completed_iso_week_last_level",
+          "input_timeframe": "1d",
+          "bucket_timezone": "America/New_York",
+          "input_source": {
+            "source_id": "treasury_official_csv",
+            "provider_symbol": "2 Yr"
+          }
+        }
+      }
+    },
+    {
+      "asset_key": "us10y",
+      "timeframe": "1d",
+      "status": "ready",
+      "http_status": 200,
+      "source": "treasury_official_csv",
+      "provider_symbol": "10 Yr",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "treasury_official_csv"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "treasury_official",
+        "source_mode": "treasury_official_csv",
+        "provider_symbol": "10 Yr",
+        "timeframe": "1d",
+        "source_id": "treasury_official_csv",
+        "endpoint": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/{year}/all",
+        "dataset": "daily_treasury_yield_curve",
+        "series_kind": "rate_level",
+        "unit": "percent",
+        "observation_count": 3,
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        }
+      }
+    },
+    {
+      "asset_key": "us10y",
+      "timeframe": "1w",
+      "status": "ready",
+      "http_status": 200,
+      "source": "treasury_official_csv",
+      "provider_symbol": "10 Yr",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "treasury_official_csv"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "treasury_official",
+        "source_mode": "treasury_official_csv",
+        "provider_symbol": "10 Yr",
+        "timeframe": "1w",
+        "source_id": "treasury_official_csv",
+        "endpoint": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/{year}/all",
+        "dataset": "daily_treasury_yield_curve",
+        "series_kind": "rate_level",
+        "unit": "percent",
+        "observation_count": 3,
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "level_last_observation",
+          "rule": "completed_iso_week_last_level",
+          "input_timeframe": "1d",
+          "bucket_timezone": "America/New_York",
+          "input_source": {
+            "source_id": "treasury_official_csv",
+            "provider_symbol": "10 Yr"
+          }
+        }
+      }
+    },
+    {
+      "asset_key": "us2s10s",
+      "timeframe": "1d",
+      "status": "ready",
+      "http_status": 200,
+      "source": "treasury_official_csv_derived",
+      "provider_symbol": "10 Yr-2 Yr",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "treasury_official_csv_derived"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "treasury_official",
+        "source_mode": "treasury_official_csv_derived",
+        "provider_symbol": "10 Yr-2 Yr",
+        "timeframe": "1d",
+        "source_id": "treasury_official_csv_derived",
+        "endpoint": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/{year}/all",
+        "dataset": "daily_treasury_yield_curve",
+        "series_kind": "spread",
+        "unit": "basis_points",
+        "derivation": {
+          "rule": "same_date_10y_minus_2y",
+          "scale": 100,
+          "input_source": "treasury_official_csv",
+          "input_columns": [
+            "10 Yr",
+            "2 Yr"
+          ]
+        },
+        "observation_count": 3,
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        }
+      }
+    },
+    {
+      "asset_key": "us2s10s",
+      "timeframe": "1w",
+      "status": "ready",
+      "http_status": 200,
+      "source": "treasury_official_csv_derived",
+      "provider_symbol": "10 Yr-2 Yr",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "treasury_official_csv_derived"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "treasury_official",
+        "source_mode": "treasury_official_csv_derived",
+        "provider_symbol": "10 Yr-2 Yr",
+        "timeframe": "1w",
+        "source_id": "treasury_official_csv_derived",
+        "endpoint": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/{year}/all",
+        "dataset": "daily_treasury_yield_curve",
+        "series_kind": "spread",
+        "unit": "basis_points",
+        "derivation": {
+          "rule": "same_date_10y_minus_2y",
+          "scale": 100,
+          "input_source": "treasury_official_csv",
+          "input_columns": [
+            "10 Yr",
+            "2 Yr"
+          ]
+        },
+        "observation_count": 3,
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "level_last_observation",
+          "rule": "completed_iso_week_last_level",
+          "input_timeframe": "1d",
+          "bucket_timezone": "America/New_York",
+          "input_source": {
+            "source_id": "treasury_official_csv_derived",
+            "provider_symbol": "10 Yr-2 Yr"
+          }
+        }
+      }
+    },
+    {
+      "asset_key": "sp500",
+      "timeframe": "1d",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_index",
+      "provider_symbol": "^GSPC",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_index"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_index",
+        "provider_symbol": "^GSPC",
+        "timeframe": "1d",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        }
+      }
+    },
+    {
+      "asset_key": "sp500",
+      "timeframe": "1w",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_index",
+      "provider_symbol": "^GSPC",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_index"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_index",
+        "provider_symbol": "^GSPC",
+        "timeframe": "1w",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "completed_iso_week",
+          "input_timeframe": "1d",
+          "bucket_timezone": "UTC"
+        }
+      }
+    },
+    {
+      "asset_key": "nasdaq",
+      "timeframe": "1d",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_index",
+      "provider_symbol": "^IXIC",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_index"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_index",
+        "provider_symbol": "^IXIC",
+        "timeframe": "1d",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        }
+      }
+    },
+    {
+      "asset_key": "nasdaq",
+      "timeframe": "1w",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_index",
+      "provider_symbol": "^IXIC",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_index"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_index",
+        "provider_symbol": "^IXIC",
+        "timeframe": "1w",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "completed_iso_week",
+          "input_timeframe": "1d",
+          "bucket_timezone": "UTC"
+        }
+      }
+    },
+    {
+      "asset_key": "us_dividend",
+      "timeframe": "1d",
+      "status": "blocked",
+      "http_status": 502,
+      "source": "yahoo_finance_etf",
+      "provider_symbol": "SCHD",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_etf"
+      ],
+      "reject_reason": "upstream_error",
+      "access_issues": [
+        "Yahoo OHLC invariant failed for SCHD at 2011-12-23"
+      ],
+      "source_identity": {
+        "provider_symbol": "SCHD",
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_etf",
+        "timeframe": "1d",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        },
+        "requested_source": "yahoo_finance_etf",
+        "requested_ticker": "SCHD"
+      }
+    },
+    {
+      "asset_key": "us_dividend",
+      "timeframe": "1w",
+      "status": "blocked",
+      "http_status": 502,
+      "source": "yahoo_finance_etf",
+      "provider_symbol": "SCHD",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_etf"
+      ],
+      "reject_reason": "upstream_error",
+      "access_issues": [
+        "Yahoo OHLC invariant failed for SCHD at 2011-12-23"
+      ],
+      "source_identity": {
+        "provider_symbol": "SCHD",
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_etf",
+        "timeframe": "1w",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "completed_iso_week",
+          "input_timeframe": "1d",
+          "bucket_timezone": "UTC"
+        },
+        "requested_source": "yahoo_finance_etf",
+        "requested_ticker": "SCHD"
+      }
+    },
+    {
+      "asset_key": "vix",
+      "timeframe": "1d",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_index",
+      "provider_symbol": "^VIX",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_index"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_index",
+        "provider_symbol": "^VIX",
+        "timeframe": "1d",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        }
+      }
+    },
+    {
+      "asset_key": "vix",
+      "timeframe": "1w",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_index",
+      "provider_symbol": "^VIX",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_index"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_index",
+        "provider_symbol": "^VIX",
+        "timeframe": "1w",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "completed_iso_week",
+          "input_timeframe": "1d",
+          "bucket_timezone": "UTC"
+        }
+      }
+    },
+    {
+      "asset_key": "bitcoin",
+      "timeframe": "1d",
+      "status": "ready",
+      "http_status": 200,
+      "source": "binance_spot_public",
+      "provider_symbol": "BTCUSDT",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "binance_spot_public"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "binance_spot",
+        "source_mode": "binance_spot_public",
+        "provider_symbol": "BTCUSDT",
+        "timeframe": "1d",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        }
+      }
+    },
+    {
+      "asset_key": "bitcoin",
+      "timeframe": "1w",
+      "status": "ready",
+      "http_status": 200,
+      "source": "binance_spot_public",
+      "provider_symbol": "BTCUSDT",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "binance_spot_public"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "binance_spot",
+        "source_mode": "binance_spot_public",
+        "provider_symbol": "BTCUSDT",
+        "timeframe": "1w",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "completed_iso_week",
+          "input_timeframe": "1d",
+          "bucket_timezone": "UTC"
+        }
+      }
+    },
+    {
+      "asset_key": "bitcoin",
+      "timeframe": "4h",
+      "status": "ready",
+      "http_status": 200,
+      "source": "binance_spot_public",
+      "provider_symbol": "BTCUSDT",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "binance_spot_public"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "binance_spot",
+        "source_mode": "binance_spot_public",
+        "provider_symbol": "BTCUSDT",
+        "timeframe": "4h",
+        "raw_timeframe": "4h",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        }
+      }
+    },
+    {
+      "asset_key": "shanghai",
+      "timeframe": "1d",
+      "status": "ready",
+      "http_status": 200,
+      "source": "tencent_kline",
+      "provider_symbol": "sh000001",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "tencent_kline"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "tencent_finance",
+        "source_mode": "tencent_kline",
+        "provider_symbol": "sh000001",
+        "timeframe": "1d",
+        "source_id": "tencent_kline",
+        "endpoint": "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
+        "price_adjustment": "qfq",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        }
+      }
+    },
+    {
+      "asset_key": "shanghai",
+      "timeframe": "1w",
+      "status": "ready",
+      "http_status": 200,
+      "source": "tencent_kline",
+      "provider_symbol": "sh000001",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "tencent_kline"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "tencent_finance",
+        "source_mode": "tencent_kline",
+        "provider_symbol": "sh000001",
+        "timeframe": "1w",
+        "source_id": "tencent_kline",
+        "endpoint": "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
+        "price_adjustment": "qfq",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "completed_iso_week",
+          "input_timeframe": "1d",
+          "bucket_timezone": "Asia/Shanghai",
+          "input_source": {
+            "source_id": "tencent_kline",
+            "provider_symbol": "sh000001"
+          }
+        }
+      }
+    },
+    {
+      "asset_key": "star50",
+      "timeframe": "1d",
+      "status": "ready",
+      "http_status": 200,
+      "source": "tencent_kline",
+      "provider_symbol": "sh000688",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "tencent_kline"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "tencent_finance",
+        "source_mode": "tencent_kline",
+        "provider_symbol": "sh000688",
+        "timeframe": "1d",
+        "source_id": "tencent_kline",
+        "endpoint": "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
+        "price_adjustment": "qfq",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        }
+      }
+    },
+    {
+      "asset_key": "star50",
+      "timeframe": "1w",
+      "status": "ready",
+      "http_status": 200,
+      "source": "tencent_kline",
+      "provider_symbol": "sh000688",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "tencent_kline"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "tencent_finance",
+        "source_mode": "tencent_kline",
+        "provider_symbol": "sh000688",
+        "timeframe": "1w",
+        "source_id": "tencent_kline",
+        "endpoint": "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
+        "price_adjustment": "qfq",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "completed_iso_week",
+          "input_timeframe": "1d",
+          "bucket_timezone": "Asia/Shanghai",
+          "input_source": {
+            "source_id": "tencent_kline",
+            "provider_symbol": "sh000688"
+          }
+        }
+      }
+    },
+    {
+      "asset_key": "china_dividend",
+      "timeframe": "1d",
+      "status": "ready",
+      "http_status": 200,
+      "source": "tencent_kline",
+      "provider_symbol": "sh000015",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "tencent_kline"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "tencent_finance",
+        "source_mode": "tencent_kline",
+        "provider_symbol": "sh000015",
+        "timeframe": "1d",
+        "source_id": "tencent_kline",
+        "endpoint": "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
+        "price_adjustment": "qfq",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        }
+      }
+    },
+    {
+      "asset_key": "china_dividend",
+      "timeframe": "1w",
+      "status": "ready",
+      "http_status": 200,
+      "source": "tencent_kline",
+      "provider_symbol": "sh000015",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "tencent_kline"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "tencent_finance",
+        "source_mode": "tencent_kline",
+        "provider_symbol": "sh000015",
+        "timeframe": "1w",
+        "source_id": "tencent_kline",
+        "endpoint": "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
+        "price_adjustment": "qfq",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "completed_iso_week",
+          "input_timeframe": "1d",
+          "bucket_timezone": "Asia/Shanghai",
+          "input_source": {
+            "source_id": "tencent_kline",
+            "provider_symbol": "sh000015"
+          }
+        }
+      }
+    },
+    {
+      "asset_key": "nikkei",
+      "timeframe": "1d",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_index",
+      "provider_symbol": "^N225",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_index"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_index",
+        "provider_symbol": "^N225",
+        "timeframe": "1d",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        }
+      }
+    },
+    {
+      "asset_key": "nikkei",
+      "timeframe": "1w",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_index",
+      "provider_symbol": "^N225",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_index"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_index",
+        "provider_symbol": "^N225",
+        "timeframe": "1w",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "completed_iso_week",
+          "input_timeframe": "1d",
+          "bucket_timezone": "UTC"
+        }
+      }
+    },
+    {
+      "asset_key": "kospi",
+      "timeframe": "1d",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_index",
+      "provider_symbol": "^KS11",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_index"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_index",
+        "provider_symbol": "^KS11",
+        "timeframe": "1d",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        }
+      }
+    },
+    {
+      "asset_key": "kospi",
+      "timeframe": "1w",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_index",
+      "provider_symbol": "^KS11",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_index"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_index",
+        "provider_symbol": "^KS11",
+        "timeframe": "1w",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "completed_iso_week",
+          "input_timeframe": "1d",
+          "bucket_timezone": "UTC"
+        }
+      }
+    },
+    {
+      "asset_key": "wti",
+      "timeframe": "1d",
+      "status": "blocked",
+      "http_status": 502,
+      "source": "yahoo_finance_futures",
+      "provider_symbol": "CL=F",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_futures"
+      ],
+      "reject_reason": "upstream_error",
+      "access_issues": [
+        "No data for commodity CL=F (resolved to CL=F)"
+      ],
+      "source_identity": {
+        "provider_symbol": "CL=F",
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_futures",
+        "timeframe": "1d",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        },
+        "requested_source": "yahoo_finance_futures",
+        "requested_ticker": "CL=F"
+      }
+    },
+    {
+      "asset_key": "wti",
+      "timeframe": "1w",
+      "status": "blocked",
+      "http_status": 502,
+      "source": "yahoo_finance_futures",
+      "provider_symbol": "CL=F",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_futures"
+      ],
+      "reject_reason": "upstream_error",
+      "access_issues": [
+        "No data for commodity CL=F (resolved to CL=F)"
+      ],
+      "source_identity": {
+        "provider_symbol": "CL=F",
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_futures",
+        "timeframe": "1w",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "completed_iso_week",
+          "input_timeframe": "1d",
+          "bucket_timezone": "UTC"
+        },
+        "requested_source": "yahoo_finance_futures",
+        "requested_ticker": "CL=F"
+      }
+    },
+    {
+      "asset_key": "wti",
+      "timeframe": "4h",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_futures",
+      "provider_symbol": "CL=F",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_futures"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_futures",
+        "provider_symbol": "CL=F",
+        "timeframe": "4h",
+        "raw_timeframe": "1h",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "fixed_4h",
+          "input_timeframe": "1h",
+          "bucket_timezone": "UTC",
+          "anchor_hour": 0,
+          "anchor_minute": 0,
+          "dropped_incomplete_buckets": 13
+        }
+      }
+    },
+    {
+      "asset_key": "gold",
+      "timeframe": "1d",
+      "status": "blocked",
+      "http_status": 502,
+      "source": "yahoo_finance_futures",
+      "provider_symbol": "GC=F",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_futures"
+      ],
+      "reject_reason": "upstream_error",
+      "access_issues": [
+        "No data for commodity GC=F (resolved to GC=F)"
+      ],
+      "source_identity": {
+        "provider_symbol": "GC=F",
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_futures",
+        "timeframe": "1d",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        },
+        "requested_source": "yahoo_finance_futures",
+        "requested_ticker": "GC=F"
+      }
+    },
+    {
+      "asset_key": "gold",
+      "timeframe": "1w",
+      "status": "blocked",
+      "http_status": 502,
+      "source": "yahoo_finance_futures",
+      "provider_symbol": "GC=F",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_futures"
+      ],
+      "reject_reason": "upstream_error",
+      "access_issues": [
+        "No data for commodity GC=F (resolved to GC=F)"
+      ],
+      "source_identity": {
+        "provider_symbol": "GC=F",
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_futures",
+        "timeframe": "1w",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "completed_iso_week",
+          "input_timeframe": "1d",
+          "bucket_timezone": "UTC"
+        },
+        "requested_source": "yahoo_finance_futures",
+        "requested_ticker": "GC=F"
+      }
+    },
+    {
+      "asset_key": "gold",
+      "timeframe": "4h",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_futures",
+      "provider_symbol": "GC=F",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_futures"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_futures",
+        "provider_symbol": "GC=F",
+        "timeframe": "4h",
+        "raw_timeframe": "1h",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "fixed_4h",
+          "input_timeframe": "1h",
+          "bucket_timezone": "UTC",
+          "anchor_hour": 0,
+          "anchor_minute": 0,
+          "dropped_incomplete_buckets": 13
+        }
+      }
+    },
+    {
+      "asset_key": "silver",
+      "timeframe": "1d",
+      "status": "blocked",
+      "http_status": 502,
+      "source": "yahoo_finance_futures",
+      "provider_symbol": "SI=F",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_futures"
+      ],
+      "reject_reason": "upstream_error",
+      "access_issues": [
+        "No data for commodity SI=F (resolved to SI=F)"
+      ],
+      "source_identity": {
+        "provider_symbol": "SI=F",
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_futures",
+        "timeframe": "1d",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "native",
+        "aggregation": {
+          "kind": "none",
+          "rule": "native_passthrough"
+        },
+        "requested_source": "yahoo_finance_futures",
+        "requested_ticker": "SI=F"
+      }
+    },
+    {
+      "asset_key": "silver",
+      "timeframe": "1w",
+      "status": "blocked",
+      "http_status": 502,
+      "source": "yahoo_finance_futures",
+      "provider_symbol": "SI=F",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_futures"
+      ],
+      "reject_reason": "upstream_error",
+      "access_issues": [
+        "No data for commodity SI=F (resolved to SI=F)"
+      ],
+      "source_identity": {
+        "provider_symbol": "SI=F",
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_futures",
+        "timeframe": "1w",
+        "raw_timeframe": "1d",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "completed_iso_week",
+          "input_timeframe": "1d",
+          "bucket_timezone": "UTC"
+        },
+        "requested_source": "yahoo_finance_futures",
+        "requested_ticker": "SI=F"
+      }
+    },
+    {
+      "asset_key": "silver",
+      "timeframe": "4h",
+      "status": "ready",
+      "http_status": 200,
+      "source": "yahoo_finance_futures",
+      "provider_symbol": "SI=F",
+      "cache_policy": "bypass",
+      "quality_policy": "strict",
+      "fallback_policy": "none",
+      "served_from": "upstream",
+      "attempted_sources": [
+        "yahoo_finance_futures"
+      ],
+      "reject_reason": null,
+      "access_issues": [],
+      "source_identity": {
+        "provider": "yahoo_finance",
+        "source_mode": "yahoo_finance_futures",
+        "provider_symbol": "SI=F",
+        "timeframe": "4h",
+        "raw_timeframe": "1h",
+        "timeframe_origin": "aggregated",
+        "aggregation": {
+          "kind": "ohlc_resample",
+          "rule": "fixed_4h",
+          "input_timeframe": "1h",
+          "bucket_timezone": "UTC",
+          "anchor_hour": 0,
+          "anchor_minute": 0,
+          "dropped_incomplete_buckets": 10
+        }
+      }
+    }
+  ]
+}
