@@ -26,15 +26,18 @@ _TF_MAP = {
     Timeframe.WEEK: "1wk",
 }
 
-# yfinance period limits per interval
-_MAX_PERIOD = {
+# yfinance period limits per interval.  Yahoo's ``max`` history can contain
+# malformed legacy OHLC rows for otherwise healthy instruments.  The default
+# window is intentionally bounded; callers that need an exact historical
+# range must provide both ``start`` and ``end``.
+_DEFAULT_PERIOD = {
     Timeframe.MIN_1: "7d",
     Timeframe.MIN_5: "60d",
     Timeframe.MIN_15: "60d",
     Timeframe.MIN_30: "60d",
     Timeframe.HOUR_1: "730d",
-    Timeframe.DAY: "max",
-    Timeframe.WEEK: "max",
+    Timeframe.DAY: "5y",
+    Timeframe.WEEK: "5y",
 }
 
 
@@ -177,7 +180,9 @@ class USStockProvider:
                 kwargs["start"] = start
                 kwargs["end"] = end
             else:
-                kwargs["period"] = _MAX_PERIOD.get(timeframe, "2y")
+                period = _DEFAULT_PERIOD.get(timeframe, "2y")
+                kwargs["period"] = period
+                request_params["period"] = period
             df = stock.history(**kwargs)
         except Exception as e:
             self.last_raw_response["error"] = str(e)

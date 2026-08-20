@@ -117,6 +117,60 @@ async def test_yahoo_daily_excludes_current_calendar_day(monkeypatch):
     assert [item.timestamp for item in candles] == [(today - timedelta(days=1)).isoformat()]
 
 
+@pytest.mark.asyncio
+async def test_yahoo_default_daily_history_is_bounded_and_recorded(monkeypatch):
+    yesterday = date.today() - timedelta(days=1)
+    calls: dict = {}
+
+    class FakeTicker:
+        def history(self, **kwargs):
+            calls.update(kwargs)
+            return _daily_frame(
+                [(yesterday.isoformat(), 100, 105, 99, 104)],
+            )
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda ticker: FakeTicker())
+    provider = USStockProvider()
+
+    candles = await provider.fetch("SCHD", Timeframe.DAY, limit=10)
+
+    assert len(candles) == 1
+    assert calls["interval"] == "1d"
+    assert calls["period"] == "5y"
+    assert provider.last_raw_response is not None
+    assert provider.last_raw_response["request_params"]["period"] == "5y"
+
+
+@pytest.mark.asyncio
+async def test_yahoo_explicit_range_does_not_add_default_period(monkeypatch):
+    calls: dict = {}
+
+    class FakeTicker:
+        def history(self, **kwargs):
+            calls.update(kwargs)
+            return _daily_frame(
+                [("2026-08-18", 100, 105, 99, 104)],
+            )
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda ticker: FakeTicker())
+    provider = USStockProvider()
+
+    await provider.fetch(
+        "CL=F",
+        Timeframe.DAY,
+        start="2026-08-18",
+        end="2026-08-19",
+        limit=10,
+    )
+
+    assert calls["interval"] == "1d"
+    assert calls["start"] == "2026-08-18"
+    assert calls["end"] == "2026-08-19"
+    assert "period" not in calls
+    assert provider.last_raw_response is not None
+    assert "period" not in provider.last_raw_response["request_params"]
+
+
 def test_yahoo_symbol_timeframe_allowlist_is_explicit():
     index = source_manifest("yahoo_finance_index", AssetClass.INDEX)
     etf = source_manifest("yahoo_finance_etf", AssetClass.ETF)
