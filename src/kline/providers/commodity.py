@@ -40,6 +40,18 @@ class CommodityProvider:
     def __init__(self) -> None:
         self._us_provider = USStockProvider()
 
+    @property
+    def last_raw_response(self) -> dict | None:
+        return self._us_provider.last_raw_response
+
+    @property
+    def timeframe_transform(self):
+        return self._us_provider.timeframe_transform
+
+    @property
+    def source_identity(self) -> dict:
+        return self._us_provider.source_identity
+
     def supported_timeframes(self) -> list[Timeframe]:
         return self._us_provider.supported_timeframes()
 

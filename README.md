@@ -25,7 +25,7 @@ fail timeframe not supported → supported list
 fail A-share no token     → setup instructions
 ```
 
-Built-in sources: `tushare_pro`, `yahoo_finance`, `yahoo_finance_futures`,
+Built-in sources: `tushare_pro`, `yahoo_finance`, `yahoo_finance_index`, `yahoo_finance_etf`, `yahoo_finance_futures`,
 `binance_spot_public`, `binance_usdm_futures`, and the FRED macro/flow/event adapters.
 Tiger OpenAPI and OANDA v20 are credential-backed config adapters; see
 `configs/adapters.example.json`.
@@ -119,6 +119,12 @@ datafeed 本体只负责数据。它不判断“研究”或“交易”，而�
 
 - `is_synthetic` 恒为 `false`，没有合成/占位数据路径。
 - `cache_policy=bypass` / `profile=realtime` / `profile=execution_live` 不读 cache。
+- Phase 1 `1d` / `1w` / `4h` cache rows without a persisted timeframe receipt are
+  blocked rather than relabeled; use `cache_policy=bypass` to obtain a fresh,
+  source-bound response.
+- Phase 1 fresh `1d` / `1w` / `4h` upstream results are not written to the legacy
+  candle cache until the transformation receipt has a storage schema; `allow`
+  may fetch upstream, while `require` returns `cache_miss`.
 - `quality=strict` 下，上游失败、空数据、陈旧、gap、乱序都返回错误/blocked envelope。
 - `require_execution_venue=true` 会拒绝 Yahoo、TuShare、Binance Spot 等非执行场所 source。
 - normalized storage 以 `source_id + ticker + asset_class + timeframe + timestamp` 隔离；同一标的多源不会互相覆盖。
@@ -187,6 +193,9 @@ $ curl "localhost:8100/api/candles/us_stock/AAPL?timeframe=1d&limit=3"
 |------|------|
 | `provider` / `source_mode` | 具体上游与取数路径（`binance_spot` / `yahoo_finance` / `tushare` / `binance_usdm_futures`） |
 | `requested_source` | 调用方请求的 source。`auto` 会解析成 asset class 默认 source |
+| `raw_timeframe` / `timeframe_origin` | 上游原始周期，以及 `native` / `aggregated` 语义 |
+| `aggregation` | 聚合规则、输入周期、bucket timezone/anchor 和丢弃的不完整 bucket |
+| `source_identity` | provider symbol、source、周期转换和请求级 provenance receipt |
 | `cache_policy` | `allow` 可读 cache，`bypass` 跳过 cache，`require` 只读 cache |
 | `quality_policy` | `standard` 只标记质量事实；`strict` 会对 empty/stale/gap/duplicate/out-of-order blocked |
 | `fallback_policy` | 当前默认 `none`，不做静默 fallback |
@@ -267,13 +276,13 @@ python -m kline
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `asset_class` | path | — | `a_share` / `us_stock` / `crypto` / `commodity` |
+| `asset_class` | path | — | `a_share` / `us_stock` / `index` / `etf` / `crypto` / `commodity` |
 | `ticker` | path | — | 代码: `000001`, `AAPL`, `BTC`, `GOLD` |
 | `timeframe` | query | `1d` | `1m` / `5m` / `15m` / `30m` / `1h` / `4h` / `1d` / `1w` |
 | `start` | query | — | 起始日期 `YYYY-MM-DD` |
 | `end` | query | — | 结束日期 `YYYY-MM-DD` |
 | `limit` | query | `500` | 返回蜡烛数量上限 (1-2000) |
-| `source` | query | `auto` | `auto` / `tushare_pro` / `yahoo_finance` / `yahoo_finance_futures` / `binance_spot_public` / `binance_usdm_futures` |
+| `source` | query | `auto` | `auto` / `tushare_pro` / `yahoo_finance` / `yahoo_finance_index` / `yahoo_finance_etf` / `yahoo_finance_futures` / `binance_spot_public` / `binance_usdm_futures` |
 | `cache_policy` | query | `allow` | `allow` / `bypass` / `require` |
 | `quality` | query | `standard` | `standard` / `strict` |
 | `fallback_policy` | query | `none` | `none` / `explicit`；当前没有静默 fallback |
@@ -301,8 +310,10 @@ python -m kline
 |--------|-------------|----------|-------------|----------|-----------------|---------------|
 | `tushare_pro` | `a_share` | TuShare Pro | equity | false | false | 1d, 1w |
 | `yahoo_finance` | `us_stock` | Yahoo Finance | equity | false | false | 1m, 5m, 15m, 30m, 1h, 1d, 1w |
-| `yahoo_finance_futures` | `commodity` | Yahoo Finance | continuous futures contract | false | false | 1m, 5m, 15m, 30m, 1h, 1d, 1w |
-| `binance_spot_public` | `crypto` | Binance Spot API | spot | true | false | 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w |
+| `yahoo_finance_index` | `index` | Yahoo Finance | index | false | false | DX-Y.NYB: 1d, 1w, 4h; ^GSPC/^IXIC/^VIX/^N225/^KS11: 1d, 1w |
+| `yahoo_finance_etf` | `etf` | Yahoo Finance | ETF | false | false | SCHD: 1d, 1w |
+| `yahoo_finance_futures` | `commodity` | Yahoo Finance | continuous futures contract | false | false | CL=F/GC=F/SI=F: 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w; other aliases: 1d, 1w |
+| `binance_spot_public` | `crypto` | Binance Spot API | spot | true | false | BTC/BTCUSDT: 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w; other symbols: no Phase 1 4h guarantee |
 | `binance_usdm_futures` | `commodity` | Binance USD-M Futures | USD-M futures | true | true | XAUUSDT: 1m, 5m, 15m, 30m, 1h, 4h |
 
 ## 技术栈
@@ -373,7 +384,7 @@ capability:
     - "quality=strict + source down/empty/stale/gap/out-of-order → error or blocked envelope"
     - "timeframe not supported → supported timeframes list"
     - "A-share no token → setup instructions"
-  sources: [tushare_pro, yahoo_finance, yahoo_finance_futures, binance_spot_public, binance_usdm_futures]
+  sources: [tushare_pro, yahoo_finance, yahoo_finance_index, yahoo_finance_etf, yahoo_finance_futures, binance_spot_public, binance_usdm_futures]
 api_base_url: http://localhost:8100
 endpoints:
   - path: /api/instruments/{asset_class}/{ticker}
@@ -392,7 +403,7 @@ endpoints:
     params:
       - name: asset_class
         type: string
-        enum: [a_share, us_stock, crypto, commodity]
+        enum: [a_share, us_stock, index, etf, crypto, commodity]
         required: true
       - name: ticker
         type: string
@@ -406,7 +417,7 @@ endpoints:
         default: 500
       - name: source
         type: string
-        enum: [auto, tushare_pro, yahoo_finance, yahoo_finance_futures, binance_spot_public, binance_usdm_futures]
+        enum: [auto, tushare_pro, yahoo_finance, yahoo_finance_index, yahoo_finance_etf, yahoo_finance_futures, binance_spot_public, binance_usdm_futures]
         default: auto
       - name: cache_policy
         type: string

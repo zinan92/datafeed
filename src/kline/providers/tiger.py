@@ -6,7 +6,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, AsyncIterator
 
-from kline.models import AssetClass, Candle, InstrumentDefinition, Timeframe
+from kline.models import (
+    AssetClass,
+    Candle,
+    InstrumentDefinition,
+    Timeframe,
+    TimeframeTransform,
+)
 from kline.ports import MarketDataPort, ProviderMeta, SourceManifest
 from kline.providers.base import ProviderError
 
@@ -54,6 +60,14 @@ class TigerOpenFuturesAdapter(MarketDataPort):
     @property
     def last_raw_response(self) -> dict[str, Any] | None:
         return self._last_raw_response
+
+    @property
+    def timeframe_transform(self) -> TimeframeTransform | None:
+        return None
+
+    @property
+    def source_identity(self) -> dict[str, Any]:
+        return {}
 
     def canonical_ticker(self, ticker: str) -> str:
         return self.manifest.canonical_ticker(ticker)

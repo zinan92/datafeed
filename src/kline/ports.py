@@ -7,10 +7,11 @@ implementation.
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, Mapping, Protocol
 
-from kline.models import AssetClass, Candle, InstrumentDefinition, Timeframe
+from kline.models import AssetClass, Candle, InstrumentDefinition, Timeframe, TimeframeTransform
 from kline.providers.base import Provider, ProviderError
 
 
@@ -38,6 +39,9 @@ class SourceManifest:
     default_for_asset_class: bool = False
     ticker_aliases: Mapping[str, str] = field(default_factory=dict)
     canonical_instrument_ids: Mapping[str, str] = field(default_factory=dict)
+    symbol_timeframes: Mapping[str, tuple[Timeframe, ...]] = field(default_factory=dict)
+    blocked_timeframes: tuple[Timeframe, ...] = ()
+    enforce_symbol_allowlist: bool = False
 
     def canonical_ticker(self, ticker: str) -> str:
         normalized = ticker.upper().strip()
@@ -51,6 +55,29 @@ class SourceManifest:
             self.canonical_instrument_ids.get(provider_symbol, normalized),
         )
 
+    def supports_timeframe(self, ticker: str, timeframe: Timeframe) -> bool:
+        """Return whether this source explicitly serves a symbol/timeframe pair."""
+
+        normalized = self.canonical_ticker(ticker).upper().strip()
+        if timeframe in self.blocked_timeframes:
+            return False
+        allowed = self.symbol_timeframes.get(normalized)
+        if self.symbol_timeframes:
+            if allowed is None:
+                return not self.enforce_symbol_allowlist and timeframe != Timeframe.HOUR_4
+            return timeframe in allowed
+        return True
+
+
+@dataclass(frozen=True)
+class FetchReceipt:
+    """Immutable per-request result and provenance snapshot."""
+
+    candles: list[Candle]
+    timeframe_transform: TimeframeTransform | None
+    source_identity: Mapping[str, Any]
+    raw_response: dict[str, Any] | None
+
 
 class MarketDataPort(Protocol):
     """Port every market-data adapter must implement."""
@@ -61,6 +88,14 @@ class MarketDataPort(Protocol):
 
     @property
     def last_raw_response(self) -> dict[str, Any] | None:
+        ...
+
+    @property
+    def timeframe_transform(self) -> TimeframeTransform | None:
+        ...
+
+    @property
+    def source_identity(self) -> Mapping[str, Any] | None:
         ...
 
     def canonical_ticker(self, ticker: str) -> str:
@@ -78,6 +113,17 @@ class MarketDataPort(Protocol):
         end: str | None = None,
         limit: int = 500,
     ) -> list[Candle]:
+        ...
+
+    async def fetch_candles_with_receipt(
+        self,
+        ticker: str,
+        timeframe: Timeframe,
+        *,
+        start: str | None = None,
+        end: str | None = None,
+        limit: int = 500,
+    ) -> FetchReceipt:
         ...
 
     async def stream_candles(
@@ -97,6 +143,7 @@ class ProviderBackedMarketDataAdapter:
     def __init__(self, manifest: SourceManifest, provider: Provider) -> None:
         self._manifest = manifest
         self._provider = provider
+        self._fetch_lock = asyncio.Lock()
 
     @property
     def manifest(self) -> SourceManifest:
@@ -106,6 +153,16 @@ class ProviderBackedMarketDataAdapter:
     def last_raw_response(self) -> dict[str, Any] | None:
         raw = getattr(self._provider, "last_raw_response", None)
         return raw if isinstance(raw, dict) else None
+
+    @property
+    def timeframe_transform(self) -> TimeframeTransform | None:
+        value = getattr(self._provider, "timeframe_transform", None)
+        return value if isinstance(value, TimeframeTransform) else None
+
+    @property
+    def source_identity(self) -> Mapping[str, Any] | None:
+        value = getattr(self._provider, "source_identity", None)
+        return value if isinstance(value, Mapping) else None
 
     def canonical_ticker(self, ticker: str) -> str:
         return self._manifest.canonical_ticker(ticker)
@@ -122,14 +179,40 @@ class ProviderBackedMarketDataAdapter:
         end: str | None = None,
         limit: int = 500,
     ) -> list[Candle]:
-        canonical = self.canonical_ticker(ticker)
-        return await self._provider.fetch(
-            canonical,
-            timeframe,
-            start=start,
-            end=end,
-            limit=limit,
-        )
+        return (
+            await self.fetch_candles_with_receipt(
+                ticker,
+                timeframe,
+                start=start,
+                end=end,
+                limit=limit,
+            )
+        ).candles
+
+    async def fetch_candles_with_receipt(
+        self,
+        ticker: str,
+        timeframe: Timeframe,
+        *,
+        start: str | None = None,
+        end: str | None = None,
+        limit: int = 500,
+    ) -> FetchReceipt:
+        async with self._fetch_lock:
+            canonical = self.canonical_ticker(ticker)
+            candles = await self._provider.fetch(
+                canonical,
+                timeframe,
+                start=start,
+                end=end,
+                limit=limit,
+            )
+            return FetchReceipt(
+                candles=candles,
+                timeframe_transform=self.timeframe_transform,
+                source_identity=dict(self.source_identity or {}),
+                raw_response=dict(self.last_raw_response or {}) if self.last_raw_response else None,
+            )
 
     async def stream_candles(
         self,

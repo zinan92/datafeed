@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from time import monotonic
+from typing import Any, Mapping
 
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 
@@ -16,6 +17,7 @@ from kline.models import (
     FallbackPolicy,
     QualityPolicy,
     Timeframe,
+    TimeframeTransform,
     InstrumentDefinition,
 )
 from kline.ports import MarketDataPort
@@ -67,6 +69,8 @@ def _build_response(
     selected_source: str | None = None,
     attempted_sources: list[str] | None = None,
     instrument_id: str | None = None,
+    timeframe_transform: TimeframeTransform | Mapping[str, Any] | None = None,
+    source_identity: Mapping[str, Any] | None = None,
 ) -> CandleResponse:
     """Stamp provenance on each candle and wrap them in the trust envelope."""
     strict = policy.strict_quality if policy else False
@@ -80,13 +84,39 @@ def _build_response(
         candle.model_copy(update={"provider": meta.name, "quality_flags": quality_flags})
         for candle in candles
     ]
+    transform = (
+        _normalize_timeframe_transform(timeframe, timeframe_transform)
+        if timeframe_transform is not None
+        else None
+    )
+    identity = {
+        "provider": meta.name,
+        "source_mode": meta.source_mode,
+        "provider_symbol": ticker,
+        "timeframe": timeframe.value,
+        **(dict(source_identity) if isinstance(source_identity, Mapping) else {}),
+    }
+    if transform:
+        identity.update(
+            {
+                "raw_timeframe": transform.raw_timeframe.value,
+                "timeframe_origin": transform.timeframe_origin,
+                "aggregation": transform.aggregation,
+            }
+        )
+    elif served_from == "cache":
+        identity["timeframe_transform_status"] = "not_persisted_in_legacy_cache"
     return CandleResponse(
         ticker=ticker,
         instrument_id=instrument_id or ticker,
-        provider_symbol=ticker,
+        provider_symbol=str(identity.get("provider_symbol") or ticker),
         asset_class=asset_class,
         timeframe=timeframe,
         count=len(stamped),
+        raw_timeframe=transform.raw_timeframe if transform else None,
+        timeframe_origin=transform.timeframe_origin if transform else None,
+        aggregation=transform.aggregation if transform else {},
+        source_identity=identity,
         schema_version="kline-candles-v1",
         provider=meta.name,
         source_mode=meta.source_mode,
@@ -130,11 +160,39 @@ def _error(
     access_issues: list[str] | None = None,
     selected_source: str | None = None,
     attempted_sources: list[str] | None = None,
+    timeframe: Timeframe | None = None,
+    timeframe_transform: TimeframeTransform | Mapping[str, Any] | None = None,
+    source_identity: Mapping[str, Any] | None = None,
+    provider_symbol: str | None = None,
 ) -> HTTPException:
     quality_flags = list(meta.quality_flags)
     if report:
         quality_flags = _dedupe([*quality_flags, *report.quality_flags])
     issues = _dedupe([*(report.access_issues if report else []), *(access_issues or [])])
+    transform = (
+        _normalize_timeframe_transform(timeframe, timeframe_transform)
+        if timeframe_transform is not None
+        else None
+    )
+    identity = dict(source_identity) if isinstance(source_identity, Mapping) else {}
+    if provider_symbol:
+        identity.setdefault("provider_symbol", provider_symbol)
+    if timeframe:
+        identity.update(
+            {
+                "provider": meta.name,
+                "source_mode": meta.source_mode,
+                "timeframe": timeframe.value,
+            }
+        )
+        if transform:
+            identity.update(
+                {
+                    "raw_timeframe": transform.raw_timeframe.value,
+                    "timeframe_origin": transform.timeframe_origin,
+                    "aggregation": transform.aggregation,
+                }
+            )
     return HTTPException(
         status_code=status_code,
         detail=ErrorResponse(
@@ -143,6 +201,12 @@ def _error(
             suggestions=suggestions,
             provider=meta.name,
             source_mode=meta.source_mode,
+            provider_symbol=provider_symbol or identity.get("provider_symbol"),
+            timeframe=timeframe,
+            raw_timeframe=transform.raw_timeframe if transform else None,
+            timeframe_origin=transform.timeframe_origin if transform else None,
+            aggregation=transform.aggregation if transform else {},
+            source_identity=identity,
             requested_source=policy.requested_source if policy else meta.source_mode,
             selected_source=selected_source,
             attempted_sources=attempted_sources or [],
@@ -164,16 +228,48 @@ def _error(
     )
 
 
+def _normalize_timeframe_transform(
+    timeframe: Timeframe | None,
+    raw: TimeframeTransform | Mapping[str, Any] | None,
+) -> TimeframeTransform:
+    """Normalize provider metadata while keeping old adapters native by default."""
+
+    if not timeframe:
+        raise ValueError("timeframe is required to build timeframe metadata")
+    if isinstance(raw, TimeframeTransform):
+        return raw
+    payload = dict(raw) if isinstance(raw, Mapping) else {}
+    raw_value = payload.get("raw_timeframe", timeframe.value)
+    try:
+        raw_timeframe = Timeframe(str(raw_value))
+    except ValueError as exc:
+        raise ValueError(f"invalid raw timeframe metadata: {raw_value}") from exc
+    origin = str(payload.get("timeframe_origin", "native"))
+    if origin not in {"native", "aggregated"}:
+        raise ValueError(f"invalid timeframe origin metadata: {origin}")
+    aggregation = payload.get("aggregation")
+    return TimeframeTransform(
+        raw_timeframe=raw_timeframe,
+        timeframe_origin=origin,
+        aggregation=dict(aggregation) if isinstance(aggregation, Mapping) else {},
+    )
+
+
 def _save_raw_if_available(
     *,
-    adapter: MarketDataPort,
+    adapter: MarketDataPort | None,
     ticker: str,
     asset_class: AssetClass,
     timeframe: Timeframe,
     meta: ProviderMeta,
     served_from: str,
+    raw_response: dict[str, Any] | None = None,
 ) -> None:
-    raw = adapter.last_raw_response
+    raw = (
+        raw_response
+        if raw_response is not None
+        else (adapter.last_raw_response if adapter else None)
+    )
     if not raw:
         return
     store = get_store()
@@ -270,7 +366,13 @@ def _resolve_policy(
     )
 
 
-def _raise_if_execution_venue_required(meta: ProviderMeta, policy: RequestPolicy) -> None:
+def _raise_if_execution_venue_required(
+    meta: ProviderMeta,
+    policy: RequestPolicy,
+    *,
+    timeframe: Timeframe,
+    provider_symbol: str,
+) -> None:
     if policy.require_execution_venue and not meta.execution_venue:
         raise _error(
             status_code=400,
@@ -280,6 +382,10 @@ def _raise_if_execution_venue_required(meta: ProviderMeta, policy: RequestPolicy
             meta=meta,
             served_from="upstream",
             policy=policy,
+            timeframe=timeframe,
+            provider_symbol=provider_symbol,
+            selected_source=policy.source,
+            attempted_sources=[policy.source],
             reject_reason="not_execution_venue",
             access_issues=[f"{meta.source_mode} has execution_venue=false"],
         )
@@ -322,27 +428,66 @@ async def _fetch_upstream_candles(
     last_meta = meta
     last_error: ProviderError | None = None
     last_report: QualityReport | None = None
+    last_transform: TimeframeTransform | Mapping[str, Any] | None = None
+    last_identity: Mapping[str, Any] | None = None
+    last_provider_symbol: str | None = None
+    last_error_source: str | None = None
+    last_error_symbol: str | None = None
 
     for selected_source in candidates:
         attempted_sources.append(selected_source)
         selected_meta = source_meta(selected_source, asset_class)
         last_meta = selected_meta
+        last_transform = None
+        last_identity = None
         selected_ticker = canonical_ticker_for_source(selected_source, asset_class, ticker)
+        last_provider_symbol = selected_ticker
+        selected_manifest = source_manifest(selected_source, asset_class)
+        if not selected_manifest.supports_timeframe(selected_ticker, timeframe):
+            detail = (
+                f"unsupported symbol/timeframe {selected_ticker}/{timeframe.value}"
+            )
+            last_error = ProviderError(detail)
+            last_error_source = selected_source
+            last_error_symbol = selected_ticker
+            failures.append(f"{selected_source}: {detail}")
+            continue
         started_at = monotonic()
         adapter: MarketDataPort | None = None
+        raw_snapshot: dict[str, Any] | None = None
         try:
             adapter = get_adapter_for_source(selected_source, asset_class)
-            candles = await adapter.fetch_candles(
-                selected_ticker,
-                timeframe,
-                start=start,
-                end=end,
-                limit=limit,
-            )
+            fetch_with_receipt = getattr(adapter, "fetch_candles_with_receipt", None)
+            if callable(fetch_with_receipt):
+                receipt = await fetch_with_receipt(
+                    selected_ticker,
+                    timeframe,
+                    start=start,
+                    end=end,
+                    limit=limit,
+                )
+                candles = receipt.candles
+                last_transform = receipt.timeframe_transform
+                last_identity = dict(receipt.source_identity or {})
+                raw_snapshot = receipt.raw_response
+            else:
+                candles = await adapter.fetch_candles(
+                    selected_ticker,
+                    timeframe,
+                    start=start,
+                    end=end,
+                    limit=limit,
+                )
+                last_transform = getattr(adapter, "timeframe_transform", None)
+                last_identity = dict(getattr(adapter, "source_identity", None) or {})
         except ProviderError as error:
             last_error = error
+            last_error_source = selected_source
+            last_error_symbol = selected_ticker
             failures.append(f"{selected_source}: {error}")
             if adapter is not None:
+                last_transform = getattr(adapter, "timeframe_transform", None)
+                last_identity = dict(getattr(adapter, "source_identity", None) or {})
                 _save_raw_if_available(
                     adapter=adapter,
                     ticker=selected_ticker,
@@ -350,6 +495,7 @@ async def _fetch_upstream_candles(
                     timeframe=timeframe,
                     meta=selected_meta,
                     served_from="upstream",
+                    raw_response=raw_snapshot,
                 )
             get_store().save_source_observation(
                 source_id=selected_source,
@@ -373,6 +519,7 @@ async def _fetch_upstream_candles(
             timeframe=timeframe,
             meta=selected_meta,
             served_from="upstream",
+            raw_response=raw_snapshot,
         )
         report = analyze_candles(
             candles, timeframe, selected_meta, strict=policy.strict_quality
@@ -395,7 +542,7 @@ async def _fetch_upstream_candles(
             failures.append(f"{selected_source}: {report.reject_reason}")
             continue
 
-        if candles:
+        if candles and timeframe not in (Timeframe.DAY, Timeframe.WEEK, Timeframe.HOUR_4):
             get_store().save(
                 selected_ticker,
                 asset_class,
@@ -414,24 +561,35 @@ async def _fetch_upstream_candles(
             selected_source=selected_source,
             attempted_sources=attempted_sources,
             access_issues=failures if selected_source != policy.source else [],
+            timeframe_transform=last_transform,
+            source_identity=last_identity,
             instrument_id=source_manifest(
                 selected_source, asset_class
             ).canonical_instrument_id(ticker),
         )
 
     if last_error:
+        error_source = last_error_source or attempted_sources[-1]
+        error_meta = source_meta(error_source, asset_class)
         final_reason = "all_sources_failed" if len(attempted_sources) > 1 else "upstream_error"
         raise _error(
             status_code=502,
             error="upstream_error",
             detail=str(last_error),
             suggestions=last_error.suggestions,
-            meta=last_meta,
+            meta=error_meta,
             served_from="upstream",
             policy=policy,
             reject_reason=final_reason,
             access_issues=failures,
             attempted_sources=attempted_sources,
+            timeframe=timeframe,
+            timeframe_transform=last_transform,
+            source_identity=last_identity,
+            selected_source=error_source,
+            provider_symbol=(last_identity or {}).get("provider_symbol")
+            or last_error_symbol
+            or last_provider_symbol,
         ) from last_error
     final_reason = (
         "all_sources_failed"
@@ -449,6 +607,11 @@ async def _fetch_upstream_candles(
         reject_reason=final_reason,
         access_issues=failures,
         attempted_sources=attempted_sources,
+        timeframe=timeframe,
+        timeframe_transform=last_transform,
+        source_identity=last_identity,
+        selected_source=attempted_sources[-1] if attempted_sources else None,
+        provider_symbol=(last_identity or {}).get("provider_symbol") or last_provider_symbol,
     )
 
 
@@ -516,18 +679,53 @@ async def get_candles(
                 requested_source=source,
                 cache_policy=cache_policy,
                 quality_policy=quality,
-                fallback_policy=fallback_policy,
-                require_execution_venue=require_execution_venue,
-                reject_reason="invalid_policy",
+                    fallback_policy=fallback_policy,
+                    require_execution_venue=require_execution_venue,
+                    provider_symbol=ticker,
+                    source_identity={"requested_ticker": ticker, "timeframe": timeframe.value},
+                    reject_reason="invalid_policy",
                 access_issues=[str(e)],
+                timeframe=timeframe,
             ).model_dump(),
         ) from e
 
-    _raise_if_execution_venue_required(meta, policy)
-    for fallback_source in policy.fallback_sources:
-        _raise_if_execution_venue_required(source_meta(fallback_source, asset_class), policy)
     requested_ticker = ticker
     ticker = canonical_ticker_for_source(policy.source, asset_class, ticker)
+    _raise_if_execution_venue_required(
+        meta,
+        policy,
+        timeframe=timeframe,
+        provider_symbol=ticker,
+    )
+    for fallback_source in policy.fallback_sources:
+        fallback_ticker = canonical_ticker_for_source(fallback_source, asset_class, ticker)
+        _raise_if_execution_venue_required(
+            source_meta(fallback_source, asset_class),
+            policy,
+            timeframe=timeframe,
+            provider_symbol=fallback_ticker,
+        )
+    manifest = source_manifest(policy.source, asset_class)
+    if not manifest.supports_timeframe(ticker, timeframe):
+        allowed = manifest.symbol_timeframes.get(ticker.upper(), ())
+        raise _error(
+            status_code=400,
+            error="timeframe_not_supported",
+            detail=f"Source {policy.source} does not serve {ticker} at {timeframe.value}",
+            meta=meta,
+            served_from="upstream",
+            policy=policy,
+            suggestions=[
+                "Supported timeframes for "
+                f"{ticker}: {', '.join(item.value for item in allowed) or 'none'}"
+            ],
+            selected_source=policy.source,
+            attempted_sources=[policy.source],
+            timeframe=timeframe,
+            provider_symbol=ticker,
+            reject_reason="timeframe_not_supported",
+            access_issues=[f"unsupported symbol/timeframe: {ticker}/{timeframe.value}"],
+        )
 
     store = get_store()
 
@@ -549,6 +747,22 @@ async def get_candles(
                 policy=policy,
                 served_from="cache",
             )
+            if timeframe in (Timeframe.DAY, Timeframe.HOUR_4, Timeframe.WEEK):
+                raise _error(
+                    status_code=503,
+                    error="data_blocked",
+                    detail="Cached timeframe transformation metadata is unavailable",
+                    meta=meta,
+                    served_from="cache",
+                    policy=policy,
+                    report=report,
+                    selected_source=policy.source,
+                    attempted_sources=[policy.source],
+                    timeframe=timeframe,
+                    provider_symbol=ticker,
+                    reject_reason="timeframe_transform_missing",
+                    access_issues=["legacy cache row has no timeframe transformation receipt"],
+                )
             return _build_response(
                 ticker,
                 asset_class,
@@ -572,6 +786,10 @@ async def get_candles(
                 policy=policy,
                 reject_reason="cache_miss",
                 access_issues=["cache miss"],
+                timeframe=timeframe,
+                selected_source=policy.source,
+                attempted_sources=[policy.source],
+                provider_symbol=ticker,
             )
 
     return await _fetch_upstream_candles(
@@ -648,13 +866,14 @@ async def stream_candles(
 
     try:
         async for candle in adapter.stream_candles(ticker, timeframe):
-            get_store().save(
-                ticker,
-                asset_class,
-                timeframe,
-                [candle],
-                source_id=normalized_source,
-            )
+            if timeframe not in (Timeframe.DAY, Timeframe.HOUR_4, Timeframe.WEEK):
+                get_store().save(
+                    ticker,
+                    asset_class,
+                    timeframe,
+                    [candle],
+                    source_id=normalized_source,
+                )
             response = _build_response(
                 ticker,
                 asset_class,
