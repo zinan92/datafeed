@@ -28,6 +28,8 @@ _TF_SECONDS: dict[Timeframe, int] = {
     Timeframe.WEEK: 604_800,
 }
 
+PHASE1_SOURCE_REGISTRY_VERSION = "weekly-macro-phase1-source-registry-v1"
+
 # A continuous-market bar is considered fresh within this many bar-intervals.
 _FRESH_BAR_MULTIPLE = 3
 

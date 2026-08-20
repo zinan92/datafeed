@@ -30,7 +30,7 @@ from kline.provenance import (
     source_manifest,
 )
 from kline.quality import QualityReport, analyze_candles
-from kline.registry import get_adapter_for_source, get_store, provider_status
+from kline.registry import get_adapter_for_source, get_store, provider_status, runtime_status
 
 router = APIRouter()
 
@@ -488,61 +488,69 @@ async def _fetch_upstream_candles(
             if adapter is not None:
                 last_transform = getattr(adapter, "timeframe_transform", None)
                 last_identity = dict(getattr(adapter, "source_identity", None) or {})
-                _save_raw_if_available(
-                    adapter=adapter,
+            if policy.cache_policy != CachePolicy.BYPASS:
+                if adapter is not None:
+                    _save_raw_if_available(
+                        adapter=adapter,
+                        ticker=selected_ticker,
+                        asset_class=asset_class,
+                        timeframe=timeframe,
+                        meta=selected_meta,
+                        served_from="upstream",
+                        raw_response=raw_snapshot,
+                    )
+                get_store().save_source_observation(
+                    source_id=selected_source,
+                    provider=selected_meta.name,
                     ticker=selected_ticker,
                     asset_class=asset_class,
                     timeframe=timeframe,
-                    meta=selected_meta,
-                    served_from="upstream",
-                    raw_response=raw_snapshot,
+                    success=False,
+                    candle_count=0,
+                    latest_timestamp=None,
+                    latency_ms=(monotonic() - started_at) * 1000,
+                    quality_flags=list(selected_meta.quality_flags),
+                    error=str(error),
                 )
+            continue
+
+        if policy.cache_policy != CachePolicy.BYPASS:
+            _save_raw_if_available(
+                adapter=adapter,
+                ticker=selected_ticker,
+                asset_class=asset_class,
+                timeframe=timeframe,
+                meta=selected_meta,
+                served_from="upstream",
+                raw_response=raw_snapshot,
+            )
+        report = analyze_candles(
+            candles, timeframe, selected_meta, strict=policy.strict_quality
+        )
+        last_report = report
+        if policy.cache_policy != CachePolicy.BYPASS:
             get_store().save_source_observation(
                 source_id=selected_source,
                 provider=selected_meta.name,
                 ticker=selected_ticker,
                 asset_class=asset_class,
                 timeframe=timeframe,
-                success=False,
-                candle_count=0,
-                latest_timestamp=None,
+                success=report.reject_reason is None,
+                candle_count=len(candles),
+                latest_timestamp=report.latest_timestamp,
                 latency_ms=(monotonic() - started_at) * 1000,
-                quality_flags=list(selected_meta.quality_flags),
-                error=str(error),
+                quality_flags=_dedupe([*selected_meta.quality_flags, *report.quality_flags]),
+                error=report.reject_reason,
             )
-            continue
-
-        _save_raw_if_available(
-            adapter=adapter,
-            ticker=selected_ticker,
-            asset_class=asset_class,
-            timeframe=timeframe,
-            meta=selected_meta,
-            served_from="upstream",
-            raw_response=raw_snapshot,
-        )
-        report = analyze_candles(
-            candles, timeframe, selected_meta, strict=policy.strict_quality
-        )
-        last_report = report
-        get_store().save_source_observation(
-            source_id=selected_source,
-            provider=selected_meta.name,
-            ticker=selected_ticker,
-            asset_class=asset_class,
-            timeframe=timeframe,
-            success=report.reject_reason is None,
-            candle_count=len(candles),
-            latest_timestamp=report.latest_timestamp,
-            latency_ms=(monotonic() - started_at) * 1000,
-            quality_flags=_dedupe([*selected_meta.quality_flags, *report.quality_flags]),
-            error=report.reject_reason,
-        )
         if report.reject_reason:
             failures.append(f"{selected_source}: {report.reject_reason}")
             continue
 
-        if candles and timeframe not in (Timeframe.DAY, Timeframe.WEEK, Timeframe.HOUR_4):
+        if (
+            policy.cache_policy != CachePolicy.BYPASS
+            and candles
+            and timeframe not in (Timeframe.DAY, Timeframe.WEEK, Timeframe.HOUR_4)
+        ):
             get_store().save(
                 selected_ticker,
                 asset_class,
@@ -1069,6 +1077,7 @@ async def health() -> dict:
         "status": "ok",
         "service": "kline",
         "version": __version__,
+        "runtime": runtime_status(),
         "providers": provider_status(),
         "storage": get_store().storage_health(),
         "storage_coverage": coverage,
