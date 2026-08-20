@@ -10,7 +10,7 @@
     "runtime_root": "/Users/wendy/.codex/worktrees/datafeed-issue-13",
     "module_root": "/Users/wendy/.codex/worktrees/datafeed-issue-13",
     "working_directory": "/Users/wendy/.codex/worktrees/datafeed-issue-13",
-    "build_sha": "f538b05",
+    "build_sha": "072b9ae",
     "registry_version": "weekly-macro-phase1-source-registry-v1",
     "database_path": "/private/tmp/datafeed-phase1-matrix.uvlJjN/kline.db",
     "identity_status": "declared"
@@ -39,7 +39,7 @@
     }
   },
   "database_unchanged": true,
-  "receipt_code_sha": "f538b05",
+  "receipt_code_sha": "072b9ae",
   "health": {
     "status": "ok",
     "service": "kline",
@@ -49,7 +49,7 @@
       "runtime_root": "/Users/wendy/.codex/worktrees/datafeed-issue-13",
       "module_root": "/Users/wendy/.codex/worktrees/datafeed-issue-13",
       "working_directory": "/Users/wendy/.codex/worktrees/datafeed-issue-13",
-        "build_sha": "f538b05",
+        "build_sha": "072b9ae",
       "registry_version": "weekly-macro-phase1-source-registry-v1",
       "database_path": "/private/tmp/datafeed-phase1-matrix.uvlJjN/kline.db",
       "identity_status": "declared"
