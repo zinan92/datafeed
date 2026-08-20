@@ -109,6 +109,10 @@ _SOURCE_ALIASES = {
     "tushare_pro": "tushare_pro",
     "tencent": "tencent_kline",
     "tencent_kline": "tencent_kline",
+    "treasury": "treasury_official_csv",
+    "treasury_official": "treasury_official_csv",
+    "treasury_official_csv": "treasury_official_csv",
+    "treasury_official_csv_derived": "treasury_official_csv_derived",
     "fred": "fred_public_csv",
     "fred_public_csv": "fred_public_csv",
 }
@@ -120,6 +124,8 @@ _SOURCE_ASSET_CLASSES = {
     "yahoo_finance_futures": AssetClass.COMMODITY,
     "tushare_pro": AssetClass.A_SHARE,
     "tencent_kline": AssetClass.INDEX,
+    "treasury_official_csv": AssetClass.MACRO,
+    "treasury_official_csv_derived": AssetClass.MACRO,
     "yahoo_finance_index": AssetClass.INDEX,
     "yahoo_finance_etf": AssetClass.ETF,
     "fred_public_csv_macro": AssetClass.MACRO,
@@ -165,6 +171,27 @@ _TENCENT_INDEX_META = ProviderMeta(
     realtime_supported=False,
     market_type="index",
     supported_symbols=("sh000001", "sh000688", "sh000015"),
+)
+
+_TREASURY_META = ProviderMeta(
+    name="treasury_official",
+    source_mode="treasury_official_csv",
+    quality_flags=("official_api", "daily_level", "research_only"),
+    continuous=False,
+    execution_venue=False,
+    realtime_supported=False,
+    market_type="treasury_par_yield",
+    supported_symbols=("2 Yr", "10 Yr"),
+)
+_TREASURY_DERIVED_META = ProviderMeta(
+    name="treasury_official",
+    source_mode="treasury_official_csv_derived",
+    quality_flags=("official_api", "derived_level", "research_only"),
+    continuous=False,
+    execution_venue=False,
+    realtime_supported=False,
+    market_type="treasury_curve_spread",
+    supported_symbols=("10 Yr-2 Yr",),
 )
 
 _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
@@ -335,6 +362,53 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
             "SH000688": (Timeframe.DAY, Timeframe.WEEK),
             "SH000015": (Timeframe.DAY, Timeframe.WEEK),
         },
+        enforce_symbol_allowlist=True,
+    ),
+    "treasury_official_csv": SourceManifest(
+        source_id="treasury_official_csv",
+        asset_class=AssetClass.MACRO,
+        meta=_TREASURY_META,
+        default_for_asset_class=False,
+        ticker_aliases={
+            "US2Y": "2 Yr",
+            "DGS2": "2 Yr",
+            "2Y": "2 Yr",
+            "US10Y": "10 Yr",
+            "DGS10": "10 Yr",
+            "10Y": "10 Yr",
+        },
+        canonical_instrument_ids={
+            "US2Y": "us2y",
+            "DGS2": "us2y",
+            "2Y": "us2y",
+            "2 YR": "us2y",
+            "US10Y": "us10y",
+            "DGS10": "us10y",
+            "10Y": "us10y",
+            "10 YR": "us10y",
+        },
+        symbol_timeframes={
+            "2 YR": (Timeframe.DAY, Timeframe.WEEK),
+            "10 YR": (Timeframe.DAY, Timeframe.WEEK),
+        },
+        enforce_symbol_allowlist=True,
+    ),
+    "treasury_official_csv_derived": SourceManifest(
+        source_id="treasury_official_csv_derived",
+        asset_class=AssetClass.MACRO,
+        meta=_TREASURY_DERIVED_META,
+        ticker_aliases={
+            "US2S10S": "10 Yr-2 Yr",
+            "T10Y2Y": "10 Yr-2 Yr",
+            "2S10S": "10 Yr-2 Yr",
+        },
+        canonical_instrument_ids={
+            "US2S10S": "us2s10s",
+            "T10Y2Y": "us2s10s",
+            "2S10S": "us2s10s",
+            "10 YR-2 YR": "us2s10s",
+        },
+        symbol_timeframes={"10 YR-2 YR": (Timeframe.DAY, Timeframe.WEEK)},
         enforce_symbol_allowlist=True,
     ),
     "yahoo_finance_index": SourceManifest(

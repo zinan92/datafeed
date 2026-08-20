@@ -12,6 +12,7 @@ from kline.providers.binance_usdm import BinanceUsdmFuturesProvider
 from kline.providers.commodity import CommodityProvider
 from kline.providers.crypto import CryptoProvider
 from kline.providers.fred import FredCsvProvider
+from kline.providers.treasury import TreasuryCsvProvider
 from kline.providers.us import USStockProvider
 from kline.provenance import (
     all_source_manifests,
@@ -78,6 +79,18 @@ def init(settings: Settings | None = None) -> None:
                 FredCsvProvider(timeout=s.request_timeout),
             )
         )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("treasury_official_csv", AssetClass.MACRO),
+            TreasuryCsvProvider(timeout=s.request_timeout),
+        )
+    )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("treasury_official_csv_derived", AssetClass.MACRO),
+            TreasuryCsvProvider(timeout=s.request_timeout, derived_spread=True),
+        )
+    )
     register_adapter(
         ProviderBackedMarketDataAdapter(
             source_manifest("binance_spot_public", AssetClass.CRYPTO),
@@ -160,8 +173,10 @@ def get_adapter_for_source(source: str, asset_class: AssetClass) -> MarketDataPo
         raise ProviderError(
             f"Unknown source: {source}",
             suggestions=[
-                "Use auto, tencent_kline, binance_spot_public, binance_usdm_futures, "
-                "yahoo_finance, yahoo_finance_futures, tushare_pro, or a registered adapter source"
+                "Use auto, tencent_kline, treasury_official_csv, "
+                "treasury_official_csv_derived, binance_spot_public, "
+                "binance_usdm_futures, yahoo_finance, yahoo_finance_futures, "
+                "tushare_pro, or a registered adapter source"
             ],
         ) from e
 
