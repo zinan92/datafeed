@@ -107,6 +107,8 @@ _SOURCE_ALIASES = {
     "yahoo_finance_futures": "yahoo_finance_futures",
     "tushare": "tushare_pro",
     "tushare_pro": "tushare_pro",
+    "tencent": "tencent_kline",
+    "tencent_kline": "tencent_kline",
     "fred": "fred_public_csv",
     "fred_public_csv": "fred_public_csv",
 }
@@ -117,6 +119,7 @@ _SOURCE_ASSET_CLASSES = {
     "yahoo_finance": AssetClass.US_STOCK,
     "yahoo_finance_futures": AssetClass.COMMODITY,
     "tushare_pro": AssetClass.A_SHARE,
+    "tencent_kline": AssetClass.INDEX,
     "yahoo_finance_index": AssetClass.INDEX,
     "yahoo_finance_etf": AssetClass.ETF,
     "fred_public_csv_macro": AssetClass.MACRO,
@@ -151,6 +154,17 @@ _YAHOO_ETF_META = ProviderMeta(
     realtime_supported=False,
     market_type="etf",
     supported_symbols=("SCHD",),
+)
+
+_TENCENT_INDEX_META = ProviderMeta(
+    name="tencent_finance",
+    source_mode="tencent_kline",
+    quality_flags=("public_api", "market_hours", "research_only"),
+    continuous=False,
+    execution_venue=False,
+    realtime_supported=False,
+    market_type="index",
+    supported_symbols=("sh000001", "sh000688", "sh000015"),
 )
 
 _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
@@ -292,6 +306,36 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         asset_class=AssetClass.A_SHARE,
         meta=_PROVIDER_META[AssetClass.A_SHARE],
         default_for_asset_class=True,
+    ),
+    "tencent_kline": SourceManifest(
+        source_id="tencent_kline",
+        asset_class=AssetClass.INDEX,
+        meta=_TENCENT_INDEX_META,
+        ticker_aliases={
+            "SH000001": "sh000001",
+            "000001.SH": "sh000001",
+            "SH000688": "sh000688",
+            "000688.SH": "sh000688",
+            "SH000015": "sh000015",
+            "000015.SH": "sh000015",
+        },
+        canonical_instrument_ids={
+            "SH000001": "shanghai",
+            "000001.SH": "shanghai",
+            "SH000688": "star50",
+            "000688.SH": "star50",
+            "SH000015": "china_dividend",
+            "000015.SH": "china_dividend",
+            "sh000001": "shanghai",
+            "sh000688": "star50",
+            "sh000015": "china_dividend",
+        },
+        symbol_timeframes={
+            "SH000001": (Timeframe.DAY, Timeframe.WEEK),
+            "SH000688": (Timeframe.DAY, Timeframe.WEEK),
+            "SH000015": (Timeframe.DAY, Timeframe.WEEK),
+        },
+        enforce_symbol_allowlist=True,
     ),
     "yahoo_finance_index": SourceManifest(
         source_id="yahoo_finance_index",
