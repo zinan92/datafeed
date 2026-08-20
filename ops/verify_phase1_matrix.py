@@ -146,6 +146,8 @@ def _health_contract_issues(status: int, health: Any, db_path: str | None = None
                 issues.append(f"health_runtime_{field}_missing")
         if runtime.get("registry_version") != "weekly-macro-phase1-source-registry-v1":
             issues.append("health_registry_version_mismatch")
+        if runtime.get("build_sha") == "unknown":
+            issues.append("health_build_sha_unknown")
         if db_path and isinstance(runtime.get("database_path"), str):
             if Path(runtime["database_path"]).resolve() != Path(db_path).resolve():
                 issues.append("health_database_path_mismatch")

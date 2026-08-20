@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from kline.api import get_candles, health
+from kline.api import get_candles, health, stream_candles
 from kline.config import Settings
 from kline.models import AssetClass, CachePolicy, Candle, FallbackPolicy, QualityPolicy, Timeframe
 from kline.ports import ProviderBackedMarketDataAdapter
@@ -118,6 +118,52 @@ async def test_bypass_matrix_policy_does_not_persist_cache_or_audit_rows(monkeyp
     assert response.served_from == "upstream"
     assert before == after
     assert store.count("BTCUSDT", AssetClass.CRYPTO, Timeframe.MIN_1, source_id="binance_spot_public") == 0
+
+
+@pytest.mark.asyncio
+async def test_websocket_bypass_stream_does_not_persist_candles(monkeypatch, tmp_path):
+    class StreamAdapter:
+        async def stream_candles(self, *_args, **_kwargs):
+            yield Candle(
+                timestamp=datetime.now(timezone.utc).replace(second=0, microsecond=0).isoformat(),
+                open=100,
+                high=101,
+                low=99,
+                close=100.5,
+                volume=10,
+            )
+
+    class WebSocket:
+        def __init__(self):
+            self.messages = []
+
+        async def accept(self):
+            return None
+
+        async def send_json(self, payload):
+            self.messages.append(payload)
+
+        async def close(self, **_kwargs):
+            return None
+
+    store = KlineStore(str(tmp_path / "websocket.db"))
+    monkeypatch.setattr("kline.api.get_store", lambda: store)
+    monkeypatch.setattr("kline.api.get_adapter_for_source", lambda *_args: StreamAdapter())
+    websocket = WebSocket()
+
+    await stream_candles(
+        websocket,
+        AssetClass.CRYPTO,
+        "BTC",
+        timeframe=Timeframe.MIN_1,
+        source="binance_spot_public",
+        quality=QualityPolicy.STRICT,
+    )
+
+    assert websocket.messages[0]["cache_policy"] == "bypass"
+    assert store.count("BTC", AssetClass.CRYPTO, Timeframe.MIN_1, source_id="binance_spot_public") == 0
+    assert store.count_raw_responses() == 0
+    assert store.latest_source_observations() == []
 
 
 @pytest.mark.asyncio
