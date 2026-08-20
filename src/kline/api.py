@@ -649,7 +649,10 @@ async def get_candles(
     profile: str | None = Query(default=None, pattern="^(historical|realtime|execution_live)$"),
     strict: bool = Query(default=False, description="Compatibility shortcut for execution_live"),
     mode: str = Query(default="research", pattern="^(research|live)$"),
-    fallback_sources: list[str] | None = None,
+    fallback_sources: list[str] | None = Query(
+        default=None,
+        description="Named fallback source ids; only valid with fallback_policy=explicit",
+    ),
 ) -> CandleResponse:
     """
     Get K-line candles for any asset.
@@ -663,6 +666,7 @@ async def get_candles(
     - **profile**: historical, realtime, execution_live shortcut
     - **strict/mode=live**: Compatibility alias for execution_live
     """
+    provided_fallback_sources = fallback_sources if isinstance(fallback_sources, list) else []
     try:
         policy = _resolve_policy(
             asset_class=asset_class,
@@ -670,7 +674,7 @@ async def get_candles(
             cache_policy=cache_policy,
             quality=quality,
             fallback_policy=fallback_policy,
-            fallback_sources=fallback_sources or [],
+            fallback_sources=provided_fallback_sources,
             require_execution_venue=require_execution_venue,
             profile=profile,
             strict=strict,

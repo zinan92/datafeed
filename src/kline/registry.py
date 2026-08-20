@@ -15,6 +15,7 @@ from kline.providers.binance_usdm import BinanceUsdmFuturesProvider
 from kline.providers.commodity import CommodityProvider
 from kline.providers.crypto import CryptoProvider
 from kline.providers.fred import FredCsvProvider
+from kline.providers.sina import SinaIndexProvider
 from kline.providers.treasury import TreasuryCsvProvider
 from kline.providers.us import USStockProvider
 from kline.provenance import (
@@ -70,6 +71,12 @@ def init(settings: Settings | None = None) -> None:
         ProviderBackedMarketDataAdapter(
             source_manifest("tencent_kline", AssetClass.INDEX),
             TencentIndexProvider(timeout=s.request_timeout),
+        )
+    )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("sina_index", AssetClass.INDEX),
+            SinaIndexProvider(timeout=s.request_timeout),
         )
     )
     register_adapter(
@@ -180,6 +187,7 @@ def get_adapter_for_source(source: str, asset_class: AssetClass) -> MarketDataPo
             f"Unknown source: {source}",
             suggestions=[
                 "Use auto, tencent_kline, treasury_official_csv, "
+                "sina_index, "
                 "treasury_official_csv_derived, binance_spot_public, "
                 "binance_usdm_futures, yahoo_finance, yahoo_finance_futures, "
                 "tushare_pro, or a registered adapter source"

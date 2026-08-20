@@ -15,6 +15,7 @@ from kline.models import (
     FallbackPolicy,
     QualityPolicy,
     Timeframe,
+    TimeframeTransform,
 )
 from kline.ports import ProviderBackedMarketDataAdapter
 from kline.providers.ashare import TencentIndexProvider
@@ -216,6 +217,90 @@ class _FailingTencentProvider:
     async def fetch(self, *_args, **_kwargs):
         self.called = True
         raise ProviderError("Tencent returned wrong symbol")
+
+
+class _SinaFallbackProvider:
+    def __init__(self) -> None:
+        self.last_raw_response = {
+            "request_params": {"symbol": "sh000001", "scale": 240},
+            "response_body": {"row_count": 1},
+            "status_code": 200,
+            "error": None,
+        }
+        self.timeframe_transform = TimeframeTransform(
+            raw_timeframe=Timeframe.DAY,
+            timeframe_origin="native",
+            aggregation={"kind": "none", "rule": "native_passthrough"},
+        )
+        self.source_identity = {
+            "source_id": "sina_index",
+            "provider_symbol": "sh000001",
+            "endpoint": "https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData",
+        }
+
+    def supported_timeframes(self) -> list[Timeframe]:
+        return [Timeframe.DAY, Timeframe.WEEK]
+
+    async def fetch(self, *_args, **_kwargs):
+        return [
+            Candle(
+                timestamp="2026-08-19",
+                open=100,
+                high=102,
+                low=99,
+                close=101,
+                volume=1000,
+            )
+        ]
+
+
+@pytest.mark.asyncio
+async def test_tencent_failure_can_use_explicit_sina_fallback(monkeypatch, tmp_path):
+    from kline.store import KlineStore
+
+    store = KlineStore(str(tmp_path / "kline.db"))
+    primary = ProviderBackedMarketDataAdapter(
+        source_manifest("tencent_kline", AssetClass.INDEX),
+        _FailingTencentProvider(),
+    )
+    fallback = ProviderBackedMarketDataAdapter(
+        source_manifest("sina_index", AssetClass.INDEX),
+        _SinaFallbackProvider(),
+    )
+
+    def adapter_for_source(source, _asset_class):
+        return primary if source == "tencent_kline" else fallback
+
+    monkeypatch.setattr("kline.api.get_store", lambda: store)
+    monkeypatch.setattr("kline.api.get_adapter_for_source", adapter_for_source)
+
+    response = await get_candles(
+        asset_class=AssetClass.INDEX,
+        ticker="sh000001",
+        timeframe=Timeframe.DAY,
+        start=None,
+        end=None,
+        limit=1,
+        refresh=False,
+        source="tencent_kline",
+        cache_policy=CachePolicy.BYPASS,
+        quality=QualityPolicy.STRICT,
+        fallback_policy=FallbackPolicy.EXPLICIT,
+        fallback_sources=["sina_index"],
+        require_execution_venue=False,
+        profile=None,
+        strict=False,
+        mode="research",
+    )
+
+    assert response.requested_source == "tencent_kline"
+    assert response.selected_source == "sina_index"
+    assert response.selection_reason == "explicit_fallback"
+    assert response.attempted_sources == ["tencent_kline", "sina_index"]
+    assert response.provider == "sina_finance"
+    assert response.provider_symbol == "sh000001"
+    assert response.source_identity["source_id"] == "sina_index"
+    assert any("Tencent returned wrong symbol" in issue for issue in response.access_issues)
 
 
 @pytest.mark.asyncio
