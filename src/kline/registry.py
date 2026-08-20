@@ -6,7 +6,7 @@ from kline.config import Settings, ensure_data_dir, get_settings
 from kline.models import AssetClass, Timeframe
 from kline.plugin_loader import load_configured_adapters, load_entrypoint_adapters
 from kline.ports import MarketDataPort, ProviderBackedMarketDataAdapter
-from kline.providers.ashare import AShareProvider
+from kline.providers.ashare import AShareProvider, TencentIndexProvider
 from kline.providers.base import Provider, ProviderError
 from kline.providers.binance_usdm import BinanceUsdmFuturesProvider
 from kline.providers.commodity import CommodityProvider
@@ -57,6 +57,12 @@ def init(settings: Settings | None = None) -> None:
         ProviderBackedMarketDataAdapter(
             source_manifest("yahoo_finance_index", AssetClass.INDEX),
             _providers[AssetClass.INDEX],
+        )
+    )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("tencent_kline", AssetClass.INDEX),
+            TencentIndexProvider(timeout=s.request_timeout),
         )
     )
     register_adapter(
@@ -154,8 +160,8 @@ def get_adapter_for_source(source: str, asset_class: AssetClass) -> MarketDataPo
         raise ProviderError(
             f"Unknown source: {source}",
             suggestions=[
-                "Use auto, binance_spot_public, binance_usdm_futures, yahoo_finance, "
-                "yahoo_finance_futures, tushare_pro, or a registered adapter source"
+                "Use auto, tencent_kline, binance_spot_public, binance_usdm_futures, "
+                "yahoo_finance, yahoo_finance_futures, tushare_pro, or a registered adapter source"
             ],
         ) from e
 
@@ -165,7 +171,7 @@ def get_adapter_for_source(source: str, asset_class: AssetClass) -> MarketDataPo
             f"Source adapter not configured: {normalized}",
             suggestions=[
                 f"Register an adapter for {normalized}",
-                "For A-share data, set KLINE_TUSHARE_TOKEN if source=tushare_pro",
+                "For A-share equity data, set KLINE_TUSHARE_TOKEN if source=tushare_pro",
             ],
         )
     if adapter.manifest.asset_class != manifest.asset_class:
