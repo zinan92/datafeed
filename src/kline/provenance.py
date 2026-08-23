@@ -74,6 +74,28 @@ _PROVIDER_META: dict[AssetClass, ProviderMeta] = {
     ),
 }
 
+BINANCE_USDM_RESEARCH_META = ProviderMeta(
+    name="binance_usdm_futures",
+    source_mode="binance_usdm_futures_research",
+    quality_flags=("public_api", "usd_m_futures", "research_only", "not_execution_venue"),
+    continuous=True,
+    execution_venue=False,
+    realtime_supported=True,
+    market_type="usd_m_futures",
+    supported_symbols=("BTCUSDT", "ETHUSDT"),
+)
+
+HYPERLIQUID_PERP_META = ProviderMeta(
+    name="hyperliquid",
+    source_mode="hyperliquid_perpetual_public",
+    quality_flags=("public_api", "perpetual", "research_only", "not_execution_venue"),
+    continuous=True,
+    execution_venue=False,
+    realtime_supported=False,
+    market_type="perpetual_futures",
+    supported_symbols=("HYPE",),
+)
+
 BINANCE_USDM_FUTURES_META = ProviderMeta(
     name="binance_usdm_futures",
     source_mode="binance_usdm_futures",
@@ -102,6 +124,10 @@ _SOURCE_ALIASES = {
     "binance_spot_public": "binance_spot_public",
     "binance_usdm": "binance_usdm_futures",
     "binance_usdm_futures": "binance_usdm_futures",
+    "binance_usdm_futures_research": "binance_usdm_futures_research",
+    "binance_futures_research": "binance_usdm_futures_research",
+    "hyperliquid_perpetual_public": "hyperliquid_perpetual_public",
+    "hyperliquid_perp": "hyperliquid_perpetual_public",
     "yahoo": "yahoo",
     "yahoo_finance": "yahoo_finance",
     "yahoo_finance_index": "yahoo_finance_index",
@@ -124,6 +150,8 @@ _SOURCE_ALIASES = {
 _SOURCE_ASSET_CLASSES = {
     "binance_spot_public": AssetClass.CRYPTO,
     "binance_usdm_futures": AssetClass.COMMODITY,
+    "binance_usdm_futures_research": AssetClass.CRYPTO,
+    "hyperliquid_perpetual_public": AssetClass.CRYPTO,
     "yahoo_finance": AssetClass.US_STOCK,
     "yahoo_finance_futures": AssetClass.COMMODITY,
     "tushare_pro": AssetClass.A_SHARE,
@@ -141,6 +169,8 @@ _SOURCE_ASSET_CLASSES = {
 _SOURCE_META = {
     "binance_spot_public": _PROVIDER_META[AssetClass.CRYPTO],
     "binance_usdm_futures": BINANCE_USDM_FUTURES_META,
+    "binance_usdm_futures_research": BINANCE_USDM_RESEARCH_META,
+    "hyperliquid_perpetual_public": HYPERLIQUID_PERP_META,
     "yahoo_finance": _PROVIDER_META[AssetClass.US_STOCK],
     "yahoo_finance_futures": _PROVIDER_META[AssetClass.COMMODITY],
     "tushare_pro": _PROVIDER_META[AssetClass.A_SHARE],
@@ -244,6 +274,39 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         meta=BINANCE_USDM_FUTURES_META,
         ticker_aliases={"GOLD": "XAUUSDT", "XAUUSD": "XAUUSDT", "XAUUSDT": "XAUUSDT"},
         canonical_instrument_ids={"GOLD": "GOLD", "XAUUSD": "GOLD", "XAUUSDT": "GOLD"},
+    ),
+    "binance_usdm_futures_research": SourceManifest(
+        source_id="binance_usdm_futures_research",
+        asset_class=AssetClass.CRYPTO,
+        meta=BINANCE_USDM_RESEARCH_META,
+        default_for_asset_class=False,
+        ticker_aliases={
+            "BTC": "BTCUSDT",
+            "BTCUSDT": "BTCUSDT",
+            "ETH": "ETHUSDT",
+            "ETHUSDT": "ETHUSDT",
+        },
+        canonical_instrument_ids={
+            "BTC": "BTCUSDT.BINANCE",
+            "BTCUSDT": "BTCUSDT.BINANCE",
+            "ETH": "ETHUSDT.BINANCE",
+            "ETHUSDT": "ETHUSDT.BINANCE",
+        },
+        symbol_timeframes={
+            "BTCUSDT": (Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
+            "ETHUSDT": (Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
+        },
+        enforce_symbol_allowlist=True,
+    ),
+    "hyperliquid_perpetual_public": SourceManifest(
+        source_id="hyperliquid_perpetual_public",
+        asset_class=AssetClass.CRYPTO,
+        meta=HYPERLIQUID_PERP_META,
+        default_for_asset_class=False,
+        ticker_aliases={"HYPE": "HYPE"},
+        canonical_instrument_ids={"HYPE": "HYPE.HYPERLIQUID"},
+        symbol_timeframes={"HYPE": (Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK)},
+        enforce_symbol_allowlist=True,
     ),
     "yahoo_finance": SourceManifest(
         source_id="yahoo_finance",

@@ -114,6 +114,25 @@ async def test_binance_usdm_rejects_non_xau_symbols():
     assert "not enabled" in str(exc.value)
 
 
+@pytest.mark.parametrize("ticker", ["BTC", "BTCUSDT", "ETH", "ETHUSDT"])
+async def test_research_provider_accepts_explicit_crypto_futures_symbols(ticker: str):
+    seen_params: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen_params.update(dict(request.url.params))
+        return httpx.Response(200, json=[_kline(_open_ms(10, 0), "100.0")])
+
+    provider = BinanceUsdmFuturesProvider(
+        transport=httpx.MockTransport(handler),
+        allowed_symbols={"BTCUSDT", "ETHUSDT"},
+    )
+    candles = await provider.fetch(ticker, Timeframe.HOUR_4, limit=1)
+
+    assert seen_params["symbol"] == ("BTCUSDT" if ticker.startswith("BTC") else "ETHUSDT")
+    assert seen_params["interval"] == "4h"
+    assert candles[0].close == 3300.70
+
+
 async def test_xauusdt_instrument_definition_preserves_exchange_constraints():
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.path == "/fapi/v1/exchangeInfo"
