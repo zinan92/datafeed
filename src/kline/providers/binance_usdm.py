@@ -11,7 +11,7 @@ from typing import Any, AsyncIterator
 
 import httpx
 
-from kline.models import AssetClass, Candle, InstrumentDefinition, Timeframe
+from kline.models import AssetClass, Candle, InstrumentDefinition, Timeframe, TimeframeTransform
 from kline.providers.base import ProviderError
 
 logger = logging.getLogger(__name__)
@@ -152,7 +152,7 @@ class BinanceUsdmFuturesProvider:
         self._websocket_connect = websocket_connect
         self._allowed_symbols = set(allowed_symbols or {"XAUUSDT"})
         self.last_raw_response: dict[str, Any] | None = None
-        self.timeframe_transform = None
+        self.timeframe_transform: TimeframeTransform | None = None
         self.source_identity: dict[str, Any] = {}
 
     def supported_timeframes(self) -> list[Timeframe]:
@@ -177,16 +177,16 @@ class BinanceUsdmFuturesProvider:
                 candles = candles[-limit:]
             if not candles:
                 raise ProviderError(f"No completed weekly data returned for {symbol}")
-            self.timeframe_transform = {
-                "raw_timeframe": Timeframe.DAY.value,
-                "timeframe_origin": "aggregated",
-                "aggregation": {
+            self.timeframe_transform = TimeframeTransform(
+                raw_timeframe=Timeframe.DAY,
+                timeframe_origin="aggregated",
+                aggregation={
                     "kind": "ohlc_resample",
                     "rule": "completed_iso_week",
                     "input_timeframe": Timeframe.DAY.value,
                     "bucket_timezone": "UTC",
                 },
-            }
+            )
             self.source_identity = {"provider_symbol": symbol, "contract_type": "perpetual"}
             return candles
         if not interval:
@@ -197,11 +197,11 @@ class BinanceUsdmFuturesProvider:
 
         symbol = _normalize_symbol(ticker, self._allowed_symbols)
         self.source_identity = {"provider_symbol": symbol, "contract_type": "perpetual"}
-        self.timeframe_transform = {
-            "raw_timeframe": timeframe.value,
-            "timeframe_origin": "native",
-            "aggregation": {"kind": "none", "rule": "native_passthrough"},
-        }
+        self.timeframe_transform = TimeframeTransform(
+            raw_timeframe=timeframe,
+            timeframe_origin="native",
+            aggregation={"kind": "none", "rule": "native_passthrough"},
+        )
         client_kwargs: dict[str, Any] = {"timeout": self._timeout}
         if self._transport is not None:
             client_kwargs["transport"] = self._transport
