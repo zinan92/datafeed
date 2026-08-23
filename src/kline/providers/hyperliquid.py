@@ -59,11 +59,12 @@ def _completed_weekly(candles: list[Candle], *, cutoff: datetime) -> list[Candle
 
 
 class HyperliquidPerpetualProvider:
-    """Fetch HYPE perpetual candles from Hyperliquid's public info endpoint."""
+    """Fetch an explicit crypto-perpetual allowlist from Hyperliquid."""
 
-    def __init__(self, timeout: float = 30, transport: httpx.AsyncBaseTransport | None = None) -> None:
+    def __init__(self, timeout: float = 30, transport: httpx.AsyncBaseTransport | None = None, allowed_symbols: set[str] | None = None) -> None:
         self._timeout = timeout
         self._transport = transport
+        self._allowed_symbols = {item.upper() for item in (allowed_symbols or {"BTC", "ETH", "HYPE"})}
         self.last_raw_response: dict[str, Any] | None = None
         self.timeframe_transform: TimeframeTransform | None = None
         self.source_identity: dict[str, Any] = {}
@@ -81,8 +82,11 @@ class HyperliquidPerpetualProvider:
         limit: int = 500,
     ) -> list[Candle]:
         symbol = ticker.upper().strip()
-        if symbol != "HYPE":
-            raise ProviderError("Hyperliquid perpetual source only enables HYPE", suggestions=["Use ticker HYPE"])
+        if symbol not in self._allowed_symbols:
+            raise ProviderError(
+                f"Hyperliquid perpetual source does not enable {symbol}",
+                suggestions=[f"Use one of: {', '.join(sorted(self._allowed_symbols))}"],
+            )
         if timeframe == Timeframe.WEEK:
             daily = await self.fetch(
                 symbol,
@@ -94,7 +98,7 @@ class HyperliquidPerpetualProvider:
             cutoff = datetime.now(timezone.utc)
             candles = _completed_weekly(daily, cutoff=cutoff)
             if not candles:
-                raise ProviderError("No completed weekly data returned for HYPE")
+                raise ProviderError(f"No completed weekly data returned for {symbol}")
             if limit:
                 candles = candles[-limit:]
             self.timeframe_transform = TimeframeTransform(
@@ -187,7 +191,7 @@ class HyperliquidPerpetualProvider:
         if limit:
             candles = candles[-limit:]
         if not candles:
-            raise ProviderError("No completed Hyperliquid candles returned for HYPE")
+            raise ProviderError(f"No completed Hyperliquid candles returned for {symbol}")
         self.timeframe_transform = TimeframeTransform(
             raw_timeframe=timeframe,
             timeframe_origin="native",

@@ -93,7 +93,7 @@ HYPERLIQUID_PERP_META = ProviderMeta(
     execution_venue=False,
     realtime_supported=False,
     market_type="perpetual_futures",
-    supported_symbols=("HYPE",),
+    supported_symbols=("BTC", "ETH", "HYPE"),
 )
 
 BINANCE_USDM_FUTURES_META = ProviderMeta(
@@ -303,9 +303,13 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         asset_class=AssetClass.CRYPTO,
         meta=HYPERLIQUID_PERP_META,
         default_for_asset_class=False,
-        ticker_aliases={"HYPE": "HYPE"},
-        canonical_instrument_ids={"HYPE": "HYPE.HYPERLIQUID"},
-        symbol_timeframes={"HYPE": (Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK)},
+        ticker_aliases={"BTC": "BTC", "ETH": "ETH", "HYPE": "HYPE"},
+        canonical_instrument_ids={"BTC": "BTC.HYPERLIQUID", "ETH": "ETH.HYPERLIQUID", "HYPE": "HYPE.HYPERLIQUID"},
+        symbol_timeframes={
+            "BTC": (Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
+            "ETH": (Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
+            "HYPE": (Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
+        },
         enforce_symbol_allowlist=True,
     ),
     "yahoo_finance": SourceManifest(
