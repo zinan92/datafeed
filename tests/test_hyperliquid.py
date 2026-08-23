@@ -52,8 +52,23 @@ async def test_hyperliquid_native_4h_preserves_perpetual_identity():
 @pytest.mark.asyncio
 async def test_hyperliquid_rejects_unlisted_symbol():
     provider = HyperliquidPerpetualProvider(transport=httpx.MockTransport(lambda _: httpx.Response(200, json=[])))
-    with pytest.raises(ProviderError, match="only enables HYPE"):
-        await provider.fetch("BTC", Timeframe.HOUR_4)
+    with pytest.raises(ProviderError, match="does not enable SOL"):
+        await provider.fetch("SOL", Timeframe.HOUR_4)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("symbol", ["BTC", "ETH", "HYPE"])
+async def test_hyperliquid_unified_source_accepts_all_weekly_crypto_symbols(symbol: str):
+    def handler(request: httpx.Request) -> httpx.Response:
+        payload = json.loads(request.content)
+        assert payload["req"]["coin"] == symbol
+        return httpx.Response(200, json=[_row(1786838400000)])
+
+    provider = HyperliquidPerpetualProvider(transport=httpx.MockTransport(handler))
+    candles = await provider.fetch(symbol, Timeframe.HOUR_4, limit=1)
+
+    assert len(candles) == 1
+    assert provider.source_identity["provider_symbol"] == symbol
 
 
 @pytest.mark.asyncio
