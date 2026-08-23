@@ -113,9 +113,11 @@ def _aggregate_completed_weeks(candles: list[Candle]) -> list[Candle]:
     for _, rows in sorted(groups.items()):
         if len(rows) < 7:
             continue
+        first_date = datetime.fromisoformat(rows[0].timestamp.replace("Z", "+00:00")).date()
+        week_end = date.fromisocalendar(first_date.isocalendar().year, first_date.isocalendar().week, 5)
         result.append(
             Candle(
-                timestamp=rows[-1].timestamp[:10],
+                timestamp=week_end.isoformat(),
                 open=rows[0].open,
                 high=max(row.high for row in rows),
                 low=min(row.low for row in rows),
