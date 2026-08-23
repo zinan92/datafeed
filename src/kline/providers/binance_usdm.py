@@ -36,6 +36,7 @@ _TF_MILLIS = {
     Timeframe.MIN_30: 1_800_000,
     Timeframe.HOUR_1: 3_600_000,
     Timeframe.HOUR_4: 14_400_000,
+    Timeframe.DAY: 86_400_000,
 }
 
 _ALIASES = {
