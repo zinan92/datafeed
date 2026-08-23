@@ -15,6 +15,7 @@ from kline.providers.binance_usdm import BinanceUsdmFuturesProvider
 from kline.providers.commodity import CommodityProvider
 from kline.providers.crypto import CryptoProvider
 from kline.providers.fred import FredCsvProvider
+from kline.providers.hyperliquid import HyperliquidPerpetualProvider
 from kline.providers.sina import SinaIndexProvider
 from kline.providers.treasury import TreasuryCsvProvider
 from kline.providers.us import USStockProvider
@@ -122,6 +123,18 @@ def init(settings: Settings | None = None) -> None:
             _live_providers["binance_usdm_futures"],
         )
     )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("binance_usdm_futures_research", AssetClass.CRYPTO),
+            BinanceUsdmFuturesProvider(timeout=s.request_timeout, allowed_symbols={"BTCUSDT", "ETHUSDT"}),
+        )
+    )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("hyperliquid_perpetual_public", AssetClass.CRYPTO),
+            HyperliquidPerpetualProvider(timeout=s.request_timeout),
+        )
+    )
 
     # A-share requires TuShare token
     if s.tushare_token:
@@ -189,7 +202,8 @@ def get_adapter_for_source(source: str, asset_class: AssetClass) -> MarketDataPo
                 "Use auto, tencent_kline, treasury_official_csv, "
                 "sina_index, "
                 "treasury_official_csv_derived, binance_spot_public, "
-                "binance_usdm_futures, yahoo_finance, yahoo_finance_futures, "
+                "binance_usdm_futures, binance_usdm_futures_research, "
+                "hyperliquid_perpetual_public, yahoo_finance, yahoo_finance_futures, "
                 "tushare_pro, or a registered adapter source"
             ],
         ) from e

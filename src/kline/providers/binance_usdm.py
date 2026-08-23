@@ -6,7 +6,7 @@ import asyncio
 import json
 import logging
 from decimal import Decimal
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, AsyncIterator
 
 import httpx
@@ -42,15 +42,20 @@ _ALIASES = {
     "GOLD": "XAUUSDT",
     "XAUUSD": "XAUUSDT",
     "XAUUSDT": "XAUUSDT",
+    "BTC": "BTCUSDT",
+    "BTCUSDT": "BTCUSDT",
+    "ETH": "ETHUSDT",
+    "ETHUSDT": "ETHUSDT",
 }
 
 
-def _normalize_symbol(ticker: str) -> str:
+def _normalize_symbol(ticker: str, allowed_symbols: set[str]) -> str:
     symbol = _ALIASES.get(ticker.upper().strip(), ticker.upper().strip())
-    if symbol != "XAUUSDT":
+    if symbol not in allowed_symbols:
+        enabled = ", ".join(sorted(allowed_symbols))
         raise ProviderError(
-            f"Symbol {ticker} is not enabled for Binance USD-M Futures live mode",
-            suggestions=["Use XAUUSDT for live gold futures candles"],
+            f"Symbol {ticker} is not enabled for Binance USD-M Futures",
+            suggestions=[f"Use one of the explicitly enabled symbols: {enabled}"],
         )
     return symbol
 
@@ -94,6 +99,33 @@ def _candle_from_ws_kline(item: dict[str, Any]) -> Candle:
     )
 
 
+def _aggregate_completed_weeks(candles: list[Candle]) -> list[Candle]:
+    groups: dict[tuple[int, int], list[Candle]] = {}
+    current_date = datetime.now(timezone.utc).date()
+    for candle in candles:
+        stamp = datetime.fromisoformat(candle.timestamp.replace("Z", "+00:00"))
+        if stamp.date() >= current_date:
+            continue
+        iso = stamp.date().isocalendar()
+        groups.setdefault((iso.year, iso.week), []).append(candle)
+    result: list[Candle] = []
+    for _, rows in sorted(groups.items()):
+        if len(rows) < 7:
+            continue
+        result.append(
+            Candle(
+                timestamp=rows[-1].timestamp[:10],
+                open=rows[0].open,
+                high=max(row.high for row in rows),
+                low=min(row.low for row in rows),
+                close=rows[-1].close,
+                volume=sum(row.volume for row in rows),
+                amount=sum(row.amount or 0 for row in rows),
+            )
+        )
+    return result
+
+
 def _decimal_rate_from_percent(value: str) -> str:
     return format(Decimal(value) / Decimal(100), "f")
 
@@ -106,18 +138,22 @@ def _required_filter(filters: list[dict[str, Any]], filter_type: str) -> dict[st
 
 
 class BinanceUsdmFuturesProvider:
-    """Fetch and stream XAUUSDT candles from Binance USD-M Futures."""
+    """Fetch and stream an explicit allowlist from Binance USD-M Futures."""
 
     def __init__(
         self,
         timeout: float = 30,
         transport: httpx.AsyncBaseTransport | None = None,
         websocket_connect: Any | None = None,
+        allowed_symbols: set[str] | None = None,
     ) -> None:
         self._timeout = timeout
         self._transport = transport
         self._websocket_connect = websocket_connect
+        self._allowed_symbols = set(allowed_symbols or {"XAUUSDT"})
         self.last_raw_response: dict[str, Any] | None = None
+        self.timeframe_transform = None
+        self.source_identity: dict[str, Any] = {}
 
     def supported_timeframes(self) -> list[Timeframe]:
         return list(_TF_MAP.keys())
@@ -133,13 +169,39 @@ class BinanceUsdmFuturesProvider:
     ) -> list[Candle]:
         self.last_raw_response = None
         interval = _TF_MAP.get(timeframe)
+        if timeframe == Timeframe.WEEK:
+            symbol = _normalize_symbol(ticker, self._allowed_symbols)
+            daily = await self.fetch(symbol, Timeframe.DAY, start=start, end=end, limit=max(limit * 7 + 8, 100))
+            candles = _aggregate_completed_weeks(daily)
+            if limit:
+                candles = candles[-limit:]
+            if not candles:
+                raise ProviderError(f"No completed weekly data returned for {symbol}")
+            self.timeframe_transform = {
+                "raw_timeframe": Timeframe.DAY.value,
+                "timeframe_origin": "aggregated",
+                "aggregation": {
+                    "kind": "ohlc_resample",
+                    "rule": "completed_iso_week",
+                    "input_timeframe": Timeframe.DAY.value,
+                    "bucket_timezone": "UTC",
+                },
+            }
+            self.source_identity = {"provider_symbol": symbol, "contract_type": "perpetual"}
+            return candles
         if not interval:
             raise ProviderError(
                 f"Timeframe {timeframe.value} not supported for Binance USD-M Futures",
                 suggestions=[f"Supported: {[t.value for t in self.supported_timeframes()]}"],
             )
 
-        symbol = _normalize_symbol(ticker)
+        symbol = _normalize_symbol(ticker, self._allowed_symbols)
+        self.source_identity = {"provider_symbol": symbol, "contract_type": "perpetual"}
+        self.timeframe_transform = {
+            "raw_timeframe": timeframe.value,
+            "timeframe_origin": "native",
+            "aggregation": {"kind": "none", "rule": "native_passthrough"},
+        }
         client_kwargs: dict[str, Any] = {"timeout": self._timeout}
         if self._transport is not None:
             client_kwargs["transport"] = self._transport
@@ -212,7 +274,7 @@ class BinanceUsdmFuturesProvider:
                 suggestions=[f"Supported: {[t.value for t in self.supported_timeframes()]}"],
             )
 
-        symbol = _normalize_symbol(ticker)
+        symbol = _normalize_symbol(ticker, self._allowed_symbols)
         stream_name = f"{symbol.lower()}@kline_{interval}"
         url = f"{BINANCE_USDM_WS_URL}{stream_name}"
 
@@ -249,7 +311,7 @@ class BinanceUsdmFuturesProvider:
             ) from e
 
     async def fetch_instrument_definition(self, ticker: str) -> InstrumentDefinition:
-        symbol = _normalize_symbol(ticker)
+        symbol = _normalize_symbol(ticker, self._allowed_symbols)
         params = {"symbol": symbol}
         client_kwargs: dict[str, Any] = {"timeout": self._timeout}
         if self._transport is not None:

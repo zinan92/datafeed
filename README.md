@@ -28,7 +28,8 @@ fail TuShare-only A-share no token → setup instructions; Phase 1 indices need 
 Built-in sources: `tushare_pro`, `tencent_kline`, `sina_index`,
 `treasury_official_csv`, `treasury_official_csv_derived`, `yahoo_finance`,
 `yahoo_finance_index`, `yahoo_finance_etf`, `yahoo_finance_futures`,
-`binance_spot_public`, `binance_usdm_futures`, and the FRED macro/flow/event adapters.
+`binance_spot_public`, `binance_usdm_futures`, `binance_usdm_futures_research`,
+`hyperliquid_perpetual_public`, and the FRED macro/flow/event adapters.
 Tiger OpenAPI and OANDA v20 are credential-backed config adapters; see
 `configs/adapters.example.json`.
 
@@ -377,6 +378,8 @@ python -m kline
 | `yahoo_finance_futures` | `commodity` | Yahoo Finance | continuous futures contract | false | false | CL=F/GC=F/SI=F: 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w; other aliases: 1d, 1w |
 | `binance_spot_public` | `crypto` | Binance Spot API | spot | true | false | BTC/BTCUSDT: 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w; other symbols: no Phase 1 4h guarantee |
 | `binance_usdm_futures` | `commodity` | Binance USD-M Futures | USD-M futures | true | true | XAUUSDT: 1m, 5m, 15m, 30m, 1h, 4h |
+| `binance_usdm_futures_research` | `crypto` | Binance USD-M Futures | USD-M perpetuals | true | false | BTCUSDT/ETHUSDT: 4h, 1d, 1w |
+| `hyperliquid_perpetual_public` | `crypto` | Hyperliquid public API | perpetual futures | false | false | HYPE: 4h, 1d, 1w |
 
 ## 技术栈
 
@@ -448,7 +451,7 @@ capability:
     - "quality=strict + source down/empty/stale/gap/out-of-order → error or blocked envelope"
     - "timeframe not supported → supported timeframes list"
     - "TuShare-only A-share request without token → setup instructions; Phase 1 index sources do not require TuShare"
-  sources: [tushare_pro, tencent_kline, sina_index, treasury_official_csv, treasury_official_csv_derived, yahoo_finance, yahoo_finance_index, yahoo_finance_etf, yahoo_finance_futures, binance_spot_public, binance_usdm_futures, fred_public_csv_macro, fred_public_csv_flow, fred_public_csv_event]
+  sources: [tushare_pro, tencent_kline, sina_index, treasury_official_csv, treasury_official_csv_derived, yahoo_finance, yahoo_finance_index, yahoo_finance_etf, yahoo_finance_futures, binance_spot_public, binance_usdm_futures, binance_usdm_futures_research, hyperliquid_perpetual_public, fred_public_csv_macro, fred_public_csv_flow, fred_public_csv_event]
 api_base_url: http://localhost:8100
 endpoints:
   - path: /api/instruments/{asset_class}/{ticker}
@@ -481,7 +484,7 @@ endpoints:
         default: 500
       - name: source
         type: string
-        enum: [auto, tushare_pro, yahoo_finance, yahoo_finance_index, yahoo_finance_etf, yahoo_finance_futures, binance_spot_public, binance_usdm_futures]
+        enum: [auto, tushare_pro, yahoo_finance, yahoo_finance_index, yahoo_finance_etf, yahoo_finance_futures, binance_spot_public, binance_usdm_futures, binance_usdm_futures_research, hyperliquid_perpetual_public]
         default: auto
       - name: cache_policy
         type: string
