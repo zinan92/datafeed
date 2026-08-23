@@ -131,6 +131,9 @@ async def test_research_provider_accepts_explicit_crypto_futures_symbols(ticker:
     assert seen_params["symbol"] == ("BTCUSDT" if ticker.startswith("BTC") else "ETHUSDT")
     assert seen_params["interval"] == "4h"
     assert candles[0].close == 3300.70
+    assert provider.timeframe_transform is not None
+    assert provider.timeframe_transform.raw_timeframe == Timeframe.HOUR_4
+    assert provider.timeframe_transform.timeframe_origin == "native"
 
 
 async def test_xauusdt_instrument_definition_preserves_exchange_constraints():
