@@ -374,7 +374,7 @@ python -m kline
 | `treasury_official_csv_derived` | `macro` | U.S. Treasury | 2s10s derived spread | false | false | T10Y2Y: 1d, 1w |
 | `yahoo_finance` | `us_stock` | Yahoo Finance | equity | false | false | 1m, 5m, 15m, 30m, 1h, 1d, 1w |
 | `yahoo_finance_index` | `index` | Yahoo Finance | index | false | false | DX-Y.NYB: 1d, 1w, 4h; ^GSPC/^IXIC/^VIX/^N225/^KS11: 1d, 1w |
-| `yahoo_finance_etf` | `etf` | Yahoo Finance | ETF | false | false | SCHD: 1d, 1w |
+| `yahoo_finance_etf` | `etf` | Yahoo Finance | ETF | false | false | SPY/QQQ/SCHD: 1d, 1w; UUP: 4h, 1d, 1w |
 | `yahoo_finance_futures` | `commodity` | Yahoo Finance | continuous futures contract | false | false | CL=F/GC=F/SI=F: 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w; other aliases: 1d, 1w |
 | `binance_spot_public` | `crypto` | Binance Spot API | spot | true | false | BTC/BTCUSDT: 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w; other symbols: no Phase 1 4h guarantee |
 | `binance_usdm_futures` | `commodity` | Binance USD-M Futures | USD-M futures | true | true | XAUUSDT: 1m, 5m, 15m, 30m, 1h, 4h |

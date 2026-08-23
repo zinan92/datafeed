@@ -194,7 +194,7 @@ _YAHOO_ETF_META = ProviderMeta(
     execution_venue=False,
     realtime_supported=False,
     market_type="etf",
-    supported_symbols=("SCHD",),
+    supported_symbols=("SPY", "QQQ", "SCHD", "UUP"),
 )
 
 _TENCENT_INDEX_META = ProviderMeta(
@@ -549,7 +549,12 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         asset_class=AssetClass.ETF,
         meta=_YAHOO_ETF_META,
         default_for_asset_class=True,
-        symbol_timeframes={"SCHD": (Timeframe.DAY, Timeframe.WEEK)},
+        symbol_timeframes={
+            "SPY": (Timeframe.DAY, Timeframe.WEEK),
+            "QQQ": (Timeframe.DAY, Timeframe.WEEK),
+            "SCHD": (Timeframe.DAY, Timeframe.WEEK),
+            "UUP": (Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
+        },
         enforce_symbol_allowlist=True,
     ),
 }
