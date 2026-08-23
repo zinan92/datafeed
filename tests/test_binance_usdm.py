@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import asyncio
+from datetime import timedelta
 
 import httpx
 import pytest
@@ -134,6 +135,36 @@ async def test_research_provider_accepts_explicit_crypto_futures_symbols(ticker:
     assert provider.timeframe_transform is not None
     assert provider.timeframe_transform.raw_timeframe == Timeframe.HOUR_4
     assert provider.timeframe_transform.timeframe_origin == "native"
+
+
+async def test_research_provider_weekly_paginates_daily_history_without_key_error():
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls > 1:
+            if calls > 2:
+                return httpx.Response(200, json=[])
+        start = datetime(2025, 1, 1, tzinfo=timezone.utc) + timedelta(days=(calls - 1) * 1500)
+        page_size = int(request.url.params["limit"])
+        rows = []
+        for offset in range(page_size):
+            stamp = start + timedelta(days=offset)
+            rows.append(_kline(int(stamp.timestamp() * 1000), "100.0"))
+        return httpx.Response(200, json=rows)
+
+    provider = BinanceUsdmFuturesProvider(
+        transport=httpx.MockTransport(handler),
+        allowed_symbols={"BTCUSDT", "ETHUSDT"},
+    )
+    candles = await provider.fetch("BTC", Timeframe.WEEK, start="2025-01-01", end="2031-01-01", limit=300)
+
+    assert calls == 2
+    assert candles
+    assert provider.timeframe_transform is not None
+    assert provider.timeframe_transform.raw_timeframe == Timeframe.DAY
+    assert provider.timeframe_transform.timeframe_origin == "aggregated"
 
 
 async def test_xauusdt_instrument_definition_preserves_exchange_constraints():
