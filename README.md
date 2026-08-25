@@ -379,7 +379,7 @@ python -m kline
 | `binance_spot_public` | `crypto` | Binance Spot API | spot | true | false | BTC/BTCUSDT: 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w; other symbols: no Phase 1 4h guarantee |
 | `binance_usdm_futures` | `commodity` | Binance USD-M Futures | USD-M futures | true | true | XAUUSDT: 1m, 5m, 15m, 30m, 1h, 4h |
 | `binance_usdm_futures_research` | `crypto` | Binance USD-M Futures | USD-M perpetuals | true | false | BTCUSDT/ETHUSDT: 4h, 1d, 1w |
-| `hyperliquid_perpetual_public` | `crypto` | Hyperliquid public API | perpetual futures | false | false | BTC/ETH/HYPE: 4h, 1d, 1w |
+| `hyperliquid_perpetual_public` | `crypto` | Hyperliquid public API | perpetual futures | false | false | BTC/ETH/HYPE: 30m, 4h, 1d, 1w |
 
 ## 技术栈
 
