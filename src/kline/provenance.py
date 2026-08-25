@@ -306,9 +306,9 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         ticker_aliases={"BTC": "BTC", "ETH": "ETH", "HYPE": "HYPE"},
         canonical_instrument_ids={"BTC": "BTC.HYPERLIQUID", "ETH": "ETH.HYPERLIQUID", "HYPE": "HYPE.HYPERLIQUID"},
         symbol_timeframes={
-            "BTC": (Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
-            "ETH": (Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
-            "HYPE": (Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
+            "BTC": (Timeframe.MIN_30, Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
+            "ETH": (Timeframe.MIN_30, Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
+            "HYPE": (Timeframe.MIN_30, Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
         },
         enforce_symbol_allowlist=True,
     ),

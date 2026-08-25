@@ -177,6 +177,7 @@ def test_yahoo_symbol_timeframe_allowlist_is_explicit():
     futures = source_manifest("yahoo_finance_futures", AssetClass.COMMODITY)
     us_stock = source_manifest("yahoo_finance", AssetClass.US_STOCK)
     crypto = source_manifest("binance_spot_public", AssetClass.CRYPTO)
+    hyperliquid = source_manifest("hyperliquid_perpetual_public", AssetClass.CRYPTO)
 
     assert index.meta.supported_symbols == ("DX-Y.NYB", "^GSPC", "^IXIC", "^VIX", "^N225", "^KS11")
     assert index.supports_timeframe("DX-Y.NYB", Timeframe.HOUR_4)
@@ -190,6 +191,9 @@ def test_yahoo_symbol_timeframe_allowlist_is_explicit():
     assert not us_stock.supports_timeframe("AAPL", Timeframe.HOUR_4)
     assert crypto.supports_timeframe("BTC", Timeframe.HOUR_4)
     assert not crypto.supports_timeframe("ETH", Timeframe.HOUR_4)
+    assert hyperliquid.supports_timeframe("BTC", Timeframe.MIN_30)
+    assert hyperliquid.supports_timeframe("ETH", Timeframe.MIN_30)
+    assert hyperliquid.supports_timeframe("HYPE", Timeframe.MIN_30)
 
 
 def test_health_exposes_effective_symbol_matrix(tmp_path):

@@ -15,6 +15,7 @@ from kline.providers.base import ProviderError
 HYPERLIQUID_INFO_URL = "https://api.hyperliquid.xyz/info"
 
 _TF_MAP = {
+    Timeframe.MIN_30: ("30m", 30 * 60 * 1000),
     Timeframe.HOUR_4: ("4h", 4 * 60 * 60 * 1000),
     Timeframe.DAY: ("1d", 24 * 60 * 60 * 1000),
 }
@@ -70,7 +71,7 @@ class HyperliquidPerpetualProvider:
         self.source_identity: dict[str, Any] = {}
 
     def supported_timeframes(self) -> list[Timeframe]:
-        return [Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK]
+        return [Timeframe.MIN_30, Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK]
 
     async def fetch(
         self,
@@ -115,7 +116,7 @@ class HyperliquidPerpetualProvider:
 
         interval, interval_ms = _TF_MAP.get(timeframe, (None, None))
         if interval is None or interval_ms is None:
-            raise ProviderError("Hyperliquid perpetual source supports only 4h, 1d, and 1w")
+            raise ProviderError("Hyperliquid perpetual source supports only 30m, 4h, 1d, and 1w")
         now = datetime.now(timezone.utc)
         start_ms = _parse_bound(start)
         end_ms = _parse_bound(end)
