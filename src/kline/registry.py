@@ -20,6 +20,7 @@ from kline.providers.hyperliquid import HyperliquidPerpetualProvider
 from kline.providers.sina import SinaIndexProvider
 from kline.providers.treasury import TreasuryCsvProvider
 from kline.providers.us import USStockProvider
+from kline.providers.us_authorized import AuthorizedUSProvider, USDataEntitlement
 from kline.provenance import (
     all_source_manifests,
     normalize_source,
@@ -85,6 +86,24 @@ def init(settings: Settings | None = None) -> None:
         ProviderBackedMarketDataAdapter(
             source_manifest("yahoo_finance_etf", AssetClass.ETF),
             _providers[AssetClass.ETF],
+        )
+    )
+    us_entitlement = None
+    if s.us_data_entitlement_path:
+        us_entitlement = USDataEntitlement.from_json_file(s.us_data_entitlement_path)
+    if s.us_data_source != "us_authorized_pending":
+        raise ProviderError(
+            "US MVP source must be registered explicitly before changing us_data_source"
+        )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("us_authorized_pending", AssetClass.US_STOCK),
+            AuthorizedUSProvider(
+                s.us_data_token,
+                entitlement=us_entitlement,
+                manifest=Path(__file__).resolve().parents[2] / "configs" / "mvp_manifest.json",
+                source_id="us_authorized_pending",
+            ),
         )
     )
     for factor_asset_class in (AssetClass.MACRO, AssetClass.FLOW, AssetClass.EVENT):

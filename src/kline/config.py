@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     # without this operator-controlled receipt remains blocked_for_entitlement.
     tushare_entitlement_path: str = ""
 
+    # Authorized US market-data adapter (provider choice remains explicit).
+    us_data_token: str = ""
+    us_data_source: str = "us_authorized_pending"
+    us_data_entitlement_path: str = ""
+
     # Provider timeouts (seconds)
     request_timeout: int = 30
 
