@@ -1045,6 +1045,122 @@ class KlineStore:
             }
         return {"status": "ok", **counts}
 
+    def latest_mvp_run(self) -> dict[str, Any] | None:
+        """Return the newest persisted MVP run receipt summary."""
+
+        with self._session_factory() as session:
+            row = session.execute(
+                select(MvpRunRow)
+                .order_by(MvpRunRow.created_at.desc(), MvpRunRow.run_id.desc())
+                .limit(1)
+            ).scalar_one_or_none()
+        if row is None:
+            return None
+        return {
+            "run_id": row.run_id,
+            "status": row.status,
+            "manifest_version": row.manifest_version,
+            "manifest_hash": row.manifest_hash,
+            "started_at": row.started_at,
+            "completed_at": row.completed_at,
+            "window_start": row.window_start,
+            "window_end": row.window_end,
+            "candle_count": row.candle_count,
+            "observation_count": row.observation_count,
+            "quality_count": row.quality_count,
+            "transform_count": row.transform_count,
+            "watermark_count": row.watermark_count,
+            "receipt_hash": row.receipt_hash,
+            "error": row.error,
+        }
+
+    def mvp_latest_closed_bars(self) -> list[dict[str, Any]]:
+        """Return latest timestamp/row count for each source-aware MVP series."""
+
+        latest = (
+            select(
+                MvpCandleRow.source_id,
+                MvpCandleRow.instrument_id,
+                MvpCandleRow.timeframe,
+                MvpCandleRow.adjustment_basis,
+                MvpCandleRow.manifest_version,
+                func.max(MvpCandleRow.timestamp).label("latest_timestamp"),
+                func.count().label("row_count"),
+            )
+            .group_by(
+                MvpCandleRow.source_id,
+                MvpCandleRow.instrument_id,
+                MvpCandleRow.timeframe,
+                MvpCandleRow.adjustment_basis,
+                MvpCandleRow.manifest_version,
+            )
+            .subquery()
+        )
+        with self._session_factory() as session:
+            rows = session.execute(select(latest)).all()
+        return [
+            {
+                "source_id": row.source_id,
+                "instrument_id": row.instrument_id,
+                "timeframe": row.timeframe,
+                "adjustment_basis": row.adjustment_basis,
+                "manifest_version": row.manifest_version,
+                "latest_timestamp": row.latest_timestamp,
+                "row_count": row.row_count,
+            }
+            for row in rows
+        ]
+
+    def mvp_quality_summary(self) -> dict[str, Any]:
+        """Summarize persisted quality outcomes for the health surface."""
+
+        with self._session_factory() as session:
+            rows = session.execute(
+                select(
+                    MvpQualityReceiptRow.status,
+                    func.count().label("count"),
+                    func.coalesce(func.sum(MvpQualityReceiptRow.gaps), 0).label("gaps"),
+                    func.coalesce(func.sum(MvpQualityReceiptRow.duplicates), 0).label("duplicates"),
+                    func.coalesce(func.sum(MvpQualityReceiptRow.blocked_cells), 0).label(
+                        "blocked_cells"
+                    ),
+                ).group_by(MvpQualityReceiptRow.status)
+            ).all()
+        return {
+            "by_status": {
+                row.status: {
+                    "count": int(row.count),
+                    "gaps": int(row.gaps),
+                    "duplicates": int(row.duplicates),
+                    "blocked_cells": int(row.blocked_cells),
+                }
+                for row in rows
+            }
+        }
+
+    def latest_mvp_backup(self) -> dict[str, Any] | None:
+        """Return the newest backup receipt without exposing database paths."""
+
+        with self._session_factory() as session:
+            row = session.execute(
+                select(MvpBackupReceiptRow)
+                .order_by(
+                    MvpBackupReceiptRow.created_at.desc(), MvpBackupReceiptRow.backup_id.desc()
+                )
+                .limit(1)
+            ).scalar_one_or_none()
+        if row is None:
+            return None
+        return {
+            "backup_id": row.backup_id,
+            "run_id": row.run_id,
+            "status": row.status,
+            "checksum": row.checksum,
+            "size_bytes": row.size_bytes,
+            "restore_verified": row.restore_verified,
+            "created_at": row.created_at.isoformat() if row.created_at else None,
+        }
+
     def storage_health(self) -> dict[str, Any]:
         """Return an owner-side integrity receipt without exposing the database path."""
         with self._engine.connect() as connection:
