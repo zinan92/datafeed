@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import pytest
@@ -23,6 +24,28 @@ def _daily_frame(rows: list[tuple[str, float, float, float, float]]) -> pd.DataF
         },
         index=index,
     )
+
+
+def _repaired_daily_frame() -> pd.DataFrame:
+    index = pd.DatetimeIndex(["2026-08-27", "2026-08-28"], tz="UTC")
+    return pd.DataFrame(
+        {
+            "Open": [100.0, 101.0],
+            "High": [102.0, 103.0],
+            "Low": [99.0, 100.0],
+            "Close": [101.0, 102.0],
+            "Volume": [100.0, 120.0],
+            "Repaired?": [False, True],
+        },
+        index=index,
+    )
+
+
+def _broken_daily_frame() -> pd.DataFrame:
+    frame = _repaired_daily_frame().copy()
+    frame.loc[frame.index[-1], ["Open", "High", "Low", "Close"]] = float("nan")
+    frame["Repaired?"] = [False, False]
+    return frame
 
 
 @pytest.mark.asyncio
@@ -98,7 +121,7 @@ async def test_yahoo_weekly_excludes_current_partial_week(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_yahoo_daily_excludes_current_calendar_day(monkeypatch):
-    today = date.today()
+    today = datetime.now(ZoneInfo("America/New_York")).date()
     rows = [
         ((today - timedelta(days=1)).isoformat(), 100, 105, 99, 104),
         (today.isoformat(), 104, 110, 103, 109),
@@ -119,7 +142,7 @@ async def test_yahoo_daily_excludes_current_calendar_day(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_yahoo_default_daily_history_is_bounded_and_recorded(monkeypatch):
-    yesterday = date.today() - timedelta(days=1)
+    yesterday = datetime.now(ZoneInfo("America/New_York")).date() - timedelta(days=1)
     calls: dict = {}
 
     class FakeTicker:
@@ -139,6 +162,75 @@ async def test_yahoo_default_daily_history_is_bounded_and_recorded(monkeypatch):
     assert calls["period"] == "5y"
     assert provider.last_raw_response is not None
     assert provider.last_raw_response["request_params"]["period"] == "5y"
+
+
+@pytest.mark.asyncio
+async def test_yahoo_enables_upstream_repair_and_records_repaired_rows(monkeypatch):
+    calls: dict = {}
+
+    class FakeTicker:
+        def history(self, **kwargs):
+            calls.update(kwargs)
+            return _repaired_daily_frame() if kwargs["repair"] else _broken_daily_frame()
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda ticker: FakeTicker())
+    provider = USStockProvider()
+
+    candles = await provider.fetch(
+        "SPY",
+        Timeframe.DAY,
+        start="2026-08-27",
+        end="2026-08-29",
+        limit=10,
+    )
+
+    assert len(candles) == 2
+    assert calls["repair"] is True
+    assert provider.last_raw_response is not None
+    assert provider.last_raw_response["request_params"]["repair_policy"] == "yfinance_repair_on_invalid_ohlc"
+    assert provider.last_raw_response["request_params"]["repair_attempted"] is True
+    assert provider.source_identity["repair_policy"] == "yfinance_repair_on_invalid_ohlc"
+    assert provider.source_identity["repair_attempted"] is True
+    assert provider.source_identity["repaired_row_count"] == 1
+    assert provider.source_identity["repaired_timestamps"] == ["2026-08-28"]
+    assert provider.last_raw_response["response_body"]["repaired_timestamps"] == ["2026-08-28"]
+
+
+@pytest.mark.asyncio
+async def test_yahoo_repair_context_is_clipped_to_requested_end(monkeypatch):
+    calls: dict = {}
+    index = pd.DatetimeIndex(["2026-08-28", "2026-08-31"], tz="UTC")
+    frame = pd.DataFrame(
+        {
+            "Open": [100.0, 101.0],
+            "High": [102.0, 103.0],
+            "Low": [99.0, 100.0],
+            "Close": [101.0, 102.0],
+            "Volume": [100.0, 120.0],
+            "Repaired?": [True, True],
+        },
+        index=index,
+    )
+
+    class FakeTicker:
+        def history(self, **kwargs):
+            calls.update(kwargs)
+            return frame if kwargs["repair"] else frame.assign(Close=[101.0, float("nan")])
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda ticker: FakeTicker())
+    provider = USStockProvider()
+
+    candles = await provider.fetch(
+        "^KS11",
+        Timeframe.DAY,
+        start="2026-08-28",
+        end="2026-08-29",
+        limit=10,
+    )
+
+    assert calls["end"] == "2026-09-05"
+    assert [candle.timestamp for candle in candles] == ["2026-08-28"]
+    assert provider.source_identity["repaired_timestamps"] == ["2026-08-28"]
 
 
 @pytest.mark.asyncio
@@ -165,10 +257,12 @@ async def test_yahoo_explicit_range_does_not_add_default_period(monkeypatch):
 
     assert calls["interval"] == "1d"
     assert calls["start"] == "2026-08-18"
-    assert calls["end"] == "2026-08-19"
+    assert calls["end"] == "2026-08-26"
     assert "period" not in calls
     assert provider.last_raw_response is not None
     assert "period" not in provider.last_raw_response["request_params"]
+    assert provider.last_raw_response["request_params"]["end"] == "2026-08-19"
+    assert provider.last_raw_response["request_params"]["repair_context_end"] == "2026-08-26"
 
 
 def test_yahoo_symbol_timeframe_allowlist_is_explicit():

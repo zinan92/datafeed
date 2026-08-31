@@ -286,3 +286,13 @@ consumers can use without direct exchange or private SQLite access.
   the final legacy migration reports zero skipped rows.
 - Visual proof:
   `/Users/wendy/park-io/008_codex session insights and decision logs/交易系统/evidence/2026-07-15-datafeed-source-health-final.png`.
+# 2026-08-31 - Repair Yahoo latest-session OHLC gaps without stale fallback
+
+- Yahoo occasionally returned a latest-session row with valid volume but
+  `NaN` OHLC, causing strict ETF/index requests to fail with `502 upstream_error`.
+- The provider now requests a small upstream context window and retries with
+  yfinance `repair=True` only after the raw response fails OHLC validation.
+- Repaired rows are explicitly recorded in `source_identity`; output remains
+  upstream, non-synthetic, and clipped to the caller's requested cutoff.
+- No cache fallback, previous-close substitution, or implicit source change was
+  introduced. Focused and full test suites pass (147 tests).
