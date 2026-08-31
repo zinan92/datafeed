@@ -1,0 +1,72 @@
+{
+  "schema_version": "mvp-acceptance-v1",
+  "status": "blocked",
+  "generated_at": "2026-08-31T21:30:00+00:00",
+  "manifest_version": "mvp_universe_v1",
+  "manifest_hash": "fe0731ae0ea3e343400f6aff74249c91b00e7a31de2cbf6ab3ff98e5dcbc0173",
+  "window": {
+    "start": null,
+    "end": null
+  },
+  "evidence_kind": "not_supplied",
+  "criteria": {
+    "active_manifest": {
+      "status": "blocked",
+      "observed": "candidate"
+    },
+    "entitlement": {
+      "status": "blocked",
+      "blocked_instruments": 203
+    },
+    "evidence_kind": {
+      "status": "blocked",
+      "observed": "not_supplied"
+    },
+    "thirty_day_window": {
+      "status": "blocked",
+      "start": null,
+      "end": null
+    },
+    "real_coverage": {
+      "status": "blocked",
+      "health_status": null
+    },
+    "restore": {
+      "status": "blocked",
+      "observed": null
+    },
+    "membership_freeze": {
+      "status": "blocked"
+    }
+  },
+  "blockers": [
+    {
+      "code": "manifest_not_active",
+      "detail": "manifest must be activated by a real successful run"
+    },
+    {
+      "code": "entitlement_blocked",
+      "detail": "one or more manifest sources lack valid persistence entitlement"
+    },
+    {
+      "code": "real_evidence_required",
+      "detail": "mock/parser/HTTP-200 evidence cannot verify the MVP"
+    },
+    {
+      "code": "window_not_started",
+      "detail": "active manifest effective_at is missing"
+    },
+    {
+      "code": "coverage_not_verified",
+      "detail": "health must show a successful real-data run"
+    },
+    {
+      "code": "restore_not_verified",
+      "detail": "clean NAS restore with matching manifest hash is required"
+    },
+    {
+      "code": "freeze_policy_mismatch",
+      "detail": "active manifest must freeze membership for 30 days"
+    }
+  ]
+}
