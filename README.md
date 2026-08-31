@@ -263,6 +263,14 @@ $ curl "localhost:8100/api/candles/us_stock/AAPL?timeframe=1d&limit=3"
 | `latest_timestamp` / `age_seconds` | 最新一根 bar 的时间与年龄（永远是诚实事实） |
 | `fresh` / `max_age_seconds` | **仅对 7×24 连续市场（crypto）给出**新鲜度判定；行情有休市的源（美股/商品/A股）恒为 `null`，由消费方按自己的交易日历判断 |
 | `execution_venue` | 是否来自可作为交易页实时真源的执行场所。research 源为 `false`，Binance USD-M Futures live 为 `true` |
+
+### Yahoo 最新交易日修复
+
+Yahoo 偶尔会返回一个有成交量、但 OHLC 为 `NaN` 的最新交易日行。严格请求不会把
+这类坏行静默变成上一根 K 线：provider 先保留原始响应，只有在 OHLC 校验失败时才
+调用 yfinance 的 upstream repair 路径，并在 `source_identity` 中记录
+`repair_attempted`、`repaired_row_count` 和 `repaired_timestamps`。请求会多取少量上下文，
+但公开 candles 仍严格裁剪到请求的 `end`，不会泄漏未来数据、读取旧 cache 或生成合成价格。
 | `reject_reason` / `access_issues` | strict quality blocked 时的直接原因，如 `upstream_error`、`empty_data`、`stale`、`gap`、`out_of_order` |
 
 > `cache_policy=allow` 命中 cache 时不会自动回源刷新，但 `served_from` + `age_seconds` + `fresh` 让陈旧数据可见。实时路径应使用 `cache_policy=bypass` 或 `profile=realtime`。

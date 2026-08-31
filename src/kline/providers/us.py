@@ -8,6 +8,7 @@ import math
 from typing import Any
 from zoneinfo import ZoneInfo
 
+import pandas as pd
 import yfinance as yf
 
 from kline.models import Candle, Timeframe, TimeframeTransform
@@ -39,6 +40,46 @@ _DEFAULT_PERIOD = {
     Timeframe.DAY: "5y",
     Timeframe.WEEK: "5y",
 }
+
+
+def _index_date(index: Any) -> date:
+    """Return a calendar date from a pandas timestamp-like index value."""
+
+    value = getattr(index, "date", None)
+    if callable(value):
+        return value()
+    return date.fromisoformat(str(index)[:10])
+
+
+def _index_text(index: Any, timeframe: Timeframe) -> str:
+    if timeframe == Timeframe.DAY:
+        return _index_date(index).isoformat()
+    if hasattr(index, "isoformat"):
+        return index.isoformat()
+    return str(index)
+
+
+def _invalid_indices(frame: Any) -> list[Any]:
+    """Return rows that cannot be represented as a finite OHLCV candle."""
+
+    if frame is None or getattr(frame, "empty", True):
+        return []
+    invalid: list[Any] = []
+    for idx, row in frame.iterrows():
+        try:
+            values = [
+                float(row[column])
+                for column in ("Open", "High", "Low", "Close")
+            ]
+            volume = float(row.get("Volume", 0))
+            if not all(math.isfinite(value) for value in (*values, volume)):
+                invalid.append(idx)
+                continue
+            if values[1] < max(values[0], values[3]) or values[2] > min(values[0], values[3]):
+                invalid.append(idx)
+        except (TypeError, ValueError, KeyError):
+            invalid.append(idx)
+    return invalid
 
 
 class USStockProvider:
@@ -82,8 +123,9 @@ class USStockProvider:
                 self.source_identity = {"provider_symbol": ticker.upper()}
                 raise
             raw_audit = self.last_raw_response
+            raw_identity = dict(self.source_identity)
             self.timeframe_transform = requested_transform
-            self.source_identity = {"provider_symbol": ticker.upper()}
+            self.source_identity = raw_identity
             try:
                 candles = _aggregate_completed_weeks(
                     daily,
@@ -128,8 +170,9 @@ class USStockProvider:
                 self.source_identity = {"provider_symbol": ticker.upper()}
                 raise
             raw_audit = self.last_raw_response
+            raw_identity = dict(self.source_identity)
             self.timeframe_transform = requested_transform
-            self.source_identity = {"provider_symbol": ticker.upper()}
+            self.source_identity = raw_identity
             candles, dropped = _aggregate_fixed_4h(
                 hourly,
                 anchor_hour=self._four_hour_anchor[0],
@@ -166,6 +209,10 @@ class USStockProvider:
             "start": start,
             "end": end,
             "limit": limit,
+            # Yahoo occasionally emits a live row with valid volume but NaN
+            # OHLC. We first ask for the raw response, then invoke yfinance's
+            # repair path only when the raw response cannot pass validation.
+            "repair_policy": "yfinance_repair_on_invalid_ohlc",
         }
         self.last_raw_response = {
             "request_params": request_params,
@@ -175,10 +222,15 @@ class USStockProvider:
         }
         try:
             stock = yf.Ticker(ticker.upper())
-            kwargs: dict = {"interval": interval}
+            kwargs: dict = {"interval": interval, "repair": False, "keepna": False}
             if start and end:
                 kwargs["start"] = start
-                kwargs["end"] = end
+                # Give Yahoo a little context beyond the requested cutoff.
+                # Its repair path needs the next session to reconstruct a
+                # live row; the public response is still clipped to `end`
+                # below, so no future candle can leak into the contract.
+                kwargs["end"] = _repair_context_end(end)
+                request_params["repair_context_end"] = kwargs["end"]
             else:
                 period = _DEFAULT_PERIOD.get(timeframe, "2y")
                 kwargs["period"] = period
@@ -200,6 +252,73 @@ class USStockProvider:
                     "Try common symbols: AAPL, MSFT, GOOGL, AMZN",
                 ],
             )
+
+        cutoff = (
+            _closed_daily_cutoff(end, timezone_name=_source_timezone(ticker))
+            if timeframe == Timeframe.DAY
+            else None
+        )
+        raw_bad_indices = _invalid_indices(df)
+        if timeframe == Timeframe.DAY and cutoff is not None:
+            raw_dates = [
+                _index_date(idx)
+                for idx in df.index
+                if _index_date(idx) <= cutoff
+            ]
+            # A missing latest session can be represented by a dropped row
+            # rather than a NaN row (notably for VIX). Only retry when the
+            # requested cutoff is a weekday and the raw data stops earlier.
+            if raw_dates and max(raw_dates) < cutoff and cutoff.weekday() < 5:
+                raw_bad_indices.append(None)
+
+        repaired_timestamps: list[str] = []
+        repair_attempted = False
+        if raw_bad_indices:
+            repair_attempted = True
+            repair_kwargs = dict(kwargs)
+            repair_kwargs["repair"] = True
+            try:
+                repaired_df = yf.Ticker(ticker.upper()).history(**repair_kwargs)
+            except Exception as e:
+                self.last_raw_response["error"] = str(e)
+                raise ProviderError(
+                    f"Yahoo Finance repair failed for {ticker}: {e}",
+                    suggestions=["Retry the same source after the upstream response stabilizes"],
+                ) from e
+            if repaired_df is None or repaired_df.empty:
+                self.last_raw_response["error"] = "repair_empty_data"
+                raise ProviderError(f"Yahoo Finance repair returned no data for {ticker}")
+
+            allowed_indices = set(df.index)
+            target_index = None
+            if timeframe == Timeframe.DAY and cutoff is not None:
+                candidates = [
+                    idx for idx in repaired_df.index if _index_date(idx) <= cutoff
+                ]
+                if candidates:
+                    target_index = max(candidates, key=_index_date)
+                    allowed_indices.add(target_index)
+
+            replace_indices = {idx for idx in raw_bad_indices if idx is not None}
+            repaired_indices = [
+                idx
+                for idx in repaired_df.index
+                if idx in allowed_indices
+                and (idx in replace_indices or idx == target_index)
+            ]
+            for idx in repaired_indices:
+                if idx in df.index:
+                    for column in ("Open", "High", "Low", "Close", "Volume"):
+                        if column in repaired_df.columns:
+                            df.loc[idx, column] = repaired_df.loc[idx, column]
+                else:
+                    df = pd.concat([df, repaired_df.loc[[idx]]], sort=False)
+                repaired_timestamps.append(_index_text(idx, timeframe))
+            df = df.sort_index()
+            request_params["repair_attempted"] = True
+            request_params["repair_selected_rows"] = repaired_timestamps
+        else:
+            request_params["repair_attempted"] = False
 
         candles = []
         for idx, row in df.iterrows():
@@ -239,11 +358,17 @@ class USStockProvider:
             )
 
         if timeframe == Timeframe.DAY:
-            cutoff = _closed_daily_cutoff(end, timezone_name=_source_timezone(ticker))
+            assert cutoff is not None
             candles = [
                 candle
                 for candle in candles
                 if date.fromisoformat(candle.timestamp[:10]) <= cutoff
+            ]
+            returned_timestamps = {candle.timestamp[:10] for candle in candles}
+            repaired_timestamps = [
+                timestamp
+                for timestamp in repaired_timestamps
+                if timestamp[:10] in returned_timestamps
             ]
             if not candles:
                 raise ProviderError(f"No closed daily data returned for {ticker}")
@@ -256,10 +381,17 @@ class USStockProvider:
             timeframe_origin="native",
             aggregation={"kind": "none", "rule": "native_passthrough"},
         )
-        self.source_identity = {"provider_symbol": ticker.upper()}
+        self.source_identity = {
+            "provider_symbol": ticker.upper(),
+            "repair_policy": "yfinance_repair_on_invalid_ohlc",
+            "repair_attempted": repair_attempted,
+            "repaired_row_count": len(repaired_timestamps),
+            "repaired_timestamps": repaired_timestamps,
+        }
         self.last_raw_response["response_body"] = {
             "row_count": len(candles),
             "rows": [item.model_dump() for item in candles],
+            "repaired_timestamps": repaired_timestamps,
         }
         logger.info(f"Fetched {len(candles)} candles for {ticker} ({timeframe.value})")
         return candles
@@ -317,6 +449,12 @@ def _closed_daily_cutoff(end: str | None, *, timezone_name: str) -> date:
     yesterday = datetime.now(ZoneInfo(timezone_name)).date() - timedelta(days=1)
     requested = _exclusive_end_cutoff(end, timezone_name=timezone_name)
     return min(requested, yesterday)
+
+
+def _repair_context_end(end: str) -> str:
+    """Extend an upstream Yahoo request without extending the public cutoff."""
+
+    return (date.fromisoformat(end[:10]) + timedelta(days=7)).isoformat()
 
 
 def _derived_audit(
