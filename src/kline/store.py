@@ -469,8 +469,8 @@ class KlineStore:
         if write.window_end is not None:
             self._mvp_text(write.window_end, field_name="window_end")
         self._mvp_json(write.policy, field_name="policy")
-        if write.status not in {"success", "failed"}:
-            raise StorageError("run status must be success or failed")
+        if write.status not in {"success", "partial", "failed"}:
+            raise StorageError("run status must be success, partial, or failed")
         if write.status == "failed":
             if not write.error:
                 raise StorageError("failed run requires error")
@@ -707,7 +707,7 @@ class KlineStore:
                     or existing.manifest_hash != write.manifest_hash
                 ):
                     raise StorageError("run_id already belongs to a different manifest")
-                if existing.status != "success":
+                if existing.status not in {"success", "partial"}:
                     raise StorageError("run_id already has a failed attempt")
                 return self._mvp_run_receipt(existing)
             session.rollback()
