@@ -159,6 +159,9 @@ class TransformReceiptWrite:
     input_end: str
     input_hash: str
     output_hash: str
+    bucket_anchor: str | None = None
+    partial_bucket_policy: str | None = None
+    partial_bucket_count: int = 0
 
 
 @dataclass(frozen=True)
