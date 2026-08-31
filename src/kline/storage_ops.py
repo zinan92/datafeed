@@ -398,6 +398,8 @@ class SqliteBackupManager:
             ):
                 source_connection.backup(target_connection)
                 target_connection.commit()
+                target_connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+                target_connection.execute("PRAGMA journal_mode=DELETE")
                 integrity = target_connection.execute("PRAGMA integrity_check").fetchone()[0]
                 if integrity != "ok":
                     raise StorageOpsError(f"backup integrity check failed: {integrity}")
