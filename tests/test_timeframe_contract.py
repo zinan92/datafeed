@@ -187,7 +187,10 @@ async def test_yahoo_enables_upstream_repair_and_records_repaired_rows(monkeypat
     assert len(candles) == 2
     assert calls["repair"] is True
     assert provider.last_raw_response is not None
-    assert provider.last_raw_response["request_params"]["repair_policy"] == "yfinance_repair_on_invalid_ohlc"
+    assert (
+        provider.last_raw_response["request_params"]["repair_policy"]
+        == "yfinance_repair_on_invalid_ohlc"
+    )
     assert provider.last_raw_response["request_params"]["repair_attempted"] is True
     assert provider.source_identity["repair_policy"] == "yfinance_repair_on_invalid_ohlc"
     assert provider.source_identity["repair_attempted"] is True
@@ -272,6 +275,7 @@ def test_yahoo_symbol_timeframe_allowlist_is_explicit():
     us_stock = source_manifest("yahoo_finance", AssetClass.US_STOCK)
     crypto = source_manifest("binance_spot_public", AssetClass.CRYPTO)
     hyperliquid = source_manifest("hyperliquid_perpetual_public", AssetClass.CRYPTO)
+    tushare = source_manifest("tushare_pro", AssetClass.A_SHARE)
 
     assert index.meta.supported_symbols == ("DX-Y.NYB", "^GSPC", "^IXIC", "^VIX", "^N225", "^KS11")
     assert index.supports_timeframe("DX-Y.NYB", Timeframe.HOUR_4)
@@ -288,6 +292,12 @@ def test_yahoo_symbol_timeframe_allowlist_is_explicit():
     assert hyperliquid.supports_timeframe("BTC", Timeframe.MIN_30)
     assert hyperliquid.supports_timeframe("ETH", Timeframe.MIN_30)
     assert hyperliquid.supports_timeframe("HYPE", Timeframe.MIN_30)
+    assert hyperliquid.supports_timeframe("BTC", Timeframe.MIN_15)
+    assert hyperliquid.supports_timeframe("ETH", Timeframe.MIN_15)
+    assert hyperliquid.supports_timeframe("HYPE", Timeframe.MIN_15)
+    assert not tushare.supports_timeframe("300308.SZ", Timeframe.MIN_15)
+    assert not tushare.supports_timeframe("300308.SZ", Timeframe.HOUR_4)
+    assert tushare.supports_timeframe("300308.SZ", Timeframe.DAY)
 
 
 def test_health_exposes_effective_symbol_matrix(tmp_path):

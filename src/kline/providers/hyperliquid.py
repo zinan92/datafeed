@@ -15,6 +15,7 @@ from kline.providers.base import ProviderError
 HYPERLIQUID_INFO_URL = "https://api.hyperliquid.xyz/info"
 
 _TF_MAP = {
+    Timeframe.MIN_15: ("15m", 15 * 60 * 1000),
     Timeframe.MIN_30: ("30m", 30 * 60 * 1000),
     Timeframe.HOUR_4: ("4h", 4 * 60 * 60 * 1000),
     Timeframe.DAY: ("1d", 24 * 60 * 60 * 1000),
@@ -44,7 +45,9 @@ def _completed_weekly(candles: list[Candle], *, cutoff: datetime) -> list[Candle
         if len(rows) < 7:
             continue
         first_date = datetime.fromisoformat(rows[0].timestamp.replace("Z", "+00:00")).date()
-        week_end = date.fromisocalendar(first_date.isocalendar().year, first_date.isocalendar().week, 5)
+        week_end = date.fromisocalendar(
+            first_date.isocalendar().year, first_date.isocalendar().week, 5
+        )
         result.append(
             Candle(
                 timestamp=week_end.isoformat(),
@@ -62,16 +65,23 @@ def _completed_weekly(candles: list[Candle], *, cutoff: datetime) -> list[Candle
 class HyperliquidPerpetualProvider:
     """Fetch an explicit crypto-perpetual allowlist from Hyperliquid."""
 
-    def __init__(self, timeout: float = 30, transport: httpx.AsyncBaseTransport | None = None, allowed_symbols: set[str] | None = None) -> None:
+    def __init__(
+        self,
+        timeout: float = 30,
+        transport: httpx.AsyncBaseTransport | None = None,
+        allowed_symbols: set[str] | None = None,
+    ) -> None:
         self._timeout = timeout
         self._transport = transport
-        self._allowed_symbols = {item.upper() for item in (allowed_symbols or {"BTC", "ETH", "HYPE"})}
+        self._allowed_symbols = {
+            item.upper() for item in (allowed_symbols or {"BTC", "ETH", "HYPE"})
+        }
         self.last_raw_response: dict[str, Any] | None = None
         self.timeframe_transform: TimeframeTransform | None = None
         self.source_identity: dict[str, Any] = {}
 
     def supported_timeframes(self) -> list[Timeframe]:
-        return [Timeframe.MIN_30, Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK]
+        return [Timeframe.MIN_15, Timeframe.MIN_30, Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK]
 
     async def fetch(
         self,
@@ -116,12 +126,16 @@ class HyperliquidPerpetualProvider:
 
         interval, interval_ms = _TF_MAP.get(timeframe, (None, None))
         if interval is None or interval_ms is None:
-            raise ProviderError("Hyperliquid perpetual source supports only 30m, 4h, 1d, and 1w")
+            raise ProviderError(
+                "Hyperliquid perpetual source supports only 15m, 30m, 4h, 1d, and 1w"
+            )
         now = datetime.now(timezone.utc)
         start_ms = _parse_bound(start)
         end_ms = _parse_bound(end)
         if start_ms is None:
-            start_ms = int((now - timedelta(milliseconds=interval_ms * max(limit + 2, 20))).timestamp() * 1000)
+            start_ms = int(
+                (now - timedelta(milliseconds=interval_ms * max(limit + 2, 20))).timestamp() * 1000
+            )
         if end_ms is None:
             end_ms = int(now.timestamp() * 1000)
         else:
@@ -170,11 +184,20 @@ class HyperliquidPerpetualProvider:
                 stamp = datetime.fromtimestamp(float(item["t"]) / 1000, tz=timezone.utc)
             except (KeyError, TypeError, ValueError, OverflowError) as exc:
                 raise ProviderError("Hyperliquid candle payload is malformed") from exc
-            if not all(math.isfinite(value) for value in (open_value, high_value, low_value, close_value, volume)):
+            if not all(
+                math.isfinite(value)
+                for value in (open_value, high_value, low_value, close_value, volume)
+            ):
                 raise ProviderError("Hyperliquid candle contains a non-finite value")
-            if high_value < max(open_value, close_value) or low_value > min(open_value, close_value) or volume < 0:
+            if (
+                high_value < max(open_value, close_value)
+                or low_value > min(open_value, close_value)
+                or volume < 0
+            ):
                 raise ProviderError("Hyperliquid OHLC invariant failed")
-            end_stamp = datetime.fromtimestamp(float(item.get("T", item["t"])) / 1000, tz=timezone.utc)
+            end_stamp = datetime.fromtimestamp(
+                float(item.get("T", item["t"])) / 1000, tz=timezone.utc
+            )
             if end_stamp > now:
                 continue
             candles.append(

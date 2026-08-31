@@ -304,11 +304,33 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         meta=HYPERLIQUID_PERP_META,
         default_for_asset_class=False,
         ticker_aliases={"BTC": "BTC", "ETH": "ETH", "HYPE": "HYPE"},
-        canonical_instrument_ids={"BTC": "BTC.HYPERLIQUID", "ETH": "ETH.HYPERLIQUID", "HYPE": "HYPE.HYPERLIQUID"},
+        canonical_instrument_ids={
+            "BTC": "BTC.HYPERLIQUID",
+            "ETH": "ETH.HYPERLIQUID",
+            "HYPE": "HYPE.HYPERLIQUID",
+        },
         symbol_timeframes={
-            "BTC": (Timeframe.MIN_30, Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
-            "ETH": (Timeframe.MIN_30, Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
-            "HYPE": (Timeframe.MIN_30, Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
+            "BTC": (
+                Timeframe.MIN_15,
+                Timeframe.MIN_30,
+                Timeframe.HOUR_4,
+                Timeframe.DAY,
+                Timeframe.WEEK,
+            ),
+            "ETH": (
+                Timeframe.MIN_15,
+                Timeframe.MIN_30,
+                Timeframe.HOUR_4,
+                Timeframe.DAY,
+                Timeframe.WEEK,
+            ),
+            "HYPE": (
+                Timeframe.MIN_15,
+                Timeframe.MIN_30,
+                Timeframe.HOUR_4,
+                Timeframe.DAY,
+                Timeframe.WEEK,
+            ),
         },
         enforce_symbol_allowlist=True,
     ),
@@ -415,6 +437,7 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         asset_class=AssetClass.A_SHARE,
         meta=_PROVIDER_META[AssetClass.A_SHARE],
         default_for_asset_class=True,
+        blocked_timeframes=(Timeframe.MIN_15, Timeframe.HOUR_4),
     ),
     "tencent_kline": SourceManifest(
         source_id="tencent_kline",
@@ -577,11 +600,14 @@ def fred_source_manifest(asset_class: AssetClass) -> SourceManifest:
     return SourceManifest(
         source_id=f"fred_public_csv_{asset_class.value}",
         asset_class=asset_class,
-        meta=ProviderMeta(**{**FRED_META.__dict__, "source_mode": f"fred_public_csv_{asset_class.value}"}),
+        meta=ProviderMeta(
+            **{**FRED_META.__dict__, "source_mode": f"fred_public_csv_{asset_class.value}"}
+        ),
         default_for_asset_class=True,
         ticker_aliases=aliases,
         canonical_instrument_ids={key: key for key in aliases},
     )
+
 
 _EXTRA_SOURCE_MANIFESTS: dict[str, SourceManifest] = {}
 
