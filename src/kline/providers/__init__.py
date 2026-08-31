@@ -3,6 +3,7 @@
 from kline.providers.base import EntitlementBlocked, Provider
 from kline.providers.ashare import AShareProvider
 from kline.providers.tushare_mvp import TuShareEntitlement, TuShareMvpProvider
+from kline.providers.us_authorized import AuthorizedUSProvider, USDataEntitlement
 from kline.providers.us import USStockProvider
 from kline.providers.crypto import CryptoProvider
 from kline.providers.commodity import CommodityProvider
@@ -14,6 +15,8 @@ __all__ = [
     "AShareProvider",
     "TuShareEntitlement",
     "TuShareMvpProvider",
+    "AuthorizedUSProvider",
+    "USDataEntitlement",
     "USStockProvider",
     "CryptoProvider",
     "CommodityProvider",

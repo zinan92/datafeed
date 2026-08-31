@@ -137,6 +137,7 @@ _SOURCE_ALIASES = {
     "tushare_pro": "tushare_pro",
     "tencent": "tencent_kline",
     "tencent_kline": "tencent_kline",
+    "us_authorized_pending": "us_authorized_pending",
     "sina": "sina_index",
     "sina_index": "sina_index",
     "treasury": "treasury_official_csv",
@@ -161,6 +162,7 @@ _SOURCE_ASSET_CLASSES = {
     "treasury_official_csv_derived": AssetClass.MACRO,
     "yahoo_finance_index": AssetClass.INDEX,
     "yahoo_finance_etf": AssetClass.ETF,
+    "us_authorized_pending": AssetClass.US_STOCK,
     "fred_public_csv_macro": AssetClass.MACRO,
     "fred_public_csv_flow": AssetClass.FLOW,
     "fred_public_csv_event": AssetClass.EVENT,
@@ -206,6 +208,15 @@ _TENCENT_INDEX_META = ProviderMeta(
     realtime_supported=False,
     market_type="index",
     supported_symbols=("sh000001", "sh000688", "sh000015"),
+)
+_US_AUTHORIZED_META = ProviderMeta(
+    name="authorized_us_pending",
+    source_mode="us_authorized_pending",
+    quality_flags=("entitlement_required", "raw_unadjusted", "research_only"),
+    continuous=False,
+    execution_venue=False,
+    realtime_supported=False,
+    market_type="equity",
 )
 _SINA_INDEX_META = ProviderMeta(
     name="sina_finance",
@@ -340,6 +351,12 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         meta=_PROVIDER_META[AssetClass.US_STOCK],
         default_for_asset_class=True,
         blocked_timeframes=(Timeframe.HOUR_4,),
+    ),
+    "us_authorized_pending": SourceManifest(
+        source_id="us_authorized_pending",
+        asset_class=AssetClass.US_STOCK,
+        meta=_US_AUTHORIZED_META,
+        default_for_asset_class=False,
     ),
     "yahoo_finance_futures": SourceManifest(
         source_id="yahoo_finance_futures",
