@@ -13,6 +13,16 @@ from typing import Any, AsyncIterator, Mapping, Protocol
 
 from kline.models import AssetClass, Candle, InstrumentDefinition, Timeframe, TimeframeTransform
 from kline.providers.base import Provider, ProviderError
+from kline.storage import StoragePort
+
+__all__ = [
+    "FetchReceipt",
+    "MarketDataPort",
+    "ProviderBackedMarketDataAdapter",
+    "ProviderMeta",
+    "SourceManifest",
+    "StoragePort",
+]
 
 
 @dataclass(frozen=True)
@@ -83,26 +93,20 @@ class MarketDataPort(Protocol):
     """Port every market-data adapter must implement."""
 
     @property
-    def manifest(self) -> SourceManifest:
-        ...
+    def manifest(self) -> SourceManifest: ...
 
     @property
-    def last_raw_response(self) -> dict[str, Any] | None:
-        ...
+    def last_raw_response(self) -> dict[str, Any] | None: ...
 
     @property
-    def timeframe_transform(self) -> TimeframeTransform | None:
-        ...
+    def timeframe_transform(self) -> TimeframeTransform | None: ...
 
     @property
-    def source_identity(self) -> Mapping[str, Any] | None:
-        ...
+    def source_identity(self) -> Mapping[str, Any] | None: ...
 
-    def canonical_ticker(self, ticker: str) -> str:
-        ...
+    def canonical_ticker(self, ticker: str) -> str: ...
 
-    def supported_timeframes(self) -> list[Timeframe]:
-        ...
+    def supported_timeframes(self) -> list[Timeframe]: ...
 
     async def fetch_candles(
         self,
@@ -112,8 +116,7 @@ class MarketDataPort(Protocol):
         start: str | None = None,
         end: str | None = None,
         limit: int = 500,
-    ) -> list[Candle]:
-        ...
+    ) -> list[Candle]: ...
 
     async def fetch_candles_with_receipt(
         self,
@@ -123,18 +126,15 @@ class MarketDataPort(Protocol):
         start: str | None = None,
         end: str | None = None,
         limit: int = 500,
-    ) -> FetchReceipt:
-        ...
+    ) -> FetchReceipt: ...
 
     async def stream_candles(
         self,
         ticker: str,
         timeframe: Timeframe,
-    ) -> AsyncIterator[Candle]:
-        ...
+    ) -> AsyncIterator[Candle]: ...
 
-    async def fetch_instrument_definition(self, ticker: str) -> InstrumentDefinition:
-        ...
+    async def fetch_instrument_definition(self, ticker: str) -> InstrumentDefinition: ...
 
 
 class ProviderBackedMarketDataAdapter:
