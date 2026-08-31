@@ -27,7 +27,7 @@ def _row(open_ms: int, close: str = "60.0") -> dict[str, object]:
 
 
 def _row_for_interval(open_ms: int, interval: str, close: str = "60.0") -> dict[str, object]:
-    minutes = {"30m": 30, "4h": 240}[interval]
+    minutes = {"15m": 15, "30m": 30, "4h": 240}[interval]
     return {
         **_row(open_ms, close),
         "T": open_ms + minutes * 60 * 1000 - 1,
@@ -60,6 +60,24 @@ async def test_hyperliquid_native_4h_preserves_perpetual_identity():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("symbol", ["BTC", "ETH", "HYPE"])
+async def test_hyperliquid_native_15m_is_available_for_mvp_crypto_source(symbol: str):
+    def handler(request: httpx.Request) -> httpx.Response:
+        payload = json.loads(request.content)
+        assert payload["req"]["coin"] == symbol
+        assert payload["req"]["interval"] == "15m"
+        return httpx.Response(200, json=[_row_for_interval(1786838400000, "15m")])
+
+    provider = HyperliquidPerpetualProvider(transport=httpx.MockTransport(handler))
+    candles = await provider.fetch(symbol, Timeframe.MIN_15, limit=1)
+
+    assert len(candles) == 1
+    assert provider.timeframe_transform is not None
+    assert provider.timeframe_transform.raw_timeframe == Timeframe.MIN_15
+    assert provider.timeframe_transform.timeframe_origin == "native"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("symbol", ["BTC", "ETH", "HYPE"])
 async def test_hyperliquid_native_30m_is_available_for_unified_crypto_source(symbol: str):
     def handler(request: httpx.Request) -> httpx.Response:
         payload = json.loads(request.content)
@@ -78,7 +96,9 @@ async def test_hyperliquid_native_30m_is_available_for_unified_crypto_source(sym
 
 @pytest.mark.asyncio
 async def test_hyperliquid_rejects_unlisted_symbol():
-    provider = HyperliquidPerpetualProvider(transport=httpx.MockTransport(lambda _: httpx.Response(200, json=[])))
+    provider = HyperliquidPerpetualProvider(
+        transport=httpx.MockTransport(lambda _: httpx.Response(200, json=[]))
+    )
     with pytest.raises(ProviderError, match="does not enable SOL"):
         await provider.fetch("SOL", Timeframe.HOUR_4)
 
@@ -107,7 +127,13 @@ async def test_hyperliquid_weekly_bar_is_dated_on_completed_friday():
         rows = []
         for offset in range(7):
             stamp = start + timedelta(days=offset)
-            rows.append({**_row(int(stamp.timestamp() * 1000)), "T": int((stamp + timedelta(days=1)).timestamp() * 1000) - 1, "i": "1d"})
+            rows.append(
+                {
+                    **_row(int(stamp.timestamp() * 1000)),
+                    "T": int((stamp + timedelta(days=1)).timestamp() * 1000) - 1,
+                    "i": "1d",
+                }
+            )
         return httpx.Response(200, json=rows)
 
     provider = HyperliquidPerpetualProvider(transport=httpx.MockTransport(handler))
