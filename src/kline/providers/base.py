@@ -33,3 +33,12 @@ class ProviderError(Exception):
     def __init__(self, message: str, *, suggestions: list[str] | None = None) -> None:
         super().__init__(message)
         self.suggestions = suggestions or []
+        self.code = "provider_error"
+
+
+class EntitlementBlocked(ProviderError):
+    """The source is unavailable because the operator has no valid entitlement."""
+
+    def __init__(self, message: str = "data source is blocked_for_entitlement") -> None:
+        super().__init__(message)
+        self.code = "blocked_for_entitlement"

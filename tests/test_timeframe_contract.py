@@ -295,8 +295,8 @@ def test_yahoo_symbol_timeframe_allowlist_is_explicit():
     assert hyperliquid.supports_timeframe("BTC", Timeframe.MIN_15)
     assert hyperliquid.supports_timeframe("ETH", Timeframe.MIN_15)
     assert hyperliquid.supports_timeframe("HYPE", Timeframe.MIN_15)
-    assert not tushare.supports_timeframe("300308.SZ", Timeframe.MIN_15)
-    assert not tushare.supports_timeframe("300308.SZ", Timeframe.HOUR_4)
+    assert tushare.supports_timeframe("300308.SZ", Timeframe.MIN_15)
+    assert tushare.supports_timeframe("300308.SZ", Timeframe.HOUR_4)
     assert tushare.supports_timeframe("300308.SZ", Timeframe.DAY)
 
 

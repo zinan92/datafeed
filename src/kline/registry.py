@@ -9,7 +9,8 @@ from kline.config import Settings, ensure_data_dir, get_settings
 from kline.models import AssetClass, Timeframe
 from kline.plugin_loader import load_configured_adapters, load_entrypoint_adapters
 from kline.ports import MarketDataPort, ProviderBackedMarketDataAdapter
-from kline.providers.ashare import AShareProvider, TencentIndexProvider
+from kline.providers.ashare import TencentIndexProvider
+from kline.providers.tushare_mvp import TuShareEntitlement, TuShareMvpProvider
 from kline.providers.base import Provider, ProviderError
 from kline.providers.binance_usdm import BinanceUsdmFuturesProvider
 from kline.providers.commodity import CommodityProvider
@@ -126,7 +127,9 @@ def init(settings: Settings | None = None) -> None:
     register_adapter(
         ProviderBackedMarketDataAdapter(
             source_manifest("binance_usdm_futures_research", AssetClass.CRYPTO),
-            BinanceUsdmFuturesProvider(timeout=s.request_timeout, allowed_symbols={"BTCUSDT", "ETHUSDT"}),
+            BinanceUsdmFuturesProvider(
+                timeout=s.request_timeout, allowed_symbols={"BTCUSDT", "ETHUSDT"}
+            ),
         )
     )
     register_adapter(
@@ -136,15 +139,23 @@ def init(settings: Settings | None = None) -> None:
         )
     )
 
-    # A-share requires TuShare token
-    if s.tushare_token:
-        _providers[AssetClass.A_SHARE] = AShareProvider(s.tushare_token)
-        register_adapter(
-            ProviderBackedMarketDataAdapter(
-                source_manifest("tushare_pro", AssetClass.A_SHARE),
-                _providers[AssetClass.A_SHARE],
-            )
+    # A-share is always represented by the MVP adapter. Without both an
+    # operator token and an entitlement receipt, fetches remain typed
+    # blocked_for_entitlement and cannot write/promote candles.
+    entitlement = None
+    if s.tushare_entitlement_path:
+        entitlement = TuShareEntitlement.from_json_file(s.tushare_entitlement_path)
+    _providers[AssetClass.A_SHARE] = TuShareMvpProvider(
+        s.tushare_token,
+        entitlement=entitlement,
+        manifest=Path(__file__).resolve().parents[2] / "configs" / "mvp_manifest.json",
+    )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("tushare_pro", AssetClass.A_SHARE),
+            _providers[AssetClass.A_SHARE],
         )
+    )
 
     external_adapters = load_configured_adapters(s.adapter_config_path)
     if s.load_entrypoint_adapters:
@@ -247,9 +258,7 @@ def provider_status() -> dict:
             ]
         else:
             supported_timeframes = (
-                [timeframe.value for timeframe in adapter.supported_timeframes()]
-                if adapter
-                else []
+                [timeframe.value for timeframe in adapter.supported_timeframes()] if adapter else []
             )
         sources[source_id] = {
             "available": False,
