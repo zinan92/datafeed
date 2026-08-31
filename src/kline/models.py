@@ -231,7 +231,9 @@ class KlineRow(Base):
     __tablename__ = "klines"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    source_id = Column(String, nullable=False, default="legacy_unknown", server_default="legacy_unknown")
+    source_id = Column(
+        String, nullable=False, default="legacy_unknown", server_default="legacy_unknown"
+    )
     ticker = Column(String, nullable=False)
     asset_class = Column(String, nullable=False)
     timeframe = Column(String, nullable=False)
@@ -324,3 +326,219 @@ class SourceObservation(Base):
             "observed_at",
         ),
     )
+
+
+class MvpCandleRow(Base):
+    """Source-aware MVP candle; isolated from the legacy ``klines`` table."""
+
+    __tablename__ = "mvp_candles"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    instrument_id = Column(String, nullable=False)
+    display_symbol = Column(String, nullable=False)
+    provider_symbol = Column(String, nullable=False)
+    source_id = Column(String, nullable=False)
+    asset_class = Column(String, nullable=False)
+    timeframe = Column(String, nullable=False)
+    adjustment_basis = Column(String, nullable=False)
+    manifest_version = Column(String, nullable=False)
+    timestamp = Column(String, nullable=False)
+    open = Column(Float, nullable=False)
+    high = Column(Float, nullable=False)
+    low = Column(Float, nullable=False)
+    close = Column(Float, nullable=False)
+    volume = Column(Float, nullable=True)
+    amount = Column(Float, nullable=True)
+    volume_semantics = Column(String, nullable=False)
+    is_derived = Column(Boolean, nullable=False, default=False)
+    transform_receipt_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        Index(
+            "uq_mvp_candle_identity",
+            "source_id",
+            "instrument_id",
+            "timeframe",
+            "adjustment_basis",
+            "manifest_version",
+            "timestamp",
+            unique=True,
+        ),
+        Index(
+            "ix_mvp_candle_series",
+            "source_id",
+            "instrument_id",
+            "timeframe",
+            "manifest_version",
+        ),
+    )
+
+
+class MvpRunRow(Base):
+    """One ingestion attempt, including the manifest identity it ran."""
+
+    __tablename__ = "mvp_runs"
+
+    run_id = Column(String, primary_key=True)
+    manifest_version = Column(String, nullable=False)
+    manifest_hash = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    started_at = Column(String, nullable=False)
+    completed_at = Column(String, nullable=True)
+    window_start = Column(String, nullable=True)
+    window_end = Column(String, nullable=True)
+    policy_json = Column(Text, nullable=False, default="{}")
+    receipt_hash = Column(String, nullable=True)
+    error = Column(Text, nullable=True)
+    candle_count = Column(Integer, nullable=False, default=0)
+    observation_count = Column(Integer, nullable=False, default=0)
+    quality_count = Column(Integer, nullable=False, default=0)
+    transform_count = Column(Integer, nullable=False, default=0)
+    watermark_count = Column(Integer, nullable=False, default=0)
+    committed_at = Column(String, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+
+class MvpWatermarkRow(Base):
+    """Last closed candle promoted for one exact source-aware series."""
+
+    __tablename__ = "mvp_watermarks"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    instrument_id = Column(String, nullable=False)
+    display_symbol = Column(String, nullable=False)
+    provider_symbol = Column(String, nullable=False)
+    source_id = Column(String, nullable=False)
+    asset_class = Column(String, nullable=False)
+    timeframe = Column(String, nullable=False)
+    adjustment_basis = Column(String, nullable=False)
+    manifest_version = Column(String, nullable=False)
+    last_closed_timestamp = Column(String, nullable=False)
+    cursor = Column(String, nullable=True)
+    run_id = Column(String, nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    __table_args__ = (
+        Index(
+            "uq_mvp_watermark_identity",
+            "source_id",
+            "instrument_id",
+            "timeframe",
+            "adjustment_basis",
+            "manifest_version",
+            unique=True,
+        ),
+    )
+
+
+class MvpSourceObservationRow(Base):
+    """Request-level observation with identity, window, policy and response hash."""
+
+    __tablename__ = "mvp_source_observations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    run_id = Column(String, nullable=False)
+    manifest_version = Column(String, nullable=False)
+    instrument_id = Column(String, nullable=False)
+    display_symbol = Column(String, nullable=False)
+    provider_symbol = Column(String, nullable=False)
+    source_id = Column(String, nullable=False)
+    asset_class = Column(String, nullable=False)
+    timeframe = Column(String, nullable=False)
+    success = Column(Boolean, nullable=False)
+    served_from = Column(String, nullable=False)
+    request_start = Column(String, nullable=True)
+    request_end = Column(String, nullable=True)
+    response_hash = Column(String, nullable=True)
+    policy_json = Column(Text, nullable=False, default="{}")
+    candle_count = Column(Integer, nullable=False, default=0)
+    latest_timestamp = Column(String, nullable=True)
+    latency_ms = Column(Float, nullable=True)
+    error = Column(Text, nullable=True)
+    observed_at = Column(String, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        Index("ix_mvp_source_observation_run", "run_id", "source_id", "instrument_id", "timeframe"),
+    )
+
+
+class MvpQualityReceiptRow(Base):
+    """Quality gate receipt attached to one run/series."""
+
+    __tablename__ = "mvp_quality_receipts"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    run_id = Column(String, nullable=False)
+    manifest_version = Column(String, nullable=False)
+    instrument_id = Column(String, nullable=False)
+    source_id = Column(String, nullable=False)
+    timeframe = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    gaps = Column(Integer, nullable=False, default=0)
+    duplicates = Column(Integer, nullable=False, default=0)
+    invalid_rows = Column(Integer, nullable=False, default=0)
+    blocked_cells = Column(Integer, nullable=False, default=0)
+    details_json = Column(Text, nullable=False, default="{}")
+    receipt_hash = Column(String, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+
+class MvpTransformReceiptRow(Base):
+    """Auditable input/output identity for a derived timeframe."""
+
+    __tablename__ = "mvp_transform_receipts"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    run_id = Column(String, nullable=False)
+    manifest_version = Column(String, nullable=False)
+    instrument_id = Column(String, nullable=False)
+    source_id = Column(String, nullable=False)
+    output_timeframe = Column(String, nullable=False)
+    input_timeframe = Column(String, nullable=False)
+    aggregation_rule_version = Column(String, nullable=False)
+    input_start = Column(String, nullable=False)
+    input_end = Column(String, nullable=False)
+    input_hash = Column(String, nullable=False)
+    output_hash = Column(String, nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+
+class MvpEntitlementReceiptRow(Base):
+    """Source licence/permission receipt; absence must remain a blocked state."""
+
+    __tablename__ = "mvp_entitlement_receipts"
+
+    receipt_id = Column(String, primary_key=True)
+    source_id = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    allowed_history_json = Column(Text, nullable=False)
+    timeframe_permissions_json = Column(Text, nullable=False)
+    persistence_allowed = Column(Boolean, nullable=False)
+    derived_allowed = Column(Boolean, nullable=False)
+    non_display_allowed = Column(Boolean, nullable=False)
+    valid_from = Column(String, nullable=True)
+    valid_to = Column(String, nullable=True)
+    evidence_ref = Column(String, nullable=False)
+    receipt_hash = Column(String, nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    __table_args__ = (Index("ix_mvp_entitlement_source", "source_id", "valid_from", "valid_to"),)
+
+
+class MvpBackupReceiptRow(Base):
+    """Completed consistent-backup receipt, including restore verification."""
+
+    __tablename__ = "mvp_backup_receipts"
+
+    backup_id = Column(String, primary_key=True)
+    run_id = Column(String, nullable=False)
+    destination = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    checksum = Column(String, nullable=False)
+    size_bytes = Column(Integer, nullable=False)
+    restore_verified = Column(Boolean, nullable=False)
+    policy_json = Column(Text, nullable=False, default="{}")
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)

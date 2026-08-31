@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+import hashlib
 import json
-from typing import Any
+from typing import Any, Sequence
 
-from sqlalchemy import create_engine, event, select
+from sqlalchemy import create_engine, event, func, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import sessionmaker
 
@@ -17,6 +19,28 @@ from kline.models import (
     RawUpstreamResponse,
     SourceObservation,
     Timeframe,
+    MvpBackupReceiptRow,
+    MvpCandleRow,
+    MvpEntitlementReceiptRow,
+    MvpQualityReceiptRow,
+    MvpRunRow,
+    MvpSourceObservationRow,
+    MvpTransformReceiptRow,
+    MvpWatermarkRow,
+)
+from kline.storage import (
+    BackupReceiptWrite,
+    CandleSeriesKey,
+    EntitlementReceiptWrite,
+    MvpCandle,
+    MvpRunReceipt,
+    MvpRunWrite,
+    QualityReceiptWrite,
+    SourceObservationWrite,
+    StorageError,
+    TransformReceiptWrite,
+    WatermarkState,
+    WatermarkWrite,
 )
 
 LEGACY_SOURCE_ID = "legacy_unknown"
@@ -27,6 +51,7 @@ class KlineStore:
 
     def __init__(self, db_path: str) -> None:
         self._engine = create_engine(f"sqlite:///{db_path}", echo=False)
+        self._mvp_commit_failpoint = None
         # Enable WAL mode for concurrent reads
         event.listen(self._engine, "connect", self._enable_wal)
         Base.metadata.create_all(self._engine)
@@ -69,8 +94,7 @@ class KlineStore:
                 unique_sql = "UNIQUE " if unique else ""
                 joined = ", ".join(expected_columns)
                 connection.exec_driver_sql(
-                    f"CREATE {unique_sql}INDEX IF NOT EXISTS {index_name} "
-                    f"ON klines ({joined})"
+                    f"CREATE {unique_sql}INDEX IF NOT EXISTS {index_name} ON klines ({joined})"
                 )
 
     def _normalize_stored_timestamps(self) -> None:
@@ -395,13 +419,630 @@ class KlineStore:
             stmt = select(func.count()).select_from(RawUpstreamResponse)
             return session.execute(stmt).scalar_one()
 
+    @staticmethod
+    def _mvp_key_identity(key: CandleSeriesKey) -> tuple[str, ...]:
+        return (
+            key.source_id,
+            key.instrument_id,
+            key.timeframe,
+            key.adjustment_basis,
+            key.manifest_version,
+        )
+
+    @staticmethod
+    def _mvp_json(value: Any, *, field_name: str) -> str:
+        if not isinstance(value, dict) and not hasattr(value, "items"):
+            raise StorageError(f"{field_name} must be JSON object-like")
+        try:
+            return json.dumps(
+                dict(value), ensure_ascii=False, sort_keys=True, separators=(",", ":")
+            )
+        except (TypeError, ValueError) as exc:
+            raise StorageError(f"{field_name} must be JSON serializable") from exc
+
+    @staticmethod
+    def _mvp_hash(value: str, *, field_name: str) -> str:
+        if not isinstance(value, str) or len(value) != 64:
+            raise StorageError(f"{field_name} must be a SHA-256 hex digest")
+        lowered = value.lower()
+        if any(char not in "0123456789abcdef" for char in lowered):
+            raise StorageError(f"{field_name} must be a SHA-256 hex digest")
+        return lowered
+
+    @staticmethod
+    def _mvp_text(value: Any, *, field_name: str) -> str:
+        if not isinstance(value, str) or not value.strip():
+            raise StorageError(f"{field_name} must be a non-empty string")
+        return value.strip()
+
+    def _validate_mvp_run(self, write: MvpRunWrite) -> None:
+        if not isinstance(write, MvpRunWrite):
+            raise StorageError("commit_mvp_run expects MvpRunWrite")
+        self._mvp_text(write.run_id, field_name="run_id")
+        self._mvp_text(write.manifest_version, field_name="manifest_version")
+        self._mvp_hash(write.manifest_hash, field_name="manifest_hash")
+        self._mvp_text(write.started_at, field_name="started_at")
+        if write.completed_at is not None:
+            self._mvp_text(write.completed_at, field_name="completed_at")
+        if write.window_start is not None:
+            self._mvp_text(write.window_start, field_name="window_start")
+        if write.window_end is not None:
+            self._mvp_text(write.window_end, field_name="window_end")
+        self._mvp_json(write.policy, field_name="policy")
+        if write.status not in {"success", "failed"}:
+            raise StorageError("run status must be success or failed")
+        if write.status == "failed":
+            if not write.error:
+                raise StorageError("failed run requires error")
+            if any(
+                (
+                    write.candles,
+                    write.source_observations,
+                    write.quality_receipts,
+                    write.transform_receipts,
+                    write.watermarks,
+                )
+            ):
+                raise StorageError("failed run cannot promote candles or watermarks")
+
+        candle_keys: set[tuple[Any, ...]] = set()
+        for candle in write.candles:
+            if not isinstance(candle, MvpCandle):
+                raise StorageError("candles must contain MvpCandle values")
+            if candle.key.manifest_version != write.manifest_version:
+                raise StorageError("candle manifest_version does not match run")
+            identity = (*self._mvp_key_identity(candle.key), candle.timestamp)
+            if identity in candle_keys:
+                raise StorageError("duplicate candle identity in one run")
+            candle_keys.add(identity)
+
+        for observation in write.source_observations:
+            if not isinstance(observation, SourceObservationWrite):
+                raise StorageError("source_observations must contain SourceObservationWrite values")
+            if observation.run_id != write.run_id:
+                raise StorageError("source observation run_id does not match run")
+            if not isinstance(observation.success, bool):
+                raise StorageError("source observation success must be boolean")
+            if observation.key.manifest_version != write.manifest_version:
+                raise StorageError("source observation manifest_version does not match run")
+            if observation.candle_count < 0:
+                raise StorageError("source observation candle_count cannot be negative")
+            self._mvp_json(observation.policy, field_name="source observation policy")
+            if observation.request_start is not None:
+                self._mvp_text(observation.request_start, field_name="request_start")
+            if observation.request_end is not None:
+                self._mvp_text(observation.request_end, field_name="request_end")
+            if observation.response_hash is not None:
+                self._mvp_hash(observation.response_hash, field_name="response_hash")
+            if observation.latest_timestamp is not None:
+                self._mvp_text(observation.latest_timestamp, field_name="latest_timestamp")
+            if observation.observed_at is not None:
+                self._mvp_text(observation.observed_at, field_name="observed_at")
+            self._mvp_text(observation.served_from, field_name="served_from")
+            if observation.latency_ms is not None and (
+                not isinstance(observation.latency_ms, (int, float)) or observation.latency_ms < 0
+            ):
+                raise StorageError("source observation latency_ms must be non-negative")
+
+        quality_keys: set[tuple[Any, ...]] = set()
+        for quality in write.quality_receipts:
+            if not isinstance(quality, QualityReceiptWrite):
+                raise StorageError("quality_receipts must contain QualityReceiptWrite values")
+            if (
+                quality.run_id != write.run_id
+                or quality.key.manifest_version != write.manifest_version
+            ):
+                raise StorageError("quality receipt identity does not match run")
+            identity = (*self._mvp_key_identity(quality.key),)
+            if identity in quality_keys:
+                raise StorageError("duplicate quality receipt identity in one run")
+            quality_keys.add(identity)
+            if quality.status not in {"pass", "partial", "blocked", "fail"}:
+                raise StorageError("quality receipt status is invalid")
+            for field_name in ("gaps", "duplicates", "invalid_rows", "blocked_cells"):
+                value = getattr(quality, field_name)
+                if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                    raise StorageError(f"quality receipt {field_name} must be non-negative integer")
+            self._mvp_json(quality.details, field_name="quality details")
+            if quality.receipt_hash is not None:
+                self._mvp_hash(quality.receipt_hash, field_name="quality receipt_hash")
+
+        transform_keys: set[tuple[Any, ...]] = set()
+        for transform in write.transform_receipts:
+            if not isinstance(transform, TransformReceiptWrite):
+                raise StorageError("transform_receipts must contain TransformReceiptWrite values")
+            if (
+                transform.run_id != write.run_id
+                or transform.manifest_version != write.manifest_version
+            ):
+                raise StorageError("transform receipt identity does not match run")
+            if transform.output_timeframe not in {
+                "15m",
+                "4h",
+                "1d",
+                "1w",
+            } or transform.input_timeframe not in {
+                "15m",
+                "4h",
+                "1d",
+                "1w",
+            }:
+                raise StorageError("transform receipt timeframe is invalid")
+            if transform.output_timeframe == transform.input_timeframe:
+                raise StorageError("transform receipt must change timeframe")
+            identity = (
+                transform.instrument_id,
+                transform.source_id,
+                transform.output_timeframe,
+                transform.input_timeframe,
+            )
+            if identity in transform_keys:
+                raise StorageError("duplicate transform receipt identity in one run")
+            transform_keys.add(identity)
+            for field_name in ("input_start", "input_end", "aggregation_rule_version"):
+                self._mvp_text(getattr(transform, field_name), field_name=field_name)
+            self._mvp_hash(transform.input_hash, field_name="input_hash")
+            self._mvp_hash(transform.output_hash, field_name="output_hash")
+
+        watermark_keys: set[tuple[Any, ...]] = set()
+        for watermark in write.watermarks:
+            if not isinstance(watermark, WatermarkWrite):
+                raise StorageError("watermarks must contain WatermarkWrite values")
+            if (
+                watermark.run_id != write.run_id
+                or watermark.key.manifest_version != write.manifest_version
+            ):
+                raise StorageError("watermark identity does not match run")
+            identity = self._mvp_key_identity(watermark.key)
+            if identity in watermark_keys:
+                raise StorageError("duplicate watermark identity in one run")
+            watermark_keys.add(identity)
+            self._mvp_text(watermark.last_closed_timestamp, field_name="last_closed_timestamp")
+            if watermark.cursor is not None:
+                self._mvp_text(watermark.cursor, field_name="cursor")
+
+        for entitlement in write.entitlement_receipts:
+            if not isinstance(entitlement, EntitlementReceiptWrite):
+                raise StorageError(
+                    "entitlement_receipts must contain EntitlementReceiptWrite values"
+                )
+            for field_name in ("receipt_id", "source_id", "status", "evidence_ref", "receipt_hash"):
+                self._mvp_text(getattr(entitlement, field_name), field_name=field_name)
+            self._mvp_hash(entitlement.receipt_hash, field_name="receipt_hash")
+            self._mvp_json(entitlement.allowed_history, field_name="allowed_history")
+            if not isinstance(entitlement.timeframe_permissions, Sequence) or isinstance(
+                entitlement.timeframe_permissions, (str, bytes)
+            ):
+                raise StorageError("timeframe_permissions must be a sequence")
+            if any(
+                item not in {"15m", "4h", "1d", "1w"} for item in entitlement.timeframe_permissions
+            ):
+                raise StorageError("timeframe_permissions contains unsupported timeframe")
+            if not all(
+                isinstance(value, bool)
+                for value in (
+                    entitlement.persistence_allowed,
+                    entitlement.derived_allowed,
+                    entitlement.non_display_allowed,
+                )
+            ):
+                raise StorageError("entitlement permissions must be boolean")
+
+        for backup in write.backup_receipts:
+            if not isinstance(backup, BackupReceiptWrite):
+                raise StorageError("backup_receipts must contain BackupReceiptWrite values")
+            for field_name in ("backup_id", "run_id", "destination", "status", "checksum"):
+                self._mvp_text(getattr(backup, field_name), field_name=field_name)
+            if backup.run_id != write.run_id:
+                raise StorageError("backup receipt run_id does not match run")
+            self._mvp_hash(backup.checksum, field_name="checksum")
+            if (
+                not isinstance(backup.size_bytes, int)
+                or isinstance(backup.size_bytes, bool)
+                or backup.size_bytes < 0
+            ):
+                raise StorageError("backup size_bytes must be a non-negative integer")
+            if not isinstance(backup.restore_verified, bool):
+                raise StorageError("backup restore_verified must be boolean")
+            self._mvp_json(backup.policy, field_name="backup policy")
+
+    @staticmethod
+    def _mvp_now() -> str:
+        return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+    @staticmethod
+    def _mvp_run_receipt(row: MvpRunRow) -> MvpRunReceipt:
+        return MvpRunReceipt(
+            run_id=row.run_id,
+            status=row.status,
+            manifest_version=row.manifest_version,
+            manifest_hash=row.manifest_hash,
+            candle_count=row.candle_count,
+            observation_count=row.observation_count,
+            quality_count=row.quality_count,
+            transform_count=row.transform_count,
+            watermark_count=row.watermark_count,
+            committed_at=row.committed_at or "",
+        )
+
+    def commit_mvp_run(self, write: MvpRunWrite) -> MvpRunReceipt:
+        """Atomically persist a complete MVP run and all of its receipts."""
+
+        self._validate_mvp_run(write)
+        committed_at = self._mvp_now()
+        receipt_hash = hashlib.sha256(
+            json.dumps(
+                {
+                    "run_id": write.run_id,
+                    "manifest_version": write.manifest_version,
+                    "manifest_hash": write.manifest_hash,
+                    "status": write.status,
+                    "candle_count": len(write.candles),
+                    "observation_count": len(write.source_observations),
+                    "quality_count": len(write.quality_receipts),
+                    "transform_count": len(write.transform_receipts),
+                    "watermark_count": len(write.watermarks),
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+
+        with self._session_factory() as session:
+            existing = session.get(MvpRunRow, write.run_id)
+            if existing is not None:
+                session.rollback()
+                if (
+                    existing.manifest_version != write.manifest_version
+                    or existing.manifest_hash != write.manifest_hash
+                ):
+                    raise StorageError("run_id already belongs to a different manifest")
+                if existing.status != "success":
+                    raise StorageError("run_id already has a failed attempt")
+                return self._mvp_run_receipt(existing)
+            session.rollback()
+
+            try:
+                with session.begin():
+                    run_row = MvpRunRow(
+                        run_id=write.run_id,
+                        manifest_version=write.manifest_version,
+                        manifest_hash=write.manifest_hash.lower(),
+                        status=write.status,
+                        started_at=write.started_at,
+                        completed_at=write.completed_at or committed_at,
+                        window_start=write.window_start,
+                        window_end=write.window_end,
+                        policy_json=self._mvp_json(write.policy, field_name="policy"),
+                        receipt_hash=receipt_hash,
+                        error=write.error,
+                        candle_count=len(write.candles),
+                        observation_count=len(write.source_observations),
+                        quality_count=len(write.quality_receipts),
+                        transform_count=len(write.transform_receipts),
+                        watermark_count=len(write.watermarks),
+                        committed_at=committed_at,
+                    )
+                    session.add(run_row)
+
+                    for entitlement in write.entitlement_receipts:
+                        session.add(
+                            MvpEntitlementReceiptRow(
+                                receipt_id=entitlement.receipt_id,
+                                source_id=entitlement.source_id,
+                                status=entitlement.status,
+                                allowed_history_json=self._mvp_json(
+                                    entitlement.allowed_history, field_name="allowed_history"
+                                ),
+                                timeframe_permissions_json=json.dumps(
+                                    list(entitlement.timeframe_permissions),
+                                    ensure_ascii=False,
+                                    sort_keys=True,
+                                ),
+                                persistence_allowed=entitlement.persistence_allowed,
+                                derived_allowed=entitlement.derived_allowed,
+                                non_display_allowed=entitlement.non_display_allowed,
+                                valid_from=entitlement.valid_from,
+                                valid_to=entitlement.valid_to,
+                                evidence_ref=entitlement.evidence_ref,
+                                receipt_hash=entitlement.receipt_hash.lower(),
+                            )
+                        )
+
+                    for transform in write.transform_receipts:
+                        row = MvpTransformReceiptRow(
+                            run_id=transform.run_id,
+                            manifest_version=transform.manifest_version,
+                            instrument_id=transform.instrument_id,
+                            source_id=transform.source_id,
+                            output_timeframe=transform.output_timeframe,
+                            input_timeframe=transform.input_timeframe,
+                            aggregation_rule_version=transform.aggregation_rule_version,
+                            input_start=transform.input_start,
+                            input_end=transform.input_end,
+                            input_hash=transform.input_hash.lower(),
+                            output_hash=transform.output_hash.lower(),
+                        )
+                        session.add(row)
+                    session.flush()
+
+                    for candle in write.candles:
+                        values = {
+                            "instrument_id": candle.key.instrument_id,
+                            "display_symbol": candle.key.display_symbol,
+                            "provider_symbol": candle.key.provider_symbol,
+                            "source_id": candle.key.source_id,
+                            "asset_class": candle.key.asset_class,
+                            "timeframe": candle.key.timeframe,
+                            "adjustment_basis": candle.key.adjustment_basis,
+                            "manifest_version": candle.key.manifest_version,
+                            "timestamp": candle.timestamp,
+                            "open": candle.open,
+                            "high": candle.high,
+                            "low": candle.low,
+                            "close": candle.close,
+                            "volume": candle.volume,
+                            "amount": candle.amount,
+                            "volume_semantics": candle.volume_semantics,
+                            "is_derived": candle.is_derived,
+                            "transform_receipt_id": candle.transform_receipt_id,
+                        }
+                        stmt = sqlite_insert(MvpCandleRow).values(values)
+                        stmt = stmt.on_conflict_do_update(
+                            index_elements=[
+                                "source_id",
+                                "instrument_id",
+                                "timeframe",
+                                "adjustment_basis",
+                                "manifest_version",
+                                "timestamp",
+                            ],
+                            set_={
+                                "display_symbol": stmt.excluded.display_symbol,
+                                "provider_symbol": stmt.excluded.provider_symbol,
+                                "asset_class": stmt.excluded.asset_class,
+                                "open": stmt.excluded.open,
+                                "high": stmt.excluded.high,
+                                "low": stmt.excluded.low,
+                                "close": stmt.excluded.close,
+                                "volume": stmt.excluded.volume,
+                                "amount": stmt.excluded.amount,
+                                "volume_semantics": stmt.excluded.volume_semantics,
+                                "is_derived": stmt.excluded.is_derived,
+                                "transform_receipt_id": stmt.excluded.transform_receipt_id,
+                            },
+                        )
+                        session.execute(stmt)
+
+                    if callable(self._mvp_commit_failpoint):
+                        self._mvp_commit_failpoint("after_candles")
+
+                    for observation in write.source_observations:
+                        session.add(
+                            MvpSourceObservationRow(
+                                run_id=observation.run_id,
+                                manifest_version=observation.key.manifest_version,
+                                instrument_id=observation.key.instrument_id,
+                                display_symbol=observation.key.display_symbol,
+                                provider_symbol=observation.key.provider_symbol,
+                                source_id=observation.key.source_id,
+                                asset_class=observation.key.asset_class,
+                                timeframe=observation.key.timeframe,
+                                success=observation.success,
+                                served_from=observation.served_from,
+                                request_start=observation.request_start,
+                                request_end=observation.request_end,
+                                response_hash=observation.response_hash.lower()
+                                if observation.response_hash
+                                else None,
+                                policy_json=self._mvp_json(
+                                    observation.policy, field_name="source observation policy"
+                                ),
+                                candle_count=observation.candle_count,
+                                latest_timestamp=observation.latest_timestamp,
+                                latency_ms=observation.latency_ms,
+                                error=observation.error,
+                                observed_at=observation.observed_at,
+                            )
+                        )
+                    for quality in write.quality_receipts:
+                        session.add(
+                            MvpQualityReceiptRow(
+                                run_id=quality.run_id,
+                                manifest_version=quality.key.manifest_version,
+                                instrument_id=quality.key.instrument_id,
+                                source_id=quality.key.source_id,
+                                timeframe=quality.key.timeframe,
+                                status=quality.status,
+                                gaps=quality.gaps,
+                                duplicates=quality.duplicates,
+                                invalid_rows=quality.invalid_rows,
+                                blocked_cells=quality.blocked_cells,
+                                details_json=self._mvp_json(
+                                    quality.details, field_name="quality details"
+                                ),
+                                receipt_hash=quality.receipt_hash.lower()
+                                if quality.receipt_hash
+                                else None,
+                            )
+                        )
+                    for watermark in write.watermarks:
+                        existing_watermark = session.execute(
+                            select(MvpWatermarkRow).where(
+                                MvpWatermarkRow.source_id == watermark.key.source_id,
+                                MvpWatermarkRow.instrument_id == watermark.key.instrument_id,
+                                MvpWatermarkRow.timeframe == watermark.key.timeframe,
+                                MvpWatermarkRow.adjustment_basis == watermark.key.adjustment_basis,
+                                MvpWatermarkRow.manifest_version == watermark.key.manifest_version,
+                            )
+                        ).scalar_one_or_none()
+                        if (
+                            existing_watermark is not None
+                            and watermark.last_closed_timestamp
+                            < existing_watermark.last_closed_timestamp
+                        ):
+                            raise StorageError("watermark cannot move backwards")
+                        if existing_watermark is None:
+                            session.add(
+                                MvpWatermarkRow(
+                                    instrument_id=watermark.key.instrument_id,
+                                    display_symbol=watermark.key.display_symbol,
+                                    provider_symbol=watermark.key.provider_symbol,
+                                    source_id=watermark.key.source_id,
+                                    asset_class=watermark.key.asset_class,
+                                    timeframe=watermark.key.timeframe,
+                                    adjustment_basis=watermark.key.adjustment_basis,
+                                    manifest_version=watermark.key.manifest_version,
+                                    last_closed_timestamp=watermark.last_closed_timestamp,
+                                    cursor=watermark.cursor,
+                                    run_id=watermark.run_id,
+                                )
+                            )
+                        else:
+                            existing_watermark.display_symbol = watermark.key.display_symbol
+                            existing_watermark.provider_symbol = watermark.key.provider_symbol
+                            existing_watermark.asset_class = watermark.key.asset_class
+                            existing_watermark.last_closed_timestamp = (
+                                watermark.last_closed_timestamp
+                            )
+                            existing_watermark.cursor = watermark.cursor
+                            existing_watermark.run_id = watermark.run_id
+
+                    for backup in write.backup_receipts:
+                        session.add(
+                            MvpBackupReceiptRow(
+                                backup_id=backup.backup_id,
+                                run_id=backup.run_id,
+                                destination=backup.destination,
+                                status=backup.status,
+                                checksum=backup.checksum.lower(),
+                                size_bytes=backup.size_bytes,
+                                restore_verified=backup.restore_verified,
+                                policy_json=self._mvp_json(
+                                    backup.policy, field_name="backup policy"
+                                ),
+                            )
+                        )
+                    if callable(self._mvp_commit_failpoint):
+                        self._mvp_commit_failpoint("before_commit")
+            except StorageError:
+                raise
+            except Exception as exc:
+                raise StorageError(f"MVP run transaction rolled back: {exc}") from exc
+
+            return MvpRunReceipt(
+                run_id=write.run_id,
+                status=write.status,
+                manifest_version=write.manifest_version,
+                manifest_hash=write.manifest_hash.lower(),
+                candle_count=len(write.candles),
+                observation_count=len(write.source_observations),
+                quality_count=len(write.quality_receipts),
+                transform_count=len(write.transform_receipts),
+                watermark_count=len(write.watermarks),
+                committed_at=committed_at,
+            )
+
+    def query_mvp_candles(
+        self,
+        key: CandleSeriesKey,
+        *,
+        start: str | None = None,
+        end: str | None = None,
+        limit: int = 500,
+    ) -> list[MvpCandle]:
+        """Read a source-aware MVP series without consulting the legacy table."""
+
+        if limit < 1:
+            return []
+        with self._session_factory() as session:
+            stmt = (
+                select(MvpCandleRow)
+                .where(
+                    MvpCandleRow.source_id == key.source_id,
+                    MvpCandleRow.instrument_id == key.instrument_id,
+                    MvpCandleRow.timeframe == key.timeframe,
+                    MvpCandleRow.adjustment_basis == key.adjustment_basis,
+                    MvpCandleRow.manifest_version == key.manifest_version,
+                )
+                .order_by(MvpCandleRow.timestamp.desc())
+                .limit(limit)
+            )
+            if start is not None:
+                stmt = stmt.where(MvpCandleRow.timestamp >= start)
+            if end is not None:
+                stmt = stmt.where(MvpCandleRow.timestamp <= end)
+            rows = list(session.execute(stmt).scalars())
+        return [
+            MvpCandle(
+                key=key,
+                timestamp=row.timestamp,
+                open=row.open,
+                high=row.high,
+                low=row.low,
+                close=row.close,
+                volume=row.volume,
+                amount=row.amount,
+                volume_semantics=row.volume_semantics,
+                is_derived=row.is_derived,
+                transform_receipt_id=row.transform_receipt_id,
+            )
+            for row in reversed(rows)
+        ]
+
+    def get_mvp_watermark(self, key: CandleSeriesKey) -> WatermarkState | None:
+        """Return the last closed-bar watermark for an exact series key."""
+
+        with self._session_factory() as session:
+            row = session.execute(
+                select(MvpWatermarkRow).where(
+                    MvpWatermarkRow.source_id == key.source_id,
+                    MvpWatermarkRow.instrument_id == key.instrument_id,
+                    MvpWatermarkRow.timeframe == key.timeframe,
+                    MvpWatermarkRow.adjustment_basis == key.adjustment_basis,
+                    MvpWatermarkRow.manifest_version == key.manifest_version,
+                )
+            ).scalar_one_or_none()
+        if row is None:
+            return None
+        return WatermarkState(
+            key=key,
+            last_closed_timestamp=row.last_closed_timestamp,
+            cursor=row.cursor,
+            run_id=row.run_id,
+        )
+
+    def mvp_storage_health(self) -> dict[str, Any]:
+        """Return counts for the MVP serving and receipt tables."""
+
+        tables = {
+            "candles": MvpCandleRow,
+            "runs": MvpRunRow,
+            "watermarks": MvpWatermarkRow,
+            "source_observations": MvpSourceObservationRow,
+            "quality_receipts": MvpQualityReceiptRow,
+            "transform_receipts": MvpTransformReceiptRow,
+            "entitlement_receipts": MvpEntitlementReceiptRow,
+            "backup_receipts": MvpBackupReceiptRow,
+        }
+        with self._session_factory() as session:
+            counts = {
+                name: int(session.execute(select(func.count()).select_from(model)).scalar_one())
+                for name, model in tables.items()
+            }
+        return {"status": "ok", **counts}
+
     def storage_health(self) -> dict[str, Any]:
         """Return an owner-side integrity receipt without exposing the database path."""
         with self._engine.connect() as connection:
             integrity = str(connection.exec_driver_sql("PRAGMA integrity_check").scalar_one())
-            candle_rows = int(connection.exec_driver_sql("SELECT COUNT(*) FROM klines").scalar_one())
+            candle_rows = int(
+                connection.exec_driver_sql("SELECT COUNT(*) FROM klines").scalar_one()
+            )
             source_rows = int(
-                connection.exec_driver_sql("SELECT COUNT(DISTINCT source_id) FROM klines").scalar_one()
+                connection.exec_driver_sql(
+                    "SELECT COUNT(DISTINCT source_id) FROM klines"
+                ).scalar_one()
             )
         return {
             "status": "ok" if integrity == "ok" else "error",
