@@ -437,7 +437,6 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         asset_class=AssetClass.A_SHARE,
         meta=_PROVIDER_META[AssetClass.A_SHARE],
         default_for_asset_class=True,
-        blocked_timeframes=(Timeframe.MIN_15, Timeframe.HOUR_4),
     ),
     "tencent_kline": SourceManifest(
         source_id="tencent_kline",

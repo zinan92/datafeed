@@ -14,6 +14,9 @@ class Settings(BaseSettings):
 
     # TuShare Pro (required for A-shares)
     tushare_token: str = ""
+    # Optional JSON receipt proving minute/history/persistence rights. A token
+    # without this operator-controlled receipt remains blocked_for_entitlement.
+    tushare_entitlement_path: str = ""
 
     # Provider timeouts (seconds)
     request_timeout: int = 30

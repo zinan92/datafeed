@@ -443,10 +443,12 @@ def test_manifest_rejects_malformed_open_ended_dates_and_source_mismatch() -> No
         validate_manifest(payload)
 
     payload = manifest.to_dict()
-    payload["instruments"][0]["source_status"] = "configured"
-    payload["instruments"][0]["required_timeframes"] = ["15m"]
-    payload["instruments"][0]["blocked_timeframes"] = []
-    payload["instruments"][0]["not_applicable_timeframes"] = ["4h", "1d", "1w"]
+    capability_target = next(
+        item for item in payload["instruments"] if item["source_id"] == "tencent_kline"
+    )
+    capability_target["required_timeframes"] = ["15m"]
+    capability_target["blocked_timeframes"] = []
+    capability_target["not_applicable_timeframes"] = ["4h", "1d", "1w"]
     with pytest.raises(ManifestError, match="does not support"):
         validate_manifest(payload)
 
