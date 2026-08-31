@@ -503,6 +503,9 @@ class MvpTransformReceiptRow(Base):
     input_end = Column(String, nullable=False)
     input_hash = Column(String, nullable=False)
     output_hash = Column(String, nullable=False)
+    bucket_anchor = Column(String, nullable=True)
+    partial_bucket_policy = Column(String, nullable=True)
+    partial_bucket_count = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
 
 

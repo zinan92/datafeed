@@ -583,6 +583,16 @@ class KlineStore:
                 self._mvp_text(getattr(transform, field_name), field_name=field_name)
             self._mvp_hash(transform.input_hash, field_name="input_hash")
             self._mvp_hash(transform.output_hash, field_name="output_hash")
+            if transform.bucket_anchor is not None:
+                self._mvp_text(transform.bucket_anchor, field_name="bucket_anchor")
+            if transform.partial_bucket_policy is not None:
+                self._mvp_text(transform.partial_bucket_policy, field_name="partial_bucket_policy")
+            if (
+                not isinstance(transform.partial_bucket_count, int)
+                or isinstance(transform.partial_bucket_count, bool)
+                or transform.partial_bucket_count < 0
+            ):
+                raise StorageError("partial_bucket_count must be a non-negative integer")
 
         watermark_keys: set[tuple[Any, ...]] = set()
         for watermark in write.watermarks:
@@ -762,6 +772,9 @@ class KlineStore:
                             input_end=transform.input_end,
                             input_hash=transform.input_hash.lower(),
                             output_hash=transform.output_hash.lower(),
+                            bucket_anchor=transform.bucket_anchor,
+                            partial_bucket_policy=transform.partial_bucket_policy,
+                            partial_bucket_count=transform.partial_bucket_count,
                         )
                         session.add(row)
                     session.flush()
