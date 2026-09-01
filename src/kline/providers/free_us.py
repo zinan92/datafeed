@@ -21,6 +21,12 @@ from kline.storage import CandleSeriesKey, MvpCandle
 _SINA_DAILY_URL = (
     "https://stock.finance.sina.com.cn/usstock/api/jsonp.php/var/US_MinKService.getDailyK"
 )
+_YAHOO_TICKER_ALIASES = {"BRK.B": "BRK-B"}
+
+
+def _yahoo_ticker(ticker: str) -> str:
+    normalized = ticker.upper().strip()
+    return _YAHOO_TICKER_ALIASES.get(normalized, normalized)
 
 
 class USFreeProvider(USStockProvider):
@@ -79,12 +85,14 @@ class USFreeProvider(USStockProvider):
     ) -> list[Candle]:
         self.last_attempts = []
         self.last_raw_response = None
+        requested_ticker = ticker.upper().strip()
+        yahoo_ticker = _yahoo_ticker(requested_ticker)
         if timeframe == Timeframe.HOUR_4:
             started_at = time.perf_counter()
             await self._pacer.wait()
             try:
                 base = await super().fetch(
-                    ticker,
+                    yahoo_ticker,
                     Timeframe.MIN_15,
                     start=start,
                     end=end,
@@ -156,6 +164,8 @@ class USFreeProvider(USStockProvider):
             self.source_identity = {
                 **self.source_identity,
                 "source_id": "yahoo_finance_free",
+                "requested_symbol": requested_ticker,
+                "provider_symbol": yahoo_ticker,
                 "selected_source": "yahoo",
             }
             selected = aggregate.candles[-limit:] if limit else aggregate.candles
@@ -180,7 +190,9 @@ class USFreeProvider(USStockProvider):
         try:
             started_at = time.perf_counter()
             await self._pacer.wait()
-            candles = await super().fetch(ticker, timeframe, start=start, end=end, limit=limit)
+            candles = await super().fetch(
+                yahoo_ticker, timeframe, start=start, end=end, limit=limit
+            )
             self._record_attempt(
                 source="yahoo",
                 started_at=started_at,
@@ -192,6 +204,8 @@ class USFreeProvider(USStockProvider):
             self.source_identity = {
                 **self.source_identity,
                 "source_id": "yahoo_finance_free",
+                "requested_symbol": requested_ticker,
+                "provider_symbol": yahoo_ticker,
                 "selected_source": selected,
                 "fallback_from": fallback_from,
             }
@@ -225,6 +239,7 @@ class USFreeProvider(USStockProvider):
             self.source_identity = {
                 "source_id": "yahoo_finance_free",
                 "provider_symbol": ticker.upper(),
+                "requested_symbol": ticker.upper(),
                 "selected_source": "sina",
                 "fallback_from": None,
                 "adjustment_basis": "raw_unadjusted",
@@ -242,7 +257,7 @@ class USFreeProvider(USStockProvider):
                 started_at = time.perf_counter()
                 await self._pacer.wait()
                 candles = await super().fetch(
-                    ticker, Timeframe.DAY, start=start, end=end, limit=limit
+                    _yahoo_ticker(ticker), Timeframe.DAY, start=start, end=end, limit=limit
                 )
                 self._record_attempt(
                     source="yahoo",
@@ -253,7 +268,8 @@ class USFreeProvider(USStockProvider):
                 self.source_identity = {
                     **self.source_identity,
                     "source_id": "yahoo_finance_free",
-                    "provider_symbol": ticker.upper(),
+                    "requested_symbol": ticker.upper(),
+                    "provider_symbol": _yahoo_ticker(ticker),
                     "selected_source": "yahoo",
                     "fallback_from": "sina",
                     "adjustment_basis": "raw_unadjusted",

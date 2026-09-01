@@ -17,7 +17,7 @@ from kline.providers.free_ashare import (
     parse_tencent_rows,
 )
 from kline.providers.free_common import requested_cutoff
-from kline.providers.free_us import USFreeProvider
+from kline.providers.free_us import USFreeProvider, _yahoo_ticker
 from kline.providers.us import USStockProvider
 
 
@@ -26,6 +26,11 @@ MANIFEST_PATH = Path(__file__).parents[1] / "configs" / "mvp_manifest.json"
 
 def test_derived_bar_cutoff_uses_request_end() -> None:
     assert requested_cutoff("2026-09-01T08:00:00Z").isoformat() == "2026-09-01T08:00:00+00:00"
+
+
+def test_yahoo_ticker_alias_preserves_dotted_canonical_symbol() -> None:
+    assert _yahoo_ticker("BRK.B") == "BRK-B"
+    assert _yahoo_ticker("AAPL") == "AAPL"
 
 
 def test_free_profile_routes_a_share_and_us_stock_without_changing_identity() -> None:
@@ -114,6 +119,8 @@ async def test_adapter_exposes_failed_provider_attempts() -> None:
 async def test_free_us_provider_uses_yahoo_for_intraday_and_declares_source(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    seen_tickers: list[str] = []
+
     async def yahoo_success(
         _self,
         _ticker: str,
@@ -123,15 +130,19 @@ async def test_free_us_provider_uses_yahoo_for_intraday_and_declares_source(
         end: str | None,
         limit: int,
     ) -> list[Candle]:
+        seen_tickers.append(_ticker)
         del start, end, limit
         return [Candle(timestamp="2026-09-01", open=100, high=102, low=99, close=101, volume=10)]
 
     monkeypatch.setattr(USStockProvider, "fetch", yahoo_success)
     provider = USFreeProvider()
-    candles = await provider.fetch("AAPL", Timeframe.HOUR_1, limit=10)
+    candles = await provider.fetch("BRK.B", Timeframe.HOUR_1, limit=10)
     assert len(candles) == 1
     assert provider.source_identity["source_id"] == "yahoo_finance_free"
     assert provider.source_identity["selected_source"] == "yahoo"
+    assert provider.source_identity["requested_symbol"] == "BRK.B"
+    assert provider.source_identity["provider_symbol"] == "BRK-B"
+    assert seen_tickers == ["BRK-B"]
     assert provider.last_attempts[0]["source"] == "yahoo"
     assert provider.last_attempts[0]["status"] == "success"
     assert provider.supported_timeframes() == [
