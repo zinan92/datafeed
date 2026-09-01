@@ -353,7 +353,10 @@ def _resolve_policy(
             source_meta(normalized_fallback, asset_class)
         except (KeyError, ValueError) as error:
             raise ValueError(f"Invalid fallback source: {fallback_source}") from error
-        if normalized_fallback != normalized_source and normalized_fallback not in normalized_fallbacks:
+        if (
+            normalized_fallback != normalized_source
+            and normalized_fallback not in normalized_fallbacks
+        ):
             normalized_fallbacks.append(normalized_fallback)
     if resolved_fallback_policy == FallbackPolicy.EXPLICIT and not normalized_fallbacks:
         raise ValueError("fallback sources must differ from the primary source")
@@ -447,9 +450,7 @@ async def _fetch_upstream_candles(
         last_provider_symbol = selected_ticker
         selected_manifest = source_manifest(selected_source, asset_class)
         if not selected_manifest.supports_timeframe(selected_ticker, timeframe):
-            detail = (
-                f"unsupported symbol/timeframe {selected_ticker}/{timeframe.value}"
-            )
+            detail = f"unsupported symbol/timeframe {selected_ticker}/{timeframe.value}"
             last_error = ProviderError(detail)
             last_error_source = selected_source
             last_error_symbol = selected_ticker
@@ -527,9 +528,7 @@ async def _fetch_upstream_candles(
                 served_from="upstream",
                 raw_response=raw_snapshot,
             )
-        report = analyze_candles(
-            candles, timeframe, selected_meta, strict=policy.strict_quality
-        )
+        report = analyze_candles(candles, timeframe, selected_meta, strict=policy.strict_quality)
         last_report = report
         if policy.cache_policy != CachePolicy.BYPASS:
             get_store().save_source_observation(
@@ -574,9 +573,9 @@ async def _fetch_upstream_candles(
             access_issues=failures if selected_source != policy.source else [],
             timeframe_transform=last_transform,
             source_identity=last_identity,
-            instrument_id=source_manifest(
-                selected_source, asset_class
-            ).canonical_instrument_id(ticker),
+            instrument_id=source_manifest(selected_source, asset_class).canonical_instrument_id(
+                ticker
+            ),
         )
 
     if last_error:
@@ -694,11 +693,11 @@ async def get_candles(
                 requested_source=source,
                 cache_policy=cache_policy,
                 quality_policy=quality,
-                    fallback_policy=fallback_policy,
-                    require_execution_venue=require_execution_venue,
-                    provider_symbol=ticker,
-                    source_identity={"requested_ticker": ticker, "timeframe": timeframe.value},
-                    reject_reason="invalid_policy",
+                fallback_policy=fallback_policy,
+                require_execution_venue=require_execution_venue,
+                provider_symbol=ticker,
+                source_identity={"requested_ticker": ticker, "timeframe": timeframe.value},
+                reject_reason="invalid_policy",
                 access_issues=[str(e)],
                 timeframe=timeframe,
             ).model_dump(),
@@ -786,9 +785,9 @@ async def get_candles(
                 meta,
                 served_from="cache",
                 policy=policy,
-                instrument_id=source_manifest(
-                    policy.source, asset_class
-                ).canonical_instrument_id(requested_ticker),
+                instrument_id=source_manifest(policy.source, asset_class).canonical_instrument_id(
+                    requested_ticker
+                ),
             )
         if policy.cache_policy == CachePolicy.REQUIRE:
             raise _error(
@@ -876,12 +875,15 @@ async def stream_candles(
         )
         await websocket.close(code=1011)
 
-
         return
 
     try:
         async for candle in adapter.stream_candles(ticker, timeframe):
-            if policy.cache_policy != CachePolicy.BYPASS and timeframe not in (Timeframe.DAY, Timeframe.HOUR_4, Timeframe.WEEK):
+            if policy.cache_policy != CachePolicy.BYPASS and timeframe not in (
+                Timeframe.DAY,
+                Timeframe.HOUR_4,
+                Timeframe.WEEK,
+            ):
                 get_store().save(
                     ticker,
                     asset_class,
@@ -987,7 +989,9 @@ async def compare_sources(
             normalized = normalize_source(source, asset_class)
             source_meta(normalized, asset_class)
         except (KeyError, ValueError) as error:
-            raise HTTPException(status_code=400, detail=f"Invalid comparison source: {source}") from error
+            raise HTTPException(
+                status_code=400, detail=f"Invalid comparison source: {source}"
+            ) from error
         if normalized not in normalized_sources:
             normalized_sources.append(normalized)
     if len(normalized_sources) < 2:
@@ -1103,5 +1107,9 @@ async def mvp_health_matrix() -> dict:
     except Exception as error:
         raise HTTPException(
             status_code=503,
-            detail={"error": "dashboard_unavailable", "detail": type(error).__name__},
+            detail={
+                "error": "dashboard_unavailable",
+                "detail": type(error).__name__,
+                "last_success_at": None,
+            },
         ) from error

@@ -279,11 +279,11 @@ def _worker_payload(
     )
     last_activity = (latest.get("completed_at") or latest.get("started_at")) if latest else None
     parsed_activity = _parse_timestamp(last_activity)
-    next_due = (
-        _iso(parsed_activity + timedelta(seconds=interval_seconds))
-        if parsed_activity is not None
-        else None
-    )
+    next_due = None
+    if parsed_activity is not None:
+        due = parsed_activity + timedelta(seconds=interval_seconds)
+        reference = now.astimezone(timezone.utc)
+        next_due = _iso(max(due, reference))
     return {
         "status": "idle" if latest is None else "last_run",
         "last_attempt_at": latest.get("started_at") if latest else None,
