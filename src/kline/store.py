@@ -558,11 +558,13 @@ class KlineStore:
                 raise StorageError("transform receipt identity does not match run")
             if transform.output_timeframe not in {
                 "15m",
+                "1h",
                 "4h",
                 "1d",
                 "1w",
             } or transform.input_timeframe not in {
                 "15m",
+                "1h",
                 "4h",
                 "1d",
                 "1w",
@@ -593,6 +595,18 @@ class KlineStore:
                 or transform.partial_bucket_count < 0
             ):
                 raise StorageError("partial_bucket_count must be a non-negative integer")
+
+        derived_identities = {
+            (candle.key.instrument_id, candle.key.source_id, candle.key.timeframe)
+            for candle in write.candles
+            if candle.is_derived
+        }
+        receipt_identities = {
+            (instrument_id, source_id, output_timeframe)
+            for instrument_id, source_id, output_timeframe, _input_timeframe in transform_keys
+        }
+        if derived_identities - receipt_identities:
+            raise StorageError("derived candle requires a matching transform receipt")
 
         watermark_keys: set[tuple[Any, ...]] = set()
         for watermark in write.watermarks:
@@ -625,7 +639,8 @@ class KlineStore:
             ):
                 raise StorageError("timeframe_permissions must be a sequence")
             if any(
-                item not in {"15m", "4h", "1d", "1w"} for item in entitlement.timeframe_permissions
+                item not in {"15m", "1h", "4h", "1d", "1w"}
+                for item in entitlement.timeframe_permissions
             ):
                 raise StorageError("timeframe_permissions contains unsupported timeframe")
             if not all(
@@ -759,6 +774,7 @@ class KlineStore:
                             )
                         )
 
+                    transform_rows: dict[tuple[str, str, str], MvpTransformReceiptRow] = {}
                     for transform in write.transform_receipts:
                         row = MvpTransformReceiptRow(
                             run_id=transform.run_id,
@@ -777,9 +793,30 @@ class KlineStore:
                             partial_bucket_count=transform.partial_bucket_count,
                         )
                         session.add(row)
+                        transform_rows[
+                            (
+                                transform.instrument_id,
+                                transform.source_id,
+                                transform.output_timeframe,
+                            )
+                        ] = row
                     session.flush()
 
                     for candle in write.candles:
+                        transform_row = transform_rows.get(
+                            (
+                                candle.key.instrument_id,
+                                candle.key.source_id,
+                                candle.key.timeframe,
+                            )
+                        )
+                        transform_receipt_id = candle.transform_receipt_id
+                        if candle.is_derived:
+                            if transform_row is None:
+                                raise StorageError(
+                                    "derived candle requires a matching transform receipt"
+                                )
+                            transform_receipt_id = transform_row.id
                         values = {
                             "instrument_id": candle.key.instrument_id,
                             "display_symbol": candle.key.display_symbol,
@@ -798,7 +835,7 @@ class KlineStore:
                             "amount": candle.amount,
                             "volume_semantics": candle.volume_semantics,
                             "is_derived": candle.is_derived,
-                            "transform_receipt_id": candle.transform_receipt_id,
+                            "transform_receipt_id": transform_receipt_id,
                         }
                         stmt = sqlite_insert(MvpCandleRow).values(values)
                         stmt = stmt.on_conflict_do_update(

@@ -27,7 +27,7 @@ def _row(open_ms: int, close: str = "60.0") -> dict[str, object]:
 
 
 def _row_for_interval(open_ms: int, interval: str, close: str = "60.0") -> dict[str, object]:
-    minutes = {"15m": 15, "30m": 30, "4h": 240}[interval]
+    minutes = {"15m": 15, "30m": 30, "1h": 60, "4h": 240}[interval]
     return {
         **_row(open_ms, close),
         "T": open_ms + minutes * 60 * 1000 - 1,
@@ -73,6 +73,24 @@ async def test_hyperliquid_native_15m_is_available_for_mvp_crypto_source(symbol:
     assert len(candles) == 1
     assert provider.timeframe_transform is not None
     assert provider.timeframe_transform.raw_timeframe == Timeframe.MIN_15
+    assert provider.timeframe_transform.timeframe_origin == "native"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("symbol", ["BTC", "ETH", "HYPE"])
+async def test_hyperliquid_native_1h_is_available_for_mvp_crypto_source(symbol: str):
+    def handler(request: httpx.Request) -> httpx.Response:
+        payload = json.loads(request.content)
+        assert payload["req"]["coin"] == symbol
+        assert payload["req"]["interval"] == "1h"
+        return httpx.Response(200, json=[_row_for_interval(1786838400000, "1h")])
+
+    provider = HyperliquidPerpetualProvider(transport=httpx.MockTransport(handler))
+    candles = await provider.fetch(symbol, Timeframe.HOUR_1, limit=1)
+
+    assert len(candles) == 1
+    assert provider.timeframe_transform is not None
+    assert provider.timeframe_transform.raw_timeframe == Timeframe.HOUR_1
     assert provider.timeframe_transform.timeframe_origin == "native"
 
 

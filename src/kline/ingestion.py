@@ -11,7 +11,7 @@ import json
 from typing import Any, Callable, Mapping, Sequence
 
 from kline.market_calendar import QualityResult, assess_quality
-from kline.models import AssetClass, Candle, Timeframe
+from kline.models import AssetClass, Candle, Timeframe, TimeframeTransform
 from kline.mvp_manifest import MvpManifest, manifest_digest
 from kline.ports import FetchReceipt, MarketDataPort
 from kline.providers.base import EntitlementBlocked, ProviderError
@@ -266,10 +266,21 @@ class IngestionOrchestrator:
         raise ProviderError(str(last_error)) from last_error
 
     def _to_mvp_rows(
-        self, instrument: Any, timeframe: str, candles: Sequence[Candle], manifest: MvpManifest
+        self,
+        instrument: Any,
+        timeframe: str,
+        candles: Sequence[Candle],
+        manifest: MvpManifest,
+        *,
+        timeframe_transform: TimeframeTransform | None = None,
     ) -> list[MvpCandle]:
         key = self._key(instrument, timeframe, manifest)
         rows: list[MvpCandle] = []
+        is_derived = timeframe in {"4h", "1w"} or (
+            timeframe == "1h"
+            and timeframe_transform is not None
+            and timeframe_transform.timeframe_origin == "aggregated"
+        )
         for candle in candles:
             volume = None if instrument.volume_semantics == "not_applicable" else candle.volume
             rows.append(
@@ -283,7 +294,7 @@ class IngestionOrchestrator:
                     volume=volume,
                     amount=candle.amount,
                     volume_semantics=instrument.volume_semantics,
-                    is_derived=timeframe in {"4h", "1w"},
+                    is_derived=is_derived,
                 )
             )
         return rows
@@ -341,7 +352,7 @@ class IngestionOrchestrator:
         quality_counts = {"pass": 0, "partial": 0, "fail": 0}
 
         for instrument in manifest.instruments:
-            for timeframe in ("15m", "4h", "1d", "1w"):
+            for timeframe in ("15m", "1h", "4h", "1d", "1w"):
                 if timeframe in instrument.not_applicable_timeframes:
                     cells.append(
                         CellResult(
@@ -443,7 +454,13 @@ class IngestionOrchestrator:
                         plan=plan,
                     )
                     raw_rows = fetch_receipt.candles
-                    mvp_rows = self._to_mvp_rows(instrument, timeframe, raw_rows, manifest)
+                    mvp_rows = self._to_mvp_rows(
+                        instrument,
+                        timeframe,
+                        raw_rows,
+                        manifest,
+                        timeframe_transform=fetch_receipt.timeframe_transform,
+                    )
                     quality = assess_quality(
                         mvp_rows,
                         timeframe=timeframe,

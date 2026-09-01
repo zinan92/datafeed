@@ -448,7 +448,7 @@ def test_manifest_rejects_malformed_open_ended_dates_and_source_mismatch() -> No
     )
     capability_target["required_timeframes"] = ["15m"]
     capability_target["blocked_timeframes"] = []
-    capability_target["not_applicable_timeframes"] = ["4h", "1d", "1w"]
+    capability_target["not_applicable_timeframes"] = ["1h", "4h", "1d", "1w"]
     with pytest.raises(ManifestError, match="does not support"):
         validate_manifest(payload)
 
