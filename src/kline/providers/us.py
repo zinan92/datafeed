@@ -279,7 +279,9 @@ class USStockProvider:
             repair_kwargs = dict(kwargs)
             repair_kwargs["repair"] = True
             try:
-                repaired_df = yf.Ticker(ticker.upper()).history(**repair_kwargs)
+                repaired_df = await asyncio.to_thread(
+                    yf.Ticker(ticker.upper()).history, **repair_kwargs
+                )
             except Exception as e:
                 self.last_raw_response["error"] = str(e)
                 raise ProviderError(
