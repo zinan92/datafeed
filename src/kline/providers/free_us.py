@@ -1,4 +1,4 @@
-"""Free personal-use US stock provider: Yahoo Chart with Sina daily fallback."""
+"""Free personal-use US stock provider: Sina coarse bars with Yahoo fallback."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ _SINA_DAILY_URL = (
 
 
 class USFreeProvider(USStockProvider):
-    """Use the existing Yahoo implementation and fall back to Sina daily K-lines."""
+    """Use Sina for daily/weekly bars and Yahoo for intraday/fallback data."""
 
     def __init__(
         self,
@@ -78,6 +78,7 @@ class USFreeProvider(USStockProvider):
         limit: int = 500,
     ) -> list[Candle]:
         self.last_attempts = []
+        self.last_raw_response = None
         if timeframe == Timeframe.HOUR_4:
             started_at = time.perf_counter()
             await self._pacer.wait()
@@ -174,6 +175,8 @@ class USFreeProvider(USStockProvider):
             # The inherited weekly transform calls back into this provider for
             # daily bars; that inner call owns the Yahoo/Sina attempt receipt.
             return await super().fetch(ticker, timeframe, start=start, end=end, limit=limit)
+        if timeframe == Timeframe.DAY:
+            return await self._fetch_daily_with_fallback(ticker, start=start, end=end, limit=limit)
         try:
             started_at = time.perf_counter()
             await self._pacer.wait()
@@ -200,38 +203,72 @@ class USFreeProvider(USStockProvider):
                 status="error",
                 error=str(yahoo_error),
             )
-            if timeframe != Timeframe.DAY:
-                raise
+            raise
+
+    async def _fetch_daily_with_fallback(
+        self, ticker: str, *, start: str | None, end: str | None, limit: int
+    ) -> list[Candle]:
+        """Prefer Sina for coarse bars; use Yahoo only when Sina fails."""
+
+        try:
+            started_at = time.perf_counter()
+            candles = await self._fetch_sina_daily(ticker, start=start, end=end, limit=limit)
+            self._record_attempt(
+                source="sina",
+                started_at=started_at,
+                status="success",
+                endpoint=_SINA_DAILY_URL,
+                http_status=(self.last_raw_response or {}).get("http_status"),
+                row_count=len(candles),
+            )
+            self.timeframe_transform = None
+            self.source_identity = {
+                "source_id": "yahoo_finance_free",
+                "provider_symbol": ticker.upper(),
+                "selected_source": "sina",
+                "fallback_from": None,
+                "adjustment_basis": "raw_unadjusted",
+            }
+            return candles
+        except ProviderError as sina_error:
+            self._record_attempt(
+                source="sina",
+                started_at=started_at,
+                status="error",
+                endpoint=_SINA_DAILY_URL,
+                error=str(sina_error),
+            )
             try:
                 started_at = time.perf_counter()
-                candles = await self._fetch_sina_daily(ticker, start=start, end=end, limit=limit)
+                await self._pacer.wait()
+                candles = await super().fetch(
+                    ticker, Timeframe.DAY, start=start, end=end, limit=limit
+                )
                 self._record_attempt(
-                    source="sina",
+                    source="yahoo",
                     started_at=started_at,
                     status="success",
-                    endpoint=_SINA_DAILY_URL,
-                    http_status=(self.last_raw_response or {}).get("http_status"),
                     row_count=len(candles),
                 )
-                self.timeframe_transform = None
                 self.source_identity = {
+                    **self.source_identity,
                     "source_id": "yahoo_finance_free",
                     "provider_symbol": ticker.upper(),
-                    "selected_source": "sina",
-                    "fallback_from": "yahoo",
+                    "selected_source": "yahoo",
+                    "fallback_from": "sina",
+                    "adjustment_basis": "raw_unadjusted",
                 }
                 return candles
-            except ProviderError as sina_error:
+            except ProviderError as yahoo_error:
                 self._record_attempt(
-                    source="sina",
+                    source="yahoo",
                     started_at=started_at,
                     status="error",
-                    endpoint=_SINA_DAILY_URL,
-                    error=str(sina_error),
+                    error=str(yahoo_error),
                 )
                 raise ProviderError(
-                    f"free US sources failed for {ticker}: Yahoo={yahoo_error}; Sina={sina_error}"
-                ) from sina_error
+                    f"free US sources failed for {ticker}: Sina={sina_error}; Yahoo={yahoo_error}"
+                ) from yahoo_error
 
     async def _fetch_sina_daily(
         self, ticker: str, *, start: str | None, end: str | None, limit: int

@@ -51,7 +51,7 @@ MarketDataPort
         │
         ├─ Binance USD-M Futures adapter
         ├─ Binance Spot adapter
-        ├─ Yahoo adapter + free Sina daily fallback
+        ├─ Yahoo adapter + free Sina daily primary/fallback
         ├─ TuShare adapter
         ├─ Free Tencent A-share adapter + Tonghuashun fallback
         ├─ Tencent A-share index adapter
@@ -140,8 +140,8 @@ keeps `fallback_policy=none`.
 The local MVP does not require a current TuShare subscription or a paid U.S.
 market-data plan. Its runtime free profile keeps canonical instrument IDs but
 routes A-share stocks through `tencent_stock_free` (Tonghuashun is a bounded
-fallback for 1h/daily) and U.S. stocks through `yahoo_finance_free` (Sina is a
-daily fallback). Yahoo/Tencent/Sina responses are recorded as
+fallback for 1h/daily) and U.S. stocks through `yahoo_finance_free` (Sina is
+the daily/weekly primary, Yahoo is the explicit coarse fallback). Yahoo/Tencent/Sina responses are recorded as
 `entitlement_unverified` and therefore remain `partial` until the operator
 documents the personal-use terms; HTTP 200 is never promoted to commercial or
 `verified` status. The Tencent path is requested as qfq; a Tonghuashun fallback
