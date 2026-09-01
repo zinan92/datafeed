@@ -132,6 +132,8 @@ def validate_seed_target(
 
 
 def _classify_attempt(attempt: Mapping[str, Any]) -> str | None:
+    if attempt.get("watermark_regression_suppressed"):
+        return "watermark_regression"
     status = str(attempt.get("status") or "").casefold()
     error = str(attempt.get("error") or "").casefold()
     http_status = attempt.get("http_status")
