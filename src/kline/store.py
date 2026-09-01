@@ -1111,6 +1111,171 @@ class KlineStore:
             "error": row.error,
         }
 
+    def latest_mvp_runs(self, *, limit: int = 6) -> list[dict[str, Any]]:
+        """Return recent MVP run receipts for the health matrix timeline."""
+
+        bounded_limit = max(1, min(int(limit), 100))
+        with self._session_factory() as session:
+            rows = session.execute(
+                select(MvpRunRow)
+                .order_by(MvpRunRow.created_at.desc(), MvpRunRow.run_id.desc())
+                .limit(bounded_limit)
+            ).scalars()
+            return [
+                {
+                    "run_id": row.run_id,
+                    "status": row.status,
+                    "manifest_version": row.manifest_version,
+                    "manifest_hash": row.manifest_hash,
+                    "started_at": row.started_at,
+                    "completed_at": row.completed_at,
+                    "window_start": row.window_start,
+                    "window_end": row.window_end,
+                    "candle_count": row.candle_count,
+                    "observation_count": row.observation_count,
+                    "quality_count": row.quality_count,
+                    "transform_count": row.transform_count,
+                    "watermark_count": row.watermark_count,
+                    "receipt_hash": row.receipt_hash,
+                    "error": row.error,
+                }
+                for row in rows
+            ]
+
+    def latest_mvp_source_observations(self) -> list[dict[str, Any]]:
+        """Return the latest source observation for every exact MVP cell."""
+
+        with self._session_factory() as session:
+            rows = session.execute(
+                select(MvpSourceObservationRow).order_by(MvpSourceObservationRow.id.desc())
+            ).scalars()
+            seen: set[tuple[str, str, str, str]] = set()
+            result: list[dict[str, Any]] = []
+            for row in rows:
+                identity = (row.source_id, row.instrument_id, row.timeframe, row.manifest_version)
+                if identity in seen:
+                    continue
+                seen.add(identity)
+                result.append(
+                    {
+                        "run_id": row.run_id,
+                        "manifest_version": row.manifest_version,
+                        "instrument_id": row.instrument_id,
+                        "display_symbol": row.display_symbol,
+                        "provider_symbol": row.provider_symbol,
+                        "source_id": row.source_id,
+                        "asset_class": row.asset_class,
+                        "timeframe": row.timeframe,
+                        "success": row.success,
+                        "served_from": row.served_from,
+                        "request_start": row.request_start,
+                        "request_end": row.request_end,
+                        "response_hash": row.response_hash,
+                        "candle_count": row.candle_count,
+                        "latest_timestamp": row.latest_timestamp,
+                        "latency_ms": row.latency_ms,
+                        "error": row.error,
+                        "observed_at": row.observed_at,
+                        "policy": json.loads(row.policy_json or "{}"),
+                    }
+                )
+            return result
+
+    def latest_mvp_quality_receipts(self) -> list[dict[str, Any]]:
+        """Return the latest quality receipt for every exact MVP cell."""
+
+        with self._session_factory() as session:
+            rows = session.execute(
+                select(MvpQualityReceiptRow).order_by(MvpQualityReceiptRow.id.desc())
+            ).scalars()
+            seen: set[tuple[str, str, str, str]] = set()
+            result: list[dict[str, Any]] = []
+            for row in rows:
+                identity = (row.source_id, row.instrument_id, row.timeframe, row.manifest_version)
+                if identity in seen:
+                    continue
+                seen.add(identity)
+                result.append(
+                    {
+                        "run_id": row.run_id,
+                        "manifest_version": row.manifest_version,
+                        "instrument_id": row.instrument_id,
+                        "source_id": row.source_id,
+                        "timeframe": row.timeframe,
+                        "status": row.status,
+                        "gaps": row.gaps,
+                        "duplicates": row.duplicates,
+                        "invalid_rows": row.invalid_rows,
+                        "blocked_cells": row.blocked_cells,
+                        "details": json.loads(row.details_json or "{}"),
+                        "receipt_hash": row.receipt_hash,
+                    }
+                )
+            return result
+
+    def latest_mvp_transform_receipts(self) -> list[dict[str, Any]]:
+        """Return the latest transform receipt for every derived cell."""
+
+        with self._session_factory() as session:
+            rows = session.execute(
+                select(MvpTransformReceiptRow).order_by(MvpTransformReceiptRow.id.desc())
+            ).scalars()
+            seen: set[tuple[str, str, str, str]] = set()
+            result: list[dict[str, Any]] = []
+            for row in rows:
+                identity = (
+                    row.source_id,
+                    row.instrument_id,
+                    row.output_timeframe,
+                    row.manifest_version,
+                )
+                if identity in seen:
+                    continue
+                seen.add(identity)
+                result.append(
+                    {
+                        "id": row.id,
+                        "receipt_id": row.id,
+                        "run_id": row.run_id,
+                        "manifest_version": row.manifest_version,
+                        "instrument_id": row.instrument_id,
+                        "source_id": row.source_id,
+                        "output_timeframe": row.output_timeframe,
+                        "input_timeframe": row.input_timeframe,
+                        "aggregation_rule_version": row.aggregation_rule_version,
+                        "input_start": row.input_start,
+                        "input_end": row.input_end,
+                        "input_hash": row.input_hash,
+                        "output_hash": row.output_hash,
+                        "bucket_anchor": row.bucket_anchor,
+                        "partial_bucket_policy": row.partial_bucket_policy,
+                        "partial_bucket_count": row.partial_bucket_count,
+                    }
+                )
+            return result
+
+    def latest_mvp_watermarks(self) -> list[dict[str, Any]]:
+        """Return the latest watermark for every exact MVP cell."""
+
+        with self._session_factory() as session:
+            rows = session.execute(select(MvpWatermarkRow)).scalars()
+            return [
+                {
+                    "instrument_id": row.instrument_id,
+                    "display_symbol": row.display_symbol,
+                    "provider_symbol": row.provider_symbol,
+                    "source_id": row.source_id,
+                    "asset_class": row.asset_class,
+                    "timeframe": row.timeframe,
+                    "adjustment_basis": row.adjustment_basis,
+                    "manifest_version": row.manifest_version,
+                    "last_closed_timestamp": row.last_closed_timestamp,
+                    "cursor": row.cursor,
+                    "run_id": row.run_id,
+                }
+                for row in rows
+            ]
+
     def mvp_latest_closed_bars(self) -> list[dict[str, Any]]:
         """Return latest timestamp/row count for each source-aware MVP series."""
 

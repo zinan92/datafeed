@@ -1,4 +1,4 @@
-"""Small browser-visible source health and provenance surface."""
+"""Chinese, read-only browser surface for the MVP health matrix."""
 
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
@@ -8,67 +8,270 @@ router = APIRouter()
 
 @router.get("/health-ui", response_class=HTMLResponse, include_in_schema=False)
 async def health_ui() -> str:
+    """Serve the dashboard shell; all facts are fetched from the matrix API."""
+
     return """<!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Datafeed Source Health</title>
+  <title>市场数据健康监控</title>
   <style>
-    :root { color-scheme: dark; --bg:#091019; --panel:#101a26; --line:#253447;
-      --text:#e8f0f7; --muted:#8ea2b7; --ok:#39d98a; --bad:#ff6b6b; --accent:#58a6ff; }
-    * { box-sizing:border-box } body { margin:0; background:var(--bg); color:var(--text);
-      font:14px/1.45 ui-sans-serif,system-ui,-apple-system,sans-serif; }
-    main { max-width:1180px; margin:0 auto; padding:32px 24px 48px; }
-    header { display:flex; justify-content:space-between; gap:24px; align-items:end; margin-bottom:24px; }
-    h1 { font-size:27px; margin:0 0 6px } p { margin:0; color:var(--muted) }
-    .stamp { text-align:right; color:var(--muted) } .grid { display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; margin-bottom:28px; }
-    .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; }
-    .row { display:flex; justify-content:space-between; gap:12px; align-items:center; }
-    .source { font-weight:700; font-size:15px } .pill { border-radius:999px; padding:3px 8px;
-      font-size:12px; background:#1b2938; color:var(--muted) }
-    .pill.ok { color:var(--ok); background:#0e2b22 } .pill.bad { color:var(--bad); background:#341b20 }
-    dl { display:grid; grid-template-columns:1fr auto; gap:7px 12px; margin:14px 0 0 }
-    dt { color:var(--muted) } dd { margin:0; text-align:right; max-width:190px; overflow:hidden;
-      text-overflow:ellipsis; white-space:nowrap }
-    h2 { font-size:17px; margin:0 0 12px } table { width:100%; border-collapse:collapse;
-      background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
-    th,td { padding:11px 12px; border-bottom:1px solid var(--line); text-align:left }
-    th { color:var(--muted); font-size:12px; font-weight:600 } tr:last-child td { border:0 }
-    .empty { color:var(--muted); padding:20px } .error { color:var(--bad) }
+    :root {
+      color-scheme: dark;
+      --bg:#08111b; --panel:#101d2a; --panel-2:#0d1824; --line:#24364a;
+      --text:#e8f1f8; --muted:#8da3b8; --accent:#67b7ff; --accent-2:#9a8cff;
+      --ok:#42d392; --partial:#ffc857; --stale:#f4a261; --bad:#ff6b78;
+    }
+    * { box-sizing:border-box }
+    body { margin:0; background:radial-gradient(circle at 10% 0%,#13263a 0,#08111b 40%);
+      color:var(--text); font:14px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; }
+    main { max-width:1500px; margin:0 auto; padding:28px 24px 54px }
+    header { display:flex; justify-content:space-between; gap:20px; align-items:flex-start; margin-bottom:18px }
+    .eyebrow { color:var(--accent); font-size:12px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px }
+    h1 { margin:0 0 6px; font-size:30px; letter-spacing:-.02em }
+    h2 { margin:0 0 12px; font-size:17px }
+    p { margin:0; color:var(--muted) }
+    .header-meta { min-width:230px; text-align:right; color:var(--muted); font-size:12px }
+    .header-meta strong { display:block; color:var(--text); font-size:14px; margin-bottom:4px }
+    .banner { position:sticky; top:10px; z-index:5; display:none; margin:0 0 18px;
+      padding:12px 14px; border:1px solid #71404a; border-radius:10px; background:#321b25; color:#ffdce1; }
+    .banner.warn { border-color:#80652d; background:#332c18; color:#ffe5a5; }
+    .banner.show { display:flex; align-items:center; gap:10px }
+    .banner .dot { width:9px; height:9px; flex:none; border-radius:50%; background:var(--bad); box-shadow:0 0 14px var(--bad) }
+    .banner.warn .dot { background:var(--partial); box-shadow:0 0 14px var(--partial) }
+    .toolbar { display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px; align-items:center;
+      margin-bottom:18px; padding:11px 14px; background:rgba(16,29,42,.8); border:1px solid var(--line); border-radius:10px; }
+    .toolbar span { color:var(--muted); font-size:12px }
+    .toolbar select { border:1px solid var(--line); border-radius:7px; padding:7px 10px; background:var(--panel-2); color:var(--text) }
+    .coverage-grid { display:grid; grid-template-columns:repeat(5,minmax(155px,1fr)); gap:10px; margin-bottom:26px }
+    .card { background:linear-gradient(145deg,rgba(16,29,42,.98),rgba(12,23,34,.98)); border:1px solid var(--line); border-radius:12px; padding:14px }
+    .coverage-card { min-height:116px }
+    .coverage-card .label { color:var(--muted); font-size:12px }
+    .coverage-card .ratio { display:flex; align-items:baseline; gap:7px; margin:8px 0 4px }
+    .coverage-card .ratio strong { font-size:26px; letter-spacing:-.03em }
+    .coverage-card .ratio span { color:var(--muted); font-size:12px }
+    .coverage-card .counts { color:var(--muted); font-size:12px }
+    .progress { height:4px; border-radius:99px; background:#1b2b3b; overflow:hidden; margin-top:11px }
+    .progress i { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,var(--accent),var(--accent-2)); }
+    .section { margin-top:24px }
+    .section-head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:12px }
+    .section-head small { color:var(--muted); font-size:12px }
+    .matrix-wrap { overflow:auto; border:1px solid var(--line); border-radius:12px; background:var(--panel-2) }
+    table { width:100%; min-width:940px; border-collapse:collapse }
+    th,td { padding:10px 11px; border-bottom:1px solid rgba(36,54,74,.7); text-align:left; vertical-align:middle }
+    th { position:sticky; top:0; z-index:2; background:#152639; color:var(--muted); font-size:12px; font-weight:600; white-space:nowrap }
+    tr:last-child td { border-bottom:0 }
+    .asset { min-width:185px }
+    .asset strong { display:block; font-size:13px }
+    .asset small { display:block; color:var(--muted); margin-top:2px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+    .cell { width:100%; min-width:118px; border:1px solid transparent; border-radius:8px; padding:7px 8px; text-align:left;
+      background:#152335; color:var(--text); cursor:pointer; transition:border-color .15s,transform .15s; }
+    .cell:hover { border-color:var(--accent); transform:translateY(-1px) }
+    .cell .cell-top { display:flex; justify-content:space-between; gap:6px; align-items:center }
+    .cell .state { font-weight:700; font-size:12px }
+    .cell .age { color:var(--muted); font-size:11px; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+    .cell.ready { background:#103126; color:#bff4d9 }
+    .cell.partial { background:#332c18; color:#ffe5a5 }
+    .cell.stale { background:#332718; color:#ffd0a0 }
+    .cell.failed, .cell.blocked, .cell.unavailable { background:#351c25; color:#ffd0d6 }
+    .cell.not_applicable { background:#17202a; color:#8ea1b1; cursor:default }
+    .empty { color:var(--muted); padding:22px; text-align:center }
+    .lower-grid { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(300px,.85fr); gap:14px; }
+    .run-table { min-width:700px }
+    .run-table td, .run-table th { white-space:nowrap }
+    .run-status { font-weight:700 }
+    .infra-grid { display:grid; gap:10px }
+    .infra-item { display:flex; justify-content:space-between; gap:12px; padding-bottom:10px; border-bottom:1px solid rgba(36,54,74,.7) }
+    .infra-item:last-child { border-bottom:0; padding-bottom:0 }
+    .infra-item span { color:var(--muted) }
+    .infra-item strong { text-align:right }
+    .drawer-backdrop { position:fixed; inset:0; display:none; z-index:10; background:rgba(1,6,12,.68) }
+    .drawer-backdrop.open { display:block }
+    .drawer { position:absolute; top:0; right:0; height:100%; width:min(480px,94vw); overflow:auto; padding:22px;
+      background:#0e1a27; border-left:1px solid var(--line); box-shadow:-18px 0 50px rgba(0,0,0,.35) }
+    .drawer-head { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:18px }
+    .drawer-head h2 { margin:0 }
+    .close { border:1px solid var(--line); border-radius:7px; background:transparent; color:var(--muted); padding:5px 9px; cursor:pointer }
+    .detail-list { display:grid; grid-template-columns:140px minmax(0,1fr); gap:9px 12px; margin:0 }
+    .detail-list dt { color:var(--muted) }
+    .detail-list dd { margin:0; overflow-wrap:anywhere; color:var(--text) }
+    .detail-list code { color:#c8d9e8; white-space:pre-wrap; font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace }
+    @media (max-width:900px) { header { flex-direction:column } .header-meta { min-width:0; text-align:left }
+      .coverage-grid { grid-template-columns:repeat(2,minmax(145px,1fr)) } .lower-grid { grid-template-columns:1fr } }
+    @media (max-width:520px) { main { padding:22px 14px 42px } h1 { font-size:25px } .coverage-grid { grid-template-columns:1fr 1fr } }
   </style>
 </head>
-<body><main>
-  <header><div><h1>Datafeed Source Health</h1><p>Availability, provenance and source-scoped storage coverage.</p></div>
-    <div class="stamp" id="stamp">Loading…</div></header>
-  <div class="grid" id="sources"></div>
-  <h2>Stored source coverage</h2>
-  <div id="coverage"></div>
-  <h2 style="margin-top:28px">GOLD 5m source comparison</h2>
-  <div id="comparison" class="card empty">Waiting for two stored GOLD sources…</div>
-</main><script>
-const esc = value => String(value ?? '—').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-fetch('/api/health').then(r => r.json()).then(data => {
-  document.getElementById('stamp').textContent = `${data.service} ${data.version} · ${new Date().toLocaleString()}`;
-  const observations = Object.fromEntries((data.latest_observations || []).map(x => [x.source_id, x]));
-  const sources = data.providers?.sources || {};
-  document.getElementById('sources').innerHTML = Object.entries(sources).map(([id, src]) => {
-    const obs = observations[id]; const state = !src.available ? 'unavailable' : !obs ? 'registered' : obs.success ? 'healthy' : 'failed';
-    const klass = state === 'healthy' ? 'ok' : state === 'failed' || state === 'unavailable' ? 'bad' : '';
-    return `<section class="card"><div class="row"><span class="source">${esc(id)}</span><span class="pill ${klass}">${esc(state)}</span></div>
-      <dl><dt>Provider</dt><dd>${esc(src.provider)}</dd><dt>Asset / market</dt><dd>${esc(src.asset_class)} · ${esc(src.market_type)}</dd>
-      <dt>Execution venue</dt><dd>${src.execution_venue ? 'yes' : 'no'}</dd><dt>Realtime</dt><dd>${src.realtime_supported ? 'yes' : 'no'}</dd>
-      <dt>Last instrument</dt><dd>${esc(obs?.ticker)}</dd><dt>Latest candle</dt><dd>${esc(obs?.latest_timestamp)}</dd>
-      <dt>Latency</dt><dd>${obs?.latency_ms == null ? '—' : Math.round(obs.latency_ms) + ' ms'}</dd><dt>Last error</dt><dd title="${esc(obs?.error)}">${esc(obs?.error)}</dd></dl></section>`;
-  }).join('');
-  const rows = data.storage_coverage || [];
-  document.getElementById('coverage').innerHTML = rows.length ? `<table><thead><tr><th>Source</th><th>Asset</th><th>Symbol</th><th>TF</th><th>Bars</th><th>Latest</th></tr></thead><tbody>${rows.map(x => `<tr><td>${esc(x.source_id)}</td><td>${esc(x.asset_class)}</td><td>${esc(x.ticker)}</td><td>${esc(x.timeframe)}</td><td>${esc(x.count)}</td><td>${esc(x.latest_timestamp)}</td></tr>`).join('')}</tbody></table>` : '<div class="card empty">No source-scoped candles stored yet.</div>';
-  const ids = new Set(rows.filter(x => x.asset_class === 'commodity' && x.timeframe === '5m').map(x => x.source_id));
-  if (ids.has('binance_usdm_futures') && ids.has('yahoo_finance_futures')) {
-    fetch('/api/compare/commodity/GOLD?timeframe=5m&sources=binance_usdm_futures&sources=yahoo_finance_futures&limit=500').then(r => r.json()).then(c => {
-      document.getElementById('comparison').innerHTML = `<div class="row"><span class="source">${esc(c.instrument_id)} · ${esc(c.primary_source)} vs ${esc(c.sources[1])}</span><span class="pill">never blended</span></div><dl><dt>Overlapping candles</dt><dd>${esc(c.overlap_count)}</dd><dt>Max close deviation</dt><dd>${Number(c.max_close_deviation_pct || 0).toFixed(4)}%</dd><dt>Provider symbols</dt><dd>${esc(Object.values(c.provider_symbols).join(' / '))}</dd></dl>`;
-    });
+<body>
+<main>
+  <header>
+    <div><div class="eyebrow">市场数据管线 / 运行监控</div><h1>资产 × 时间级别健康矩阵</h1>
+      <p>只读查看最近一次持久化运行、数据质量和覆盖情况。页面每 30 秒自动读取。</p></div>
+    <div class="header-meta"><strong id="overall">等待首次读取</strong><span id="last-success">尚未取得成功快照</span></div>
+  </header>
+  <div id="banner" class="banner" role="status"><i class="dot"></i><span id="banner-text"></span></div>
+  <div class="toolbar"><span id="snapshot-meta">正在连接健康矩阵…</span>
+    <label><span>矩阵筛选：</span><select id="filter"><option value="all">显示全部</option><option value="attention">仅显示需关注</option></select></label></div>
+
+  <section><div class="section-head"><h2>覆盖概览</h2><small id="coverage-meta">—</small></div><div id="coverage" class="coverage-grid"></div></section>
+
+  <section class="section"><div class="section-head"><h2>资产 × 时间级别明细</h2><small>点击单元格查看来源、质量和水位证据</small></div>
+    <div class="matrix-wrap"><table id="matrix"><thead><tr><th class="asset">资产</th><th>15 分钟</th><th>1 小时</th><th>4 小时</th><th>日线</th><th>周线</th></tr></thead><tbody id="matrix-body"><tr><td colspan="6" class="empty">正在读取数据…</td></tr></tbody></table></div></section>
+
+  <section class="section lower-grid"><div><div class="section-head"><h2>最近一次运行</h2><small>按时间倒序展示</small></div>
+      <div class="matrix-wrap"><table class="run-table"><thead><tr><th>运行编号</th><th>状态</th><th>开始</th><th>结束</th><th>蜡烛数</th><th>质量数</th></tr></thead><tbody id="runs-body"><tr><td colspan="6" class="empty">暂无运行记录</td></tr></tbody></table></div></div>
+    <div><div class="section-head"><h2>基础设施</h2><small>不包含密钥和原始路径</small></div><div id="infrastructure" class="card infra-grid"><div class="empty">暂无基础设施事实</div></div></div></section>
+</main>
+
+<div id="drawer-backdrop" class="drawer-backdrop" aria-hidden="true"><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+  <div class="drawer-head"><h2 id="drawer-title">单元格详情</h2><button class="close" id="close-drawer" type="button">关闭</button></div><dl id="detail-list" class="detail-list"></dl>
+</aside></div>
+
+<script>
+(() => {
+  const API = '/api/mvp/health/matrix';
+  const POLL_MS = 30000;
+  const TIMEOUT_MS = 10000;
+  const MAX_SNAPSHOT_MS = 900000;
+  const timeframes = ['15m','1h','4h','1d','1w'];
+  const timeframeLabels = {'15m':'15 分钟','1h':'1 小时','4h':'4 小时','1d':'日线','1w':'周线'};
+  const statusLabels = {ready:'正常',partial:'部分',stale:'过期',failed:'失败',blocked:'阻塞',unavailable:'不可用',not_applicable:'不适用'};
+  const attention = new Set(['partial','stale','failed','blocked','unavailable']);
+  let latestSnapshot = null;
+  let latestReceivedAt = 0;
+  let loading = false;
+
+  const esc = value => String(value ?? '—').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  const fmtTime = value => { if (!value) return '—'; const date = new Date(value); return Number.isNaN(date.getTime()) ? esc(value) : date.toLocaleString('zh-CN',{hour12:false}); };
+  const fmtCount = value => value == null ? '—' : Number(value).toLocaleString('zh-CN');
+  const statusText = status => statusLabels[status] || status || '未知';
+  const validSnapshot = data => data && Array.isArray(data.cells) && data.coverage && typeof data.coverage === 'object' && data.refresh;
+  const showBanner = (text, severity = 'error') => {
+    const banner = document.getElementById('banner');
+    document.getElementById('banner-text').textContent = text;
+    banner.classList.toggle('warn', severity === 'warn');
+    banner.classList.add('show');
+  };
+  const hideBanner = () => document.getElementById('banner').classList.remove('show');
+
+  function renderCoverage(snapshot) {
+    const host = document.getElementById('coverage');
+    host.innerHTML = timeframes.map(tf => {
+      const item = snapshot.coverage[tf] || {};
+      const applicable = Number(item.applicable || 0);
+      const ready = Number(item.ready || 0);
+      const ratio = applicable ? Math.round(ready / applicable * 100) : 0;
+      const problem = ['failed','blocked','stale','partial','unavailable'].reduce((sum, key) => sum + Number(item[key] || 0), 0);
+      return `<article class="card coverage-card"><div class="label">${timeframeLabels[tf]}</div><div class="ratio"><strong>${ratio}%</strong><span>${ready}/${applicable} 正常</span></div><div class="counts">${problem ? `需关注 ${problem} 个` : '没有异常单元格'} · 不适用 ${Number(item.not_applicable || 0)} 个</div><div class="progress"><i style="width:${ratio}%"></i></div></article>`;
+    }).join('');
+    document.getElementById('coverage-meta').textContent = `共 ${fmtCount(snapshot.cells.length)} 个单元格 · 清单 ${esc(snapshot.manifest_version)}`;
   }
-}).catch(error => { document.getElementById('sources').innerHTML = `<div class="card error">Health request failed: ${esc(error)}</div>`; });
-</script></body></html>"""
+
+  function renderMatrix(snapshot) {
+    const filter = document.getElementById('filter').value;
+    const grouped = new Map();
+    snapshot.cells.forEach(cell => {
+      if (filter === 'attention' && !attention.has(cell.status)) return;
+      const key = cell.instrument_id || cell.display_symbol;
+      if (!grouped.has(key)) grouped.set(key, {symbol:cell.display_symbol, name:cell.display_name, cells:{}});
+      grouped.get(key).cells[cell.timeframe] = cell;
+    });
+    const rows = Array.from(grouped.values());
+    document.getElementById('matrix-body').innerHTML = rows.length ? rows.map(row => `<tr><td class="asset"><strong>${esc(row.symbol)}</strong><small>${esc(row.name)}</small></td>${timeframes.map(tf => {
+      const cell = row.cells[tf];
+      if (!cell) return '<td><div class="empty">—</div></td>';
+      const latest = cell.latest_closed_timestamp ? fmtTime(cell.latest_closed_timestamp) : '暂无收盘数据';
+      return `<td><button class="cell ${esc(cell.status)}" type="button" data-cell="${esc(JSON.stringify(cell))}"><span class="cell-top"><span class="state">${esc(statusText(cell.status))}</span><span>${esc(timeframeLabels[tf])}</span></span><span class="age">${esc(latest)}</span></button></td>`;
+    }).join('')}</tr>`).join('') : '<tr><td colspan="6" class="empty">当前筛选没有需要展示的资产</td></tr>';
+    document.querySelectorAll('[data-cell]').forEach(button => button.addEventListener('click', () => openDetail(JSON.parse(button.dataset.cell))));
+  }
+
+  function renderRuns(snapshot) {
+    const rows = snapshot.runs || [];
+    document.getElementById('runs-body').innerHTML = rows.length ? rows.map(run => `<tr><td title="${esc(run.run_id)}">${esc(String(run.run_id || '—').slice(0,18))}</td><td class="run-status">${esc(statusText(run.status === 'success' ? 'ready' : run.status))}</td><td>${esc(fmtTime(run.started_at))}</td><td>${esc(fmtTime(run.completed_at))}</td><td>${esc(fmtCount(run.candle_count))}</td><td>${esc(fmtCount(run.quality_count))}</td></tr>`).join('') : '<tr><td colspan="6" class="empty">暂无运行记录</td></tr>';
+  }
+
+  function renderInfrastructure(snapshot) {
+    const infra = snapshot.infrastructure || {};
+    const worker = infra.worker || snapshot.worker || {};
+    const database = infra.database || {};
+    const backup = infra.nas_backup || {};
+    const label = value => value === 'ready' || value === 'ok' || value === 'last_run' ? '正常' : statusText(value || 'unavailable');
+    document.getElementById('infrastructure').innerHTML = [
+      ['采集任务', label(worker.status), worker.last_success_at ? `上次成功 ${fmtTime(worker.last_success_at)}` : '尚无成功运行'],
+      ['本地数据库', label(database.status), database.filesystem === 'local' ? '本地 SQLite（路径已隐藏）' : '路径已隐藏'],
+      ['SSD 挂载保护', label((infra.ssd_mount_guard || {}).status), '仅展示保护状态'],
+      ['NAS 备份', label(backup.status), backup.last_backup_at ? `上次备份 ${fmtTime(backup.last_backup_at)}` : '尚无备份证据']
+    ].map(item => `<div class="infra-item"><span>${esc(item[0])}<br><small>${esc(item[2])}</small></span><strong>${esc(item[1])}</strong></div>`).join('');
+  }
+
+  function render(snapshot) {
+    latestSnapshot = snapshot;
+    renderCoverage(snapshot); renderMatrix(snapshot); renderRuns(snapshot); renderInfrastructure(snapshot);
+    document.getElementById('overall').textContent = `总体状态：${statusText(snapshot.status)}`;
+    document.getElementById('snapshot-meta').textContent = `数据时间 ${fmtTime(snapshot.as_of)} · 自动读取间隔 30 秒 · 请求上限 10 秒`;
+    if (snapshot.status === 'failed') {
+      showBanner('数据源或存储存在失败、阻塞单元格，请查看矩阵详情', 'error');
+    } else if (snapshot.status === 'partial') {
+      showBanner('数据源存在过期、部分或不可用单元格，请查看覆盖概览', 'warn');
+    } else {
+      hideBanner();
+    }
+  }
+
+  function openDetail(cell) {
+    const rows = [
+      ['状态', statusText(cell.status)], ['状态原因', cell.status_reason], ['资产', `${cell.display_symbol || '—'} · ${cell.display_name || '—'}`],
+      ['时间级别', timeframeLabels[cell.timeframe] || cell.timeframe], ['适用性', cell.applicability === 'not_applicable' ? '不适用' : '适用'],
+      ['来源标识', cell.source_id], ['供应商代码', cell.provider_symbol], ['来源模式', cell.source_mode],
+      ['最近收盘', cell.latest_closed_timestamp ? fmtTime(cell.latest_closed_timestamp) : null], ['存储行数', fmtCount(cell.row_count)],
+      ['是否聚合', cell.is_derived == null ? null : (cell.is_derived ? '是' : '否')], ['最近尝试', fmtTime(cell.last_attempt_at)],
+      ['最近成功', fmtTime(cell.last_success_at)], ['质量', cell.quality], ['水位', cell.watermark], ['转换凭证', cell.transform], ['错误', cell.error]
+    ];
+    document.getElementById('drawer-title').textContent = `${cell.display_symbol || '资产'} · ${timeframeLabels[cell.timeframe] || cell.timeframe}`;
+    document.getElementById('detail-list').innerHTML = rows.map(([key,value]) => `<dt>${esc(key)}</dt><dd>${value && typeof value === 'object' ? `<code>${esc(JSON.stringify(value,null,2))}</code>` : esc(value)}</dd>`).join('');
+    const drawer = document.getElementById('drawer-backdrop'); drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false');
+  }
+  const closeDetail = () => { const drawer = document.getElementById('drawer-backdrop'); drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); };
+
+  async function fetchHealth() {
+    if (loading) return; loading = true;
+    const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    try {
+      const response = await fetch(`${API}?_=${Date.now()}`, {cache:'no-store', signal:controller.signal, headers:{'Accept':'application/json'}});
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json(); if (!validSnapshot(data)) throw new Error('响应结构不完整');
+      latestReceivedAt = Date.now(); render(data);
+      document.getElementById('last-success').textContent = `最近成功读取 ${new Date(latestReceivedAt).toLocaleString('zh-CN',{hour12:false})}`;
+    } catch (error) {
+      const message = error.name === 'AbortError' ? '健康矩阵读取超过 10 秒' : `健康矩阵读取失败：${error.message || error}`;
+      if (!latestSnapshot) {
+        document.getElementById('overall').textContent = '监控服务不可用';
+        document.getElementById('snapshot-meta').textContent = '尚未取得可展示的健康快照';
+        document.getElementById('coverage').innerHTML = '<div class="card empty">暂无可验证的矩阵数据</div>';
+        document.getElementById('matrix-body').innerHTML = '<tr><td colspan="6" class="empty">监控服务不可用，暂不展示推测数据</td></tr>';
+      } else {
+        const age = Date.now() - latestReceivedAt;
+        if (age > MAX_SNAPSHOT_MS) {
+          latestSnapshot = null;
+          document.getElementById('overall').textContent = '快照已过期';
+          document.getElementById('snapshot-meta').textContent = '最近成功快照已超过 15 分钟，暂不继续展示';
+          document.getElementById('coverage').innerHTML = '<div class="card empty">快照已过期，等待新的可验证数据</div>';
+          document.getElementById('matrix-body').innerHTML = '<tr><td colspan="6" class="empty">快照已过期</td></tr>';
+        } else {
+          document.getElementById('snapshot-meta').textContent = `读取失败，保留最近快照 · 已过 ${Math.round(age / 1000)} 秒`;
+        }
+      }
+      showBanner(message);
+    } finally { clearTimeout(timeout); loading = false; }
+  }
+
+  document.getElementById('filter').addEventListener('change', () => { if (latestSnapshot) renderMatrix(latestSnapshot); });
+  document.getElementById('close-drawer').addEventListener('click', closeDetail);
+  document.getElementById('drawer-backdrop').addEventListener('click', event => { if (event.target.id === 'drawer-backdrop') closeDetail(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape') closeDetail(); });
+  fetchHealth(); setInterval(fetchHealth, POLL_MS);
+})();
+</script>
+</body>
+</html>"""

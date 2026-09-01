@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from time import monotonic
 from typing import Any, Mapping
 
@@ -20,6 +21,8 @@ from kline.models import (
     TimeframeTransform,
     InstrumentDefinition,
 )
+from kline.health_matrix import build_mvp_health_matrix
+from kline.mvp_manifest import load_manifest
 from kline.ports import MarketDataPort
 from kline.providers.base import ProviderError
 from kline.provenance import (
@@ -1087,3 +1090,18 @@ async def health() -> dict:
         "storage_coverage": coverage,
         "latest_observations": get_store().latest_source_observations(),
     }
+
+
+@router.get("/mvp/health/matrix")
+async def mvp_health_matrix() -> dict:
+    """Return the source-aware MVP asset × timeframe health matrix."""
+
+    manifest_path = Path(__file__).resolve().parents[2] / "configs" / "mvp_manifest.json"
+    try:
+        manifest = load_manifest(manifest_path)
+        return build_mvp_health_matrix(manifest, get_store())
+    except Exception as error:
+        raise HTTPException(
+            status_code=503,
+            detail={"error": "dashboard_unavailable", "detail": type(error).__name__},
+        ) from error
