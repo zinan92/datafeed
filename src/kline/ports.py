@@ -87,6 +87,7 @@ class FetchReceipt:
     timeframe_transform: TimeframeTransform | None
     source_identity: Mapping[str, Any]
     raw_response: dict[str, Any] | None
+    attempts: tuple[Mapping[str, Any], ...] = ()
 
 
 class MarketDataPort(Protocol):
@@ -164,6 +165,11 @@ class ProviderBackedMarketDataAdapter:
         value = getattr(self._provider, "source_identity", None)
         return value if isinstance(value, Mapping) else None
 
+    @property
+    def last_attempts(self) -> tuple[Mapping[str, Any], ...]:
+        value = getattr(self._provider, "last_attempts", ()) or ()
+        return tuple(item for item in value if isinstance(item, Mapping))
+
     def canonical_ticker(self, ticker: str) -> str:
         return self._manifest.canonical_ticker(ticker)
 
@@ -212,6 +218,7 @@ class ProviderBackedMarketDataAdapter:
                 timeframe_transform=self.timeframe_transform,
                 source_identity=dict(self.source_identity or {}),
                 raw_response=dict(self.last_raw_response or {}) if self.last_raw_response else None,
+                attempts=tuple(getattr(self._provider, "last_attempts", ()) or ()),
             )
 
     async def stream_candles(

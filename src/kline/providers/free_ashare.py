@@ -12,6 +12,7 @@ from hashlib import sha256
 import json
 import math
 import re
+import time
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -20,7 +21,7 @@ import httpx
 from kline.market_calendar import aggregate_15m_to_4h, aggregate_daily_to_weekly
 from kline.models import Candle, Timeframe, TimeframeTransform
 from kline.providers.base import ProviderError
-from kline.providers.free_common import requested_cutoff
+from kline.providers.free_common import RequestPacer, requested_cutoff
 from kline.storage import CandleSeriesKey, MvpCandle
 
 
@@ -166,12 +167,45 @@ def parse_10jqka_rows(
 class AShareFreeProvider:
     """Fetch A-share bars from Tencent with a Tonghuashun fallback."""
 
-    def __init__(self, *, timeout: float = 15.0, transport: httpx.AsyncBaseTransport | None = None):
+    def __init__(
+        self,
+        *,
+        timeout: float = 15.0,
+        transport: httpx.AsyncBaseTransport | None = None,
+        request_interval_seconds: float = 0.25,
+    ):
         self._timeout = timeout
         self._transport = transport
+        self._pacer = RequestPacer(request_interval_seconds)
         self.last_raw_response: dict[str, Any] | None = None
+        self.last_attempts: list[dict[str, Any]] = []
         self.timeframe_transform: TimeframeTransform | None = None
         self.source_identity: dict[str, Any] = {}
+
+    def _record_attempt(
+        self,
+        *,
+        source: str,
+        endpoint: str,
+        started_at: float,
+        status: str,
+        http_status: int | None = None,
+        error: str | None = None,
+        row_count: int | None = None,
+    ) -> None:
+        record: dict[str, Any] = {
+            "source": source,
+            "endpoint": endpoint,
+            "status": status,
+            "latency_ms": round((time.perf_counter() - started_at) * 1000, 1),
+        }
+        if http_status is not None:
+            record["http_status"] = http_status
+        if row_count is not None:
+            record["row_count"] = row_count
+        if error:
+            record["error"] = str(error)[:240]
+        self.last_attempts.append(record)
 
     def supported_timeframes(self) -> list[Timeframe]:
         return list(_A_SHARE_TIMEFRAMES)
@@ -187,6 +221,7 @@ class AShareFreeProvider:
     ) -> list[Candle]:
         if timeframe not in _A_SHARE_TIMEFRAMES:
             raise ProviderError(f"free A-share source does not support {timeframe.value}")
+        self.last_attempts = []
         self.timeframe_transform = None
         self.last_raw_response = None
         if timeframe == Timeframe.HOUR_4:
@@ -274,7 +309,9 @@ class AShareFreeProvider:
             "selected_source": selected,
             "adjustment_basis": "qfq" if selected == "tencent" else "unverified",
             "canonical_adjustment_basis": "qfq",
-            "adjustment_basis_evidence": "tonghuashun_unverified" if selected == "tonghuashun" else "tencent_qfq",
+            "adjustment_basis_evidence": "tonghuashun_unverified"
+            if selected == "tonghuashun"
+            else "tencent_qfq",
             "fallback_from": "tencent" if selected == "tonghuashun" else None,
             "fallback_chain": ["tonghuashun"] if selected == "tonghuashun" else [],
         }
@@ -282,7 +319,10 @@ class AShareFreeProvider:
 
     async def _tencent_minute(self, code: str, key: str, *, limit: int) -> tuple[list[Candle], str]:
         params = {"param": f"{code},{key},,{max(1, min(limit, 320))}"}
+        started_at = time.perf_counter()
+        response: httpx.Response | None = None
         try:
+            await self._pacer.wait()
             async with httpx.AsyncClient(
                 timeout=self._timeout,
                 transport=self._transport,
@@ -304,8 +344,24 @@ class AShareFreeProvider:
                 "response_sha256": sha256(response.content).hexdigest(),
                 "row_count": len(rows),
             }
+            self._record_attempt(
+                source="tencent",
+                endpoint=_TENCENT_MINUTE_URL,
+                started_at=started_at,
+                status="success",
+                http_status=response.status_code,
+                row_count=len(rows),
+            )
             return rows, "tencent"
         except (httpx.HTTPError, ValueError, ProviderError) as error:
+            self._record_attempt(
+                source="tencent",
+                endpoint=_TENCENT_MINUTE_URL,
+                started_at=started_at,
+                status="error",
+                http_status=response.status_code if response is not None else None,
+                error=str(error),
+            )
             raise ProviderError(f"Tencent minute request failed for {code}: {error}") from error
 
     async def _tencent_daily(
@@ -314,7 +370,10 @@ class AShareFreeProvider:
         params = {
             "param": f"{code},day,{(start or '')[:10]},{(end or '')[:10]},{max(1, min(limit, 500))},qfq"
         }
+        started_at = time.perf_counter()
+        response: httpx.Response | None = None
         try:
+            await self._pacer.wait()
             async with httpx.AsyncClient(
                 timeout=self._timeout, transport=self._transport
             ) as client:
@@ -333,8 +392,24 @@ class AShareFreeProvider:
                 "response_sha256": sha256(response.content).hexdigest(),
                 "row_count": len(rows),
             }
+            self._record_attempt(
+                source="tencent",
+                endpoint=_TENCENT_DAILY_URL,
+                started_at=started_at,
+                status="success",
+                http_status=response.status_code,
+                row_count=len(rows),
+            )
             return rows, "tencent"
         except (httpx.HTTPError, ValueError, ProviderError) as error:
+            self._record_attempt(
+                source="tencent",
+                endpoint=_TENCENT_DAILY_URL,
+                started_at=started_at,
+                status="error",
+                http_status=response.status_code if response is not None else None,
+                error=str(error),
+            )
             raise ProviderError(f"Tencent daily request failed for {code}: {error}") from error
 
     async def _with_fallback(
@@ -352,7 +427,11 @@ class AShareFreeProvider:
                 return await self._tencent_daily(code, start=start, end=end, limit=limit)
             return await self._tencent_minute(code, tencent_key, limit=limit)
         except ProviderError as tencent_error:
+            endpoint = _TENJQKA_URL.format(code=code[2:], period=tenjqka_period)
+            started_at = time.perf_counter()
+            response: httpx.Response | None = None
             try:
+                await self._pacer.wait()
                 async with httpx.AsyncClient(
                     timeout=self._timeout, transport=self._transport
                 ) as client:
@@ -373,6 +452,14 @@ class AShareFreeProvider:
                     "row_count": len(rows),
                     "fallback_from": "tencent",
                 }
+                self._record_attempt(
+                    source="tonghuashun",
+                    endpoint=endpoint,
+                    started_at=started_at,
+                    status="success",
+                    http_status=response.status_code,
+                    row_count=len(rows),
+                )
                 self.source_identity = {
                     "selected_source": "tonghuashun",
                     "fallback_from": "tencent",
@@ -381,6 +468,14 @@ class AShareFreeProvider:
                 }
                 return rows, "tonghuashun"
             except (httpx.HTTPError, ValueError, ProviderError) as fallback_error:
+                self._record_attempt(
+                    source="tonghuashun",
+                    endpoint=endpoint,
+                    started_at=started_at,
+                    status="error",
+                    http_status=response.status_code if response is not None else None,
+                    error=str(fallback_error),
+                )
                 raise ProviderError(
                     f"free A-share sources failed for {code}: Tencent={tencent_error}; Tonghuashun={fallback_error}"
                 ) from fallback_error

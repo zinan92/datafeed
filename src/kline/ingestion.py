@@ -8,11 +8,12 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import inspect
 import json
+import time as time_module
 from typing import Any, Callable, Mapping, Sequence
 
 from kline.market_calendar import QualityResult, assess_quality
 from kline.models import AssetClass, Candle, Timeframe, TimeframeTransform
-from kline.mvp_manifest import MvpManifest, manifest_digest
+from kline.mvp_manifest import ALLOWED_TIMEFRAMES, MvpManifest, manifest_digest
 from kline.ports import FetchReceipt, MarketDataPort
 from kline.providers.base import EntitlementBlocked, ProviderError
 from kline.storage import (
@@ -52,6 +53,8 @@ class IngestionPlan:
     rate_budget: int | None = None
     policy: Mapping[str, Any] = field(default_factory=dict)
     instrument_ids: Sequence[str] | None = None
+    timeframes: Sequence[str] | None = None
+    request_interval_seconds: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -214,6 +217,22 @@ class IngestionOrchestrator:
         plan: IngestionPlan,
     ) -> FetchReceipt:
         last_error: Exception | None = None
+        attempts: list[dict[str, Any]] = []
+
+        def adapter_attempts() -> list[dict[str, Any]]:
+            value = getattr(adapter, "last_attempts", ()) or ()
+            return [dict(item) for item in value if isinstance(item, Mapping)]
+
+        def append_attempts(values: Sequence[Mapping[str, Any]], retry_number: int) -> None:
+            attempts.extend(
+                {**dict(item), "retry_number": retry_number}
+                for item in values
+                if isinstance(item, Mapping)
+            )
+
+        def attach_attempts(error: Exception) -> None:
+            setattr(error, "attempts", tuple(attempts))
+
         for attempt in range(plan.max_retries + 1):
             try:
                 fetch_with_receipt = getattr(adapter, "fetch_candles_with_receipt", None)
@@ -228,13 +247,24 @@ class IngestionOrchestrator:
                     if inspect.isawaitable(result):
                         result = await result
                     if isinstance(result, FetchReceipt):
-                        return result
+                        append_attempts(result.attempts or tuple(adapter_attempts()), attempt + 1)
+                        return FetchReceipt(
+                            candles=result.candles,
+                            timeframe_transform=result.timeframe_transform,
+                            source_identity=result.source_identity,
+                            raw_response=result.raw_response,
+                            attempts=tuple(attempts),
+                        )
                     if hasattr(result, "candles"):
+                        append_attempts(
+                            getattr(result, "attempts", ()) or adapter_attempts(), attempt + 1
+                        )
                         return FetchReceipt(
                             candles=list(result.candles),
                             timeframe_transform=getattr(result, "timeframe_transform", None),
                             source_identity=getattr(result, "source_identity", {}) or {},
                             raw_response=getattr(result, "raw_response", None),
+                            attempts=tuple(attempts),
                         )
                 fetch = adapter.fetch_candles(
                     ticker,
@@ -244,16 +274,21 @@ class IngestionOrchestrator:
                     limit=limit,
                 )
                 candles = await fetch if inspect.isawaitable(fetch) else fetch
+                append_attempts(adapter_attempts(), attempt + 1)
                 return FetchReceipt(
                     candles=list(candles),
                     timeframe_transform=getattr(adapter, "timeframe_transform", None),
                     source_identity=getattr(adapter, "source_identity", {}) or {},
                     raw_response=getattr(adapter, "last_raw_response", None),
+                    attempts=tuple(attempts),
                 )
-            except EntitlementBlocked:
+            except EntitlementBlocked as exc:
+                append_attempts(adapter_attempts(), attempt + 1)
+                attach_attempts(exc)
                 raise
             except ProviderError as exc:
                 last_error = exc
+                append_attempts(adapter_attempts(), attempt + 1)
                 if (
                     getattr(exc, "code", "provider_error")
                     in {
@@ -263,15 +298,22 @@ class IngestionOrchestrator:
                     }
                     or attempt >= plan.max_retries
                 ):
+                    attach_attempts(exc)
                     raise
             except Exception as exc:
                 last_error = exc
+                append_attempts(adapter_attempts(), attempt + 1)
                 if attempt >= plan.max_retries:
-                    raise ProviderError(f"provider fetch failed: {exc}") from exc
+                    wrapped = ProviderError(f"provider fetch failed: {exc}")
+                    attach_attempts(wrapped)
+                    raise wrapped from exc
             if plan.retry_backoff_seconds:
                 await asyncio.sleep(plan.retry_backoff_seconds * (attempt + 1))
         assert last_error is not None
-        raise ProviderError(str(last_error)) from last_error
+        attach_attempts(last_error)
+        wrapped = ProviderError(str(last_error))
+        attach_attempts(wrapped)
+        raise wrapped from last_error
 
     def _to_mvp_rows(
         self,
@@ -348,6 +390,11 @@ class IngestionOrchestrator:
         end = self._now_iso(now)
         manifest = plan.manifest
         manifest_hash = manifest_digest(manifest)
+        timeframes = tuple(plan.timeframes or INGESTION_TIMEFRAMES)
+        if not timeframes or any(timeframe not in ALLOWED_TIMEFRAMES for timeframe in timeframes):
+            raise IngestionError(f"ingestion timeframes must be drawn from {ALLOWED_TIMEFRAMES}")
+        if plan.request_interval_seconds < 0:
+            raise IngestionError("request_interval_seconds must be non-negative")
         selected_ids = set(plan.instrument_ids) if plan.instrument_ids is not None else None
         if selected_ids is not None:
             known_ids = {instrument.instrument_id for instrument in manifest.instruments}
@@ -366,11 +413,61 @@ class IngestionOrchestrator:
         watermarks: list[WatermarkWrite] = []
         request_count = 0
         quality_counts = {"pass": 0, "partial": 0, "fail": 0}
+        last_request_at: float | None = None
+
+        def receipt_attempts(value: Any) -> list[dict[str, Any]]:
+            raw = getattr(value, "attempts", ()) or ()
+            return [dict(item) for item in raw if isinstance(item, Mapping)]
+
+        def error_attempts(error: Exception, adapter: Any) -> list[dict[str, Any]]:
+            raw = getattr(error, "attempts", ()) or getattr(adapter, "last_attempts", ()) or ()
+            return [dict(item) for item in raw if isinstance(item, Mapping)]
+
+        def elapsed_ms(started_at: float | None) -> float | None:
+            if started_at is None:
+                return None
+            return round((time_module.perf_counter() - started_at) * 1000, 1)
+
+        def append_failed_observation(
+            *,
+            key: CandleSeriesKey,
+            request_start: str | None,
+            adapter: Any,
+            error: str,
+            latency_ms: float | None,
+            provider_attempts: Sequence[Mapping[str, Any]],
+        ) -> None:
+            raw_response = getattr(adapter, "last_raw_response", None) if adapter else None
+            response_hash = self._hash(raw_response) if isinstance(raw_response, Mapping) else None
+            source_identity = getattr(adapter, "source_identity", {}) if adapter else {}
+            observations.append(
+                SourceObservationWrite(
+                    run_id=plan.run_id,
+                    key=key,
+                    success=False,
+                    request_start=request_start,
+                    request_end=end,
+                    response_hash=response_hash,
+                    policy={
+                        "fallback": "none",
+                        "overlap_bars": plan.overlap_bars,
+                        "source_identity": dict(source_identity or {})
+                        if isinstance(source_identity, Mapping)
+                        else {},
+                        "provider_attempts": [dict(item) for item in provider_attempts],
+                    },
+                    candle_count=0,
+                    latest_timestamp=None,
+                    latency_ms=latency_ms,
+                    served_from="upstream",
+                    error=error,
+                )
+            )
 
         for instrument in manifest.instruments:
             if selected_ids is not None and instrument.instrument_id not in selected_ids:
                 continue
-            for timeframe in INGESTION_TIMEFRAMES:
+            for timeframe in timeframes:
                 if timeframe in instrument.not_applicable_timeframes:
                     cells.append(
                         CellResult(
@@ -454,6 +551,14 @@ class IngestionOrchestrator:
                             "error": "source adapter is not configured",
                         }
                     )
+                    append_failed_observation(
+                        key=key,
+                        request_start=request_start,
+                        adapter=None,
+                        error="source adapter is not configured",
+                        latency_ms=None,
+                        provider_attempts=(),
+                    )
                     qualities.append(
                         QualityReceiptWrite(
                             run_id=plan.run_id, key=key, status="blocked", blocked_cells=1
@@ -461,7 +566,15 @@ class IngestionOrchestrator:
                     )
                     quality_counts["fail"] += 1
                     continue
+                fetch_started_at: float | None = None
                 try:
+                    if last_request_at is not None and plan.request_interval_seconds:
+                        elapsed = time_module.monotonic() - last_request_at
+                        wait_seconds = plan.request_interval_seconds - elapsed
+                        if wait_seconds > 0:
+                            await asyncio.sleep(wait_seconds)
+                    last_request_at = time_module.monotonic()
+                    fetch_started_at = time_module.perf_counter()
                     fetch_receipt = await self._fetch_with_retries(
                         adapter,
                         instrument.display_symbol,
@@ -471,6 +584,8 @@ class IngestionOrchestrator:
                         limit=plan.fetch_limit,
                         plan=plan,
                     )
+                    latency_ms = round((time_module.perf_counter() - fetch_started_at) * 1000, 1)
+                    provider_attempts = receipt_attempts(fetch_receipt)
                     raw_rows = fetch_receipt.candles
                     mvp_rows = self._to_mvp_rows(
                         instrument,
@@ -504,9 +619,11 @@ class IngestionOrchestrator:
                                 "fallback": "none",
                                 "overlap_bars": plan.overlap_bars,
                                 "source_identity": dict(fetch_receipt.source_identity),
+                                "provider_attempts": provider_attempts,
                             },
                             candle_count=len(mvp_rows),
                             latest_timestamp=latest,
+                            latency_ms=latency_ms,
                             served_from="upstream",
                         )
                     )
@@ -518,6 +635,10 @@ class IngestionOrchestrator:
                             "status": quality.status,
                             "candle_count": len(mvp_rows),
                             "response_hash": response_hash,
+                            "latency_ms": latency_ms,
+                            "http_status": (fetch_receipt.raw_response or {}).get("http_status"),
+                            "source_identity": dict(fetch_receipt.source_identity),
+                            "provider_attempts": provider_attempts,
                         }
                     )
                     if quality.status == "pass" and mvp_rows:
@@ -575,6 +696,16 @@ class IngestionOrchestrator:
                     if quality.status == "fail":
                         blocked_cells.append(result.to_dict())
                 except EntitlementBlocked as exc:
+                    latency_ms = elapsed_ms(fetch_started_at)
+                    provider_attempts = error_attempts(exc, adapter)
+                    append_failed_observation(
+                        key=key,
+                        request_start=request_start,
+                        adapter=adapter,
+                        error=str(exc),
+                        latency_ms=latency_ms,
+                        provider_attempts=provider_attempts,
+                    )
                     result = CellResult(
                         instrument.instrument_id,
                         instrument.display_symbol,
@@ -597,6 +728,8 @@ class IngestionOrchestrator:
                             "timeframe": timeframe,
                             "status": "blocked_for_entitlement",
                             "error": str(exc),
+                            "latency_ms": latency_ms,
+                            "provider_attempts": provider_attempts,
                         }
                     )
                     qualities.append(
@@ -609,6 +742,16 @@ class IngestionOrchestrator:
                         )
                     )
                 except ProviderError as exc:
+                    latency_ms = elapsed_ms(fetch_started_at)
+                    provider_attempts = error_attempts(exc, adapter)
+                    append_failed_observation(
+                        key=key,
+                        request_start=request_start,
+                        adapter=adapter,
+                        error=str(exc),
+                        latency_ms=latency_ms,
+                        provider_attempts=provider_attempts,
+                    )
                     result = CellResult(
                         instrument.instrument_id,
                         instrument.display_symbol,
@@ -631,6 +774,11 @@ class IngestionOrchestrator:
                             "timeframe": timeframe,
                             "status": getattr(exc, "code", "unavailable"),
                             "error": str(exc),
+                            "latency_ms": latency_ms,
+                            "http_status": (getattr(adapter, "last_raw_response", {}) or {}).get(
+                                "http_status"
+                            ),
+                            "provider_attempts": provider_attempts,
                         }
                     )
                     qualities.append(
@@ -643,6 +791,16 @@ class IngestionOrchestrator:
                         )
                     )
                 except (StorageError, ValueError) as exc:
+                    latency_ms = elapsed_ms(fetch_started_at)
+                    provider_attempts = error_attempts(exc, adapter)
+                    append_failed_observation(
+                        key=key,
+                        request_start=request_start,
+                        adapter=adapter,
+                        error=str(exc),
+                        latency_ms=latency_ms,
+                        provider_attempts=provider_attempts,
+                    )
                     result = CellResult(
                         instrument.instrument_id,
                         instrument.display_symbol,
@@ -665,6 +823,8 @@ class IngestionOrchestrator:
                             "timeframe": timeframe,
                             "status": "malformed",
                             "error": str(exc),
+                            "latency_ms": latency_ms,
+                            "provider_attempts": provider_attempts,
                         }
                     )
                     qualities.append(
