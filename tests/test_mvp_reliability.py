@@ -41,6 +41,8 @@ async def test_run_demo_once_writes_a_terminal_receipt_without_network_calls(
     assert run is not None
     assert run["status"] == "partial"
     assert store.mvp_storage_health()["runs"] == 1
+    assert store.mvp_duplicate_key_count() == 0
+    assert store.mvp_watermark_count_for_runs({"missing-run"}) == 0
     assert result["health"]["scope"]["name"] == "demo_3x3"
 
 

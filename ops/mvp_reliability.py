@@ -20,6 +20,7 @@ from typing import Any, Mapping, Sequence
 from kline.config import Settings
 from kline.health_matrix import (
     MVP_DEMO_INSTRUMENT_IDS,
+    _safe_run,
     build_mvp_health_matrix,
 )
 from kline.mvp_manifest import MvpManifest, load_manifest, manifest_digest
@@ -116,7 +117,7 @@ def _run_times(store: KlineStore, start: datetime, end: datetime) -> list[dict[s
         except (TypeError, ValueError):
             continue
         if start <= parsed <= end:
-            result.append(dict(row))
+            result.append(_safe_run(row))
     result.sort(key=lambda row: _parse_time(row["started_at"]))
     return result
 
