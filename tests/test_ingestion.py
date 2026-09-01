@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -500,6 +501,40 @@ async def test_run_once_suppresses_watermark_regression_without_failing_transact
     assert (
         store.get_mvp_watermark(watermark_key).last_closed_timestamp == "2026-08-31T00:00:00+00:00"
     )
+
+
+@pytest.mark.asyncio
+async def test_run_once_bounds_hanging_provider_cell(tmp_path: Path) -> None:
+    manifest = load_manifest(MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "provider-timeout.db"))
+
+    class HangingAdapter:
+        calls = 0
+
+        async def fetch_candles_with_receipt(self, *_args, **_kwargs) -> FetchReceipt:
+            self.calls += 1
+            await asyncio.sleep(10)
+            raise AssertionError("timeout should cancel the provider call")
+
+    adapter = HangingAdapter()
+    receipt = await IngestionOrchestrator(
+        store, adapter_resolver=lambda _instrument: adapter
+    ).run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="run-provider-timeout",
+            now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+            instrument_ids=("CRYPTO.PERP.BTC",),
+            timeframes=("1d",),
+            max_retries=2,
+            provider_timeout_seconds=0.01,
+        )
+    )
+
+    assert receipt.status == "partial"
+    assert adapter.calls == 1
+    assert receipt.source_attempts[0]["status"] == "timeout"
+    assert receipt.source_attempts[0]["latency_ms"] >= 0
 
 
 @pytest.mark.asyncio

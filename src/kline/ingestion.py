@@ -55,6 +55,7 @@ class IngestionPlan:
     instrument_ids: Sequence[str] | None = None
     timeframes: Sequence[str] | None = None
     request_interval_seconds: float = 0.0
+    provider_timeout_seconds: float = 60.0
 
 
 @dataclass(frozen=True)
@@ -245,7 +246,9 @@ class IngestionOrchestrator:
                         limit=limit,
                     )
                     if inspect.isawaitable(result):
-                        result = await result
+                        result = await asyncio.wait_for(
+                            result, timeout=plan.provider_timeout_seconds
+                        )
                     if isinstance(result, FetchReceipt):
                         append_attempts(result.attempts or tuple(adapter_attempts()), attempt + 1)
                         return FetchReceipt(
@@ -273,7 +276,11 @@ class IngestionOrchestrator:
                     end=end,
                     limit=limit,
                 )
-                candles = await fetch if inspect.isawaitable(fetch) else fetch
+                candles = (
+                    await asyncio.wait_for(fetch, timeout=plan.provider_timeout_seconds)
+                    if inspect.isawaitable(fetch)
+                    else fetch
+                )
                 append_attempts(adapter_attempts(), attempt + 1)
                 return FetchReceipt(
                     candles=list(candles),
@@ -286,6 +293,13 @@ class IngestionOrchestrator:
                 append_attempts(adapter_attempts(), attempt + 1)
                 attach_attempts(exc)
                 raise
+            except asyncio.TimeoutError as exc:
+                timeout_error = ProviderError(
+                    f"provider fetch timed out after {plan.provider_timeout_seconds:g}s"
+                )
+                timeout_error.code = "timeout"
+                attach_attempts(timeout_error)
+                raise timeout_error from exc
             except ProviderError as exc:
                 last_error = exc
                 append_attempts(adapter_attempts(), attempt + 1)
@@ -296,6 +310,7 @@ class IngestionOrchestrator:
                         "market_closed",
                         "malformed_row",
                         "empty_response",
+                        "timeout",
                     }
                     or attempt >= plan.max_retries
                 ):
@@ -396,6 +411,8 @@ class IngestionOrchestrator:
             raise IngestionError(f"ingestion timeframes must be drawn from {ALLOWED_TIMEFRAMES}")
         if plan.request_interval_seconds < 0:
             raise IngestionError("request_interval_seconds must be non-negative")
+        if plan.provider_timeout_seconds <= 0:
+            raise IngestionError("provider_timeout_seconds must be positive")
         selected_ids = set(plan.instrument_ids) if plan.instrument_ids is not None else None
         if selected_ids is not None:
             known_ids = {instrument.instrument_id for instrument in manifest.instruments}
