@@ -184,6 +184,45 @@ async def test_tushare_native_1h_requests_60min_and_keeps_identity() -> None:
     assert provider.timeframe_transform.timeframe_origin == "native"
 
 
+@pytest.mark.asyncio
+async def test_tushare_derives_1h_from_15m_when_native_permission_is_absent() -> None:
+    from tests.test_tushare_mvp import FakeTuShareClient, _entitlement, _minute_frame
+
+    local_times = [
+        *[
+            (datetime(2026, 8, 31, 9, 30) + timedelta(minutes=15 * index)).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+            for index in range(8)
+        ],
+        *[
+            (datetime(2026, 8, 31, 13, 0) + timedelta(minutes=15 * index)).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+            for index in range(8)
+        ],
+    ]
+    client = FakeTuShareClient(mins=_minute_frame(*local_times))
+    entitlement = _entitlement(
+        allowed_timeframes=("15m", "4h", "1d", "1w"),
+        derived_allowed=True,
+    )
+    provider = TuShareMvpProvider(
+        "secret-token",
+        entitlement=entitlement,
+        client=client,
+        clock=lambda: datetime(2026, 9, 1, tzinfo=timezone.utc),
+    )
+
+    candles = await provider.fetch("600519", Timeframe.HOUR_1)
+
+    assert len(candles) == 4
+    assert client.minute_calls[0]["freq"] == "15min"
+    assert provider.timeframe_transform is not None
+    assert provider.timeframe_transform.raw_timeframe == Timeframe.MIN_15
+    assert provider.timeframe_transform.timeframe_origin == "aggregated"
+
+
 class _FakeUSClient:
     def __init__(self) -> None:
         self.calls: list[dict[str, object]] = []
@@ -232,6 +271,36 @@ async def test_authorized_us_accepts_native_1h() -> None:
         timeframe_origin="native",
         aggregation={"kind": "none", "rule": "native_passthrough"},
     )
+
+
+@pytest.mark.asyncio
+async def test_authorized_us_derives_1h_from_15m_when_native_permission_is_absent() -> None:
+    from tests.test_us_authorized import FakeUSClient, _bar, _entitlement
+
+    zone = timezone(timedelta(hours=-4))
+    start = datetime(2026, 8, 31, 9, 30, tzinfo=zone)
+    client = FakeUSClient(
+        [_bar((start + timedelta(minutes=15 * index)).isoformat()) for index in range(16)]
+    )
+    entitlement = _entitlement(
+        allowed_timeframes=("15m", "4h", "1d", "1w"),
+        derived_allowed=True,
+    )
+    provider = AuthorizedUSProvider(
+        "secret-us-token",
+        entitlement=entitlement,
+        client=client,
+        manifest=MANIFEST_PATH,
+        clock=lambda: datetime(2026, 9, 1, tzinfo=timezone.utc),
+    )
+
+    candles = await provider.fetch("AAPL", Timeframe.HOUR_1)
+
+    assert len(candles) == 4
+    assert client.calls[0]["timeframe"] == "15m"
+    assert provider.timeframe_transform is not None
+    assert provider.timeframe_transform.raw_timeframe == Timeframe.MIN_15
+    assert provider.timeframe_transform.timeframe_origin == "aggregated"
 
 
 @pytest.mark.asyncio

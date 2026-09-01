@@ -18,7 +18,11 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol
 from zoneinfo import ZoneInfo
 
-from kline.market_calendar import aggregate_15m_to_4h, aggregate_daily_to_weekly
+from kline.market_calendar import (
+    aggregate_15m_to_1h,
+    aggregate_15m_to_4h,
+    aggregate_daily_to_weekly,
+)
 from kline.models import Candle, Timeframe, TimeframeTransform
 from kline.mvp_manifest import MvpManifest, load_manifest
 from kline.providers.base import EntitlementBlocked, ProviderError
@@ -179,11 +183,7 @@ class AuthorizedUSProvider:
         return [
             timeframe
             for timeframe in MVP_US_TIMEFRAMES
-            if self._entitlement.permits(timeframe, now=now)
-            and (
-                timeframe not in {Timeframe.HOUR_4, Timeframe.WEEK}
-                or self._entitlement.derived_allowed
-            )
+            if self._permission_allows(timeframe, now=now)
         ]
 
     def membership_report(self) -> dict[str, Any]:
@@ -205,6 +205,15 @@ class AuthorizedUSProvider:
         limit: int = 500,
     ) -> list[Candle]:
         instrument, alias_used = self._resolve_member(ticker, start=start, end=end)
+        if timeframe == Timeframe.HOUR_1 and not self._native_permission_allows(Timeframe.HOUR_1):
+            if self._derived_1h_permission_allows():
+                return await self._fetch_derived_1h(
+                    instrument,
+                    alias_used=alias_used,
+                    start=start,
+                    end=end,
+                    limit=limit,
+                )
         self._require_entitlement(timeframe)
         if timeframe in {Timeframe.HOUR_4, Timeframe.WEEK}:
             if self._entitlement is None or not self._entitlement.derived_allowed:
@@ -262,6 +271,80 @@ class AuthorizedUSProvider:
         rows = await self._fetch_native(instrument, timeframe, start=start, end=end, limit=limit)
         self.source_identity["alias_used"] = alias_used
         return rows
+
+    async def _fetch_derived_1h(
+        self,
+        instrument: Any,
+        *,
+        alias_used: str | None,
+        start: str | None,
+        end: str | None,
+        limit: int,
+    ) -> list[Candle]:
+        raw = await self.fetch(
+            instrument.display_symbol,
+            Timeframe.MIN_15,
+            start=start,
+            end=end,
+            limit=max(limit * 4, 200),
+        )
+        key = self._key(instrument, Timeframe.MIN_15)
+        result = aggregate_15m_to_1h(
+            [self._to_mvp(key, candle) for candle in raw],
+            calendar_id="us_equities",
+            cutoff=self._clock(),
+            run_id=f"us-preview:{instrument.instrument_id}:1h",
+        )
+        if not result.candles:
+            raise ProviderError(
+                f"authorized US returned no complete 1h rows for {instrument.display_symbol}"
+            )
+        self._set_transform(
+            Timeframe.MIN_15,
+            "us_regular_fixed_1h_v1",
+            len(result.partial_buckets),
+        )
+        self.source_identity["alias_used"] = alias_used
+        self.source_identity["timeframe_origin"] = "aggregated"
+        self.last_raw_response = dict(self.last_raw_response or {})
+        self.last_raw_response["requested_timeframe"] = Timeframe.HOUR_1.value
+        return [self._from_mvp(row) for row in result.candles[-limit:]]
+
+    def _native_permission_allows(self, timeframe: Timeframe) -> bool:
+        return bool(
+            self._token
+            and self._entitlement is not None
+            and self._entitlement.permits(timeframe, now=self._clock())
+            and self._entitlement.persistence_allowed
+            and self._entitlement.non_display_allowed
+        )
+
+    def _derived_1h_permission_allows(self) -> bool:
+        return bool(
+            self._token
+            and self._entitlement is not None
+            and self._entitlement.permits(Timeframe.MIN_15, now=self._clock())
+            and self._entitlement.derived_allowed
+            and self._entitlement.persistence_allowed
+            and self._entitlement.non_display_allowed
+        )
+
+    def _permission_allows(self, timeframe: Timeframe, *, now: datetime) -> bool:
+        if (
+            self._entitlement is None
+            or not self._token
+            or not self._entitlement.persistence_allowed
+            or not self._entitlement.non_display_allowed
+        ):
+            return False
+        if timeframe == Timeframe.HOUR_1:
+            return self._entitlement.permits(timeframe, now=now) or (
+                self._entitlement.permits(Timeframe.MIN_15, now=now)
+                and self._entitlement.derived_allowed
+            )
+        return self._entitlement.permits(timeframe, now=now) and (
+            timeframe not in {Timeframe.HOUR_4, Timeframe.WEEK} or self._entitlement.derived_allowed
+        )
 
     async def fetch_corporate_actions(
         self,
