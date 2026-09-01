@@ -45,6 +45,7 @@ class IngestionPlan:
     retry_backoff_seconds: float = 0.0
     rate_budget: int | None = None
     policy: Mapping[str, Any] = field(default_factory=dict)
+    instrument_ids: Sequence[str] | None = None
 
 
 @dataclass(frozen=True)
@@ -174,6 +175,7 @@ class IngestionOrchestrator:
     def _interval(timeframe: str) -> timedelta:
         return {
             "15m": timedelta(minutes=15),
+            "1h": timedelta(hours=1),
             "4h": timedelta(hours=4),
             "1d": timedelta(days=1),
             "1w": timedelta(days=7),
@@ -340,6 +342,14 @@ class IngestionOrchestrator:
         end = self._now_iso(now)
         manifest = plan.manifest
         manifest_hash = manifest_digest(manifest)
+        selected_ids = set(plan.instrument_ids) if plan.instrument_ids is not None else None
+        if selected_ids is not None:
+            known_ids = {instrument.instrument_id for instrument in manifest.instruments}
+            missing_ids = sorted(selected_ids - known_ids)
+            if missing_ids:
+                raise IngestionError(
+                    f"ingestion identities missing from manifest: {', '.join(missing_ids)}"
+                )
         cells: list[CellResult] = []
         blocked_cells: list[dict[str, Any]] = []
         source_attempts: list[dict[str, Any]] = []
@@ -352,6 +362,8 @@ class IngestionOrchestrator:
         quality_counts = {"pass": 0, "partial": 0, "fail": 0}
 
         for instrument in manifest.instruments:
+            if selected_ids is not None and instrument.instrument_id not in selected_ids:
+                continue
             for timeframe in ("15m", "1h", "4h", "1d", "1w"):
                 if timeframe in instrument.not_applicable_timeframes:
                     cells.append(

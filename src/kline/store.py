@@ -1082,6 +1082,33 @@ class KlineStore:
             }
         return {"status": "ok", **counts}
 
+    def mvp_duplicate_key_count(self) -> int:
+        """Count duplicate canonical candle identities, if a legacy import slipped through."""
+
+        with self._engine.connect() as connection:
+            value = connection.exec_driver_sql(
+                "SELECT COUNT(*) FROM ("
+                "SELECT source_id, instrument_id, timeframe, adjustment_basis, "
+                "manifest_version, timestamp FROM mvp_candles "
+                "GROUP BY source_id, instrument_id, timeframe, adjustment_basis, "
+                "manifest_version, timestamp HAVING COUNT(*) > 1)"
+            ).scalar_one()
+        return int(value)
+
+    def mvp_watermark_count_for_runs(self, run_ids: set[str]) -> int:
+        """Count watermark rows attributed to the supplied failed run IDs."""
+
+        if not run_ids:
+            return 0
+        with self._session_factory() as session:
+            return int(
+                session.execute(
+                    select(func.count())
+                    .select_from(MvpWatermarkRow)
+                    .where(MvpWatermarkRow.run_id.in_(sorted(run_ids)))
+                ).scalar_one()
+            )
+
     def latest_mvp_run(self) -> dict[str, Any] | None:
         """Return the newest persisted MVP run receipt summary."""
 

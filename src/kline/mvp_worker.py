@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 import fcntl
 import os
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 from kline.ingestion import (
     IngestionError,
@@ -104,6 +104,7 @@ class MvpWorker:
         interval_seconds: int = MAX_INTERVAL_SECONDS,
         lock_path: str | Path = ".mvp-worker.lock",
         history_start: str | None = None,
+        instrument_ids: Sequence[str] | None = None,
         target_guard: Callable[[], TargetGuardResult | bool] | None = None,
         clock: Callable[[], datetime] | None = None,
     ) -> None:
@@ -114,6 +115,7 @@ class MvpWorker:
         self.interval_seconds = interval_seconds
         self.lock_path = Path(lock_path)
         self.history_start = history_start
+        self.instrument_ids = tuple(instrument_ids) if instrument_ids is not None else None
         self._target_guard = target_guard or (lambda: True)
         self._clock = clock or (lambda: datetime.now(timezone.utc))
         self._orchestrator = orchestrator or IngestionOrchestrator(
@@ -218,6 +220,7 @@ class MvpWorker:
                     run_id=run_id,
                     now=started,
                     history_start=self.history_start,
+                    instrument_ids=self.instrument_ids,
                 )
             )
             completed_at = self._iso(self._clock())
