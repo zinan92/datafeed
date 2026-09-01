@@ -85,6 +85,8 @@ class USFreeProvider(USStockProvider):
     ) -> list[Candle]:
         self.last_attempts = []
         self.last_raw_response = None
+        self.source_identity = {}
+        self.timeframe_transform = None
         requested_ticker = ticker.upper().strip()
         yahoo_ticker = _yahoo_ticker(requested_ticker)
         if timeframe == Timeframe.HOUR_4:

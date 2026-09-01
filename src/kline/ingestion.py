@@ -295,6 +295,7 @@ class IngestionOrchestrator:
                         "blocked_for_entitlement",
                         "market_closed",
                         "malformed_row",
+                        "empty_response",
                     }
                     or attempt >= plan.max_retries
                 ):
