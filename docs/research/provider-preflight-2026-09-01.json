@@ -1,0 +1,3272 @@
+{
+  "schema_version": "provider-preflight-v1",
+  "observed_at": "2026-09-01T04:07:55+00:00",
+  "target_count": 9,
+  "targets": [
+    {
+      "instrument_id": "a_share:600519",
+      "display_symbol": "600519",
+      "display_name": "贵州茅台",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "provider_symbol": "600519",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "policy": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      }
+    },
+    {
+      "instrument_id": "a_share:300750",
+      "display_symbol": "300750",
+      "display_name": "宁德时代",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "provider_symbol": "300750",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "policy": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      }
+    },
+    {
+      "instrument_id": "a_share:688981",
+      "display_symbol": "688981",
+      "display_name": "中芯国际",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "provider_symbol": "688981",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "policy": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      }
+    },
+    {
+      "instrument_id": "us_stock:AAPL",
+      "display_symbol": "AAPL",
+      "display_name": "Apple",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "provider_symbol": "AAPL",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "policy": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      }
+    },
+    {
+      "instrument_id": "us_stock:NVDA",
+      "display_symbol": "NVDA",
+      "display_name": "NVIDIA",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "provider_symbol": "NVDA",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "policy": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      }
+    },
+    {
+      "instrument_id": "us_stock:TSLA",
+      "display_symbol": "TSLA",
+      "display_name": "Tesla",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "provider_symbol": "TSLA",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "policy": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      }
+    },
+    {
+      "instrument_id": "index:SPX",
+      "display_symbol": "SPX",
+      "display_name": "标普 500",
+      "asset_class": "index",
+      "source_id": "yahoo_chart",
+      "provider_symbol": "^GSPC",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "volume_semantics": "not_applicable",
+      "volume_scope": "index_not_applicable",
+      "volume_completeness": "not_applicable",
+      "policy": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      }
+    },
+    {
+      "instrument_id": "crypto:BTC",
+      "display_symbol": "BTC",
+      "display_name": "Bitcoin",
+      "asset_class": "crypto",
+      "source_id": "yahoo_chart",
+      "provider_symbol": "BTC-USD",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "crypto_24x7",
+      "timezone": "UTC",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "policy": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      }
+    },
+    {
+      "instrument_id": "commodity:GOLD",
+      "display_symbol": "GOLD",
+      "display_name": "黄金期货",
+      "asset_class": "commodity",
+      "source_id": "yahoo_chart",
+      "provider_symbol": "GC=F",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_futures",
+      "timezone": "America/Chicago",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "policy": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      }
+    }
+  ],
+  "summary": {
+    "cells": 45,
+    "by_status": {
+      "blocked": 5,
+      "partial": 25,
+      "unavailable": 15
+    },
+    "by_timeframe": {
+      "15m": {
+        "blocked": 1,
+        "partial": 5,
+        "unavailable": 3
+      },
+      "1d": {
+        "blocked": 3,
+        "partial": 3,
+        "unavailable": 3
+      },
+      "1h": {
+        "blocked": 1,
+        "partial": 5,
+        "unavailable": 3
+      },
+      "1w": {
+        "partial": 6,
+        "unavailable": 3
+      },
+      "4h": {
+        "partial": 6,
+        "unavailable": 3
+      }
+    }
+  },
+  "cells": [
+    {
+      "instrument_id": "a_share:600519",
+      "display_symbol": "600519",
+      "display_name": "贵州茅台",
+      "provider_symbol": "600519",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "15m",
+      "status": "unavailable",
+      "status_reason": "request_failed",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://push2his.eastmoney.com/api/qt/stock/kline/get",
+        "params": {
+          "secid": "1.600519",
+          "klt": "15",
+          "fqt": "1",
+          "beg": "20260718",
+          "end": "20260902",
+          "lmt": "4000",
+          "fields1": "f1,f2,f3,f4,f5,f6",
+          "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+        },
+        "timeframe": "15m"
+      },
+      "response": {
+        "http_status": 0,
+        "latency_ms": 5811.01,
+        "response_sha256": null,
+        "rate_limit_observed": false,
+        "attempts": 1
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "request_failed",
+        "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "redacted_raw": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "a_share:600519",
+      "display_symbol": "600519",
+      "display_name": "贵州茅台",
+      "provider_symbol": "600519",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "1h",
+      "status": "unavailable",
+      "status_reason": "request_failed",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://push2his.eastmoney.com/api/qt/stock/kline/get",
+        "params": {
+          "secid": "1.600519",
+          "klt": "60",
+          "fqt": "1",
+          "beg": "20260718",
+          "end": "20260902",
+          "lmt": "4000",
+          "fields1": "f1,f2,f3,f4,f5,f6",
+          "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+        },
+        "timeframe": "1h"
+      },
+      "response": {
+        "http_status": 0,
+        "latency_ms": 5631.28,
+        "response_sha256": null,
+        "rate_limit_observed": false,
+        "attempts": 1
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "request_failed",
+        "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "redacted_raw": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "a_share:600519",
+      "display_symbol": "600519",
+      "display_name": "贵州茅台",
+      "provider_symbol": "600519",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "1d",
+      "status": "unavailable",
+      "status_reason": "request_failed",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://push2his.eastmoney.com/api/qt/stock/kline/get",
+        "params": {
+          "secid": "1.600519",
+          "klt": "101",
+          "fqt": "1",
+          "beg": "20240901",
+          "end": "20260902",
+          "lmt": "4000",
+          "fields1": "f1,f2,f3,f4,f5,f6",
+          "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+        },
+        "timeframe": "1d"
+      },
+      "response": {
+        "http_status": 0,
+        "latency_ms": 5696.47,
+        "response_sha256": null,
+        "rate_limit_observed": false,
+        "attempts": 1
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "request_failed",
+        "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "redacted_raw": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "a_share:600519",
+      "display_symbol": "600519",
+      "display_name": "贵州茅台",
+      "provider_symbol": "600519",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "4h",
+      "status": "unavailable",
+      "status_reason": "missing_input",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "missing_input",
+        "message": "4h requires closed 15m input",
+        "redacted_raw": "4h requires closed 15m input",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "a_share:600519",
+      "display_symbol": "600519",
+      "display_name": "贵州茅台",
+      "provider_symbol": "600519",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "1w",
+      "status": "unavailable",
+      "status_reason": "missing_input",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "missing_input",
+        "message": "1w requires closed 1d input",
+        "redacted_raw": "1w requires closed 1d input",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "a_share:300750",
+      "display_symbol": "300750",
+      "display_name": "宁德时代",
+      "provider_symbol": "300750",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "15m",
+      "status": "unavailable",
+      "status_reason": "request_failed",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://push2his.eastmoney.com/api/qt/stock/kline/get",
+        "params": {
+          "secid": "0.300750",
+          "klt": "15",
+          "fqt": "1",
+          "beg": "20260718",
+          "end": "20260902",
+          "lmt": "4000",
+          "fields1": "f1,f2,f3,f4,f5,f6",
+          "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+        },
+        "timeframe": "15m"
+      },
+      "response": {
+        "http_status": 0,
+        "latency_ms": 6340.08,
+        "response_sha256": null,
+        "rate_limit_observed": false,
+        "attempts": 1
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "request_failed",
+        "message": "RemoteDisconnected: Remote end closed connection without response",
+        "redacted_raw": "RemoteDisconnected: Remote end closed connection without response",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "a_share:300750",
+      "display_symbol": "300750",
+      "display_name": "宁德时代",
+      "provider_symbol": "300750",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "1h",
+      "status": "unavailable",
+      "status_reason": "request_failed",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://push2his.eastmoney.com/api/qt/stock/kline/get",
+        "params": {
+          "secid": "0.300750",
+          "klt": "60",
+          "fqt": "1",
+          "beg": "20260718",
+          "end": "20260902",
+          "lmt": "4000",
+          "fields1": "f1,f2,f3,f4,f5,f6",
+          "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+        },
+        "timeframe": "1h"
+      },
+      "response": {
+        "http_status": 0,
+        "latency_ms": 8151.1,
+        "response_sha256": null,
+        "rate_limit_observed": false,
+        "attempts": 1
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "request_failed",
+        "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "redacted_raw": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "a_share:300750",
+      "display_symbol": "300750",
+      "display_name": "宁德时代",
+      "provider_symbol": "300750",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "1d",
+      "status": "unavailable",
+      "status_reason": "request_failed",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://push2his.eastmoney.com/api/qt/stock/kline/get",
+        "params": {
+          "secid": "0.300750",
+          "klt": "101",
+          "fqt": "1",
+          "beg": "20240901",
+          "end": "20260902",
+          "lmt": "4000",
+          "fields1": "f1,f2,f3,f4,f5,f6",
+          "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+        },
+        "timeframe": "1d"
+      },
+      "response": {
+        "http_status": 0,
+        "latency_ms": 10001.3,
+        "response_sha256": null,
+        "rate_limit_observed": false,
+        "attempts": 1
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "request_failed",
+        "message": "URLError: <urlopen error _ssl.c:1015: The handshake operation timed out>",
+        "redacted_raw": "URLError: <urlopen error _ssl.c:1015: The handshake operation timed out>",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "a_share:300750",
+      "display_symbol": "300750",
+      "display_name": "宁德时代",
+      "provider_symbol": "300750",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "4h",
+      "status": "unavailable",
+      "status_reason": "missing_input",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "missing_input",
+        "message": "4h requires closed 15m input",
+        "redacted_raw": "4h requires closed 15m input",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "a_share:300750",
+      "display_symbol": "300750",
+      "display_name": "宁德时代",
+      "provider_symbol": "300750",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "1w",
+      "status": "unavailable",
+      "status_reason": "missing_input",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "missing_input",
+        "message": "1w requires closed 1d input",
+        "redacted_raw": "1w requires closed 1d input",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "a_share:688981",
+      "display_symbol": "688981",
+      "display_name": "中芯国际",
+      "provider_symbol": "688981",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "15m",
+      "status": "unavailable",
+      "status_reason": "request_failed",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://push2his.eastmoney.com/api/qt/stock/kline/get",
+        "params": {
+          "secid": "1.688981",
+          "klt": "15",
+          "fqt": "1",
+          "beg": "20260718",
+          "end": "20260902",
+          "lmt": "4000",
+          "fields1": "f1,f2,f3,f4,f5,f6",
+          "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+        },
+        "timeframe": "15m"
+      },
+      "response": {
+        "http_status": 0,
+        "latency_ms": 5788.17,
+        "response_sha256": null,
+        "rate_limit_observed": false,
+        "attempts": 1
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "request_failed",
+        "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "redacted_raw": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "a_share:688981",
+      "display_symbol": "688981",
+      "display_name": "中芯国际",
+      "provider_symbol": "688981",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "1h",
+      "status": "unavailable",
+      "status_reason": "request_failed",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://push2his.eastmoney.com/api/qt/stock/kline/get",
+        "params": {
+          "secid": "1.688981",
+          "klt": "60",
+          "fqt": "1",
+          "beg": "20260718",
+          "end": "20260902",
+          "lmt": "4000",
+          "fields1": "f1,f2,f3,f4,f5,f6",
+          "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+        },
+        "timeframe": "1h"
+      },
+      "response": {
+        "http_status": 0,
+        "latency_ms": 5960.94,
+        "response_sha256": null,
+        "rate_limit_observed": false,
+        "attempts": 1
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "request_failed",
+        "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "redacted_raw": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "a_share:688981",
+      "display_symbol": "688981",
+      "display_name": "中芯国际",
+      "provider_symbol": "688981",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "1d",
+      "status": "unavailable",
+      "status_reason": "request_failed",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://push2his.eastmoney.com/api/qt/stock/kline/get",
+        "params": {
+          "secid": "1.688981",
+          "klt": "101",
+          "fqt": "1",
+          "beg": "20240901",
+          "end": "20260902",
+          "lmt": "4000",
+          "fields1": "f1,f2,f3,f4,f5,f6",
+          "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+        },
+        "timeframe": "1d"
+      },
+      "response": {
+        "http_status": 0,
+        "latency_ms": 6258.51,
+        "response_sha256": null,
+        "rate_limit_observed": false,
+        "attempts": 1
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "request_failed",
+        "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "redacted_raw": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "a_share:688981",
+      "display_symbol": "688981",
+      "display_name": "中芯国际",
+      "provider_symbol": "688981",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "4h",
+      "status": "unavailable",
+      "status_reason": "missing_input",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "missing_input",
+        "message": "4h requires closed 15m input",
+        "redacted_raw": "4h requires closed 15m input",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "a_share:688981",
+      "display_symbol": "688981",
+      "display_name": "中芯国际",
+      "provider_symbol": "688981",
+      "asset_class": "a_share",
+      "source_id": "eastmoney_kline",
+      "source_kind": "eastmoney",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "1w",
+      "status": "unavailable",
+      "status_reason": "missing_input",
+      "row_count": 0,
+      "latest_closed_timestamp": null,
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": null,
+      "transform": null,
+      "quality": {
+        "status": "unavailable",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": {
+        "code": "missing_input",
+        "message": "1w requires closed 1d input",
+        "redacted_raw": "1w requires closed 1d input",
+        "next_step": "inspect the provider receipt and keep the cell blocked"
+      }
+    },
+    {
+      "instrument_id": "us_stock:AAPL",
+      "display_symbol": "AAPL",
+      "display_name": "Apple",
+      "provider_symbol": "AAPL",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "15m",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 131,
+      "latest_closed_timestamp": "2026-08-31T20:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL",
+        "params": {
+          "interval": "15m",
+          "range": "5d",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "15m"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 1450.54,
+        "response_sha256": "9b22a8d5d1538beaa4655d0db92fb386ca35780fd8ff6abf1c80667d707c2c1b",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "AAPL",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "NasdaqGS",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "us_stock:AAPL",
+      "display_symbol": "AAPL",
+      "display_name": "Apple",
+      "provider_symbol": "AAPL",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "1h",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 36,
+      "latest_closed_timestamp": "2026-08-31T20:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL",
+        "params": {
+          "interval": "1h",
+          "range": "5d",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "1h"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 1233.69,
+        "response_sha256": "a12a171eff9bb1bd471b3503076df28f79098490c8282e1e64953d098af3c424",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "AAPL",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "NasdaqGS",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "us_stock:AAPL",
+      "display_symbol": "AAPL",
+      "display_name": "Apple",
+      "provider_symbol": "AAPL",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "1d",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 21,
+      "latest_closed_timestamp": "2026-08-31T13:30:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL",
+        "params": {
+          "interval": "1d",
+          "range": "1mo",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "1d"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 968.51,
+        "response_sha256": "992513bf61653eb08b9f33726d73c3660f12492997d711426a5c4a11fc031d9c",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "AAPL",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "NasdaqGS",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "us_stock:AAPL",
+      "display_symbol": "AAPL",
+      "display_name": "Apple",
+      "provider_symbol": "AAPL",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "4h",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 5,
+      "latest_closed_timestamp": "2026-08-31T13:30:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "15m",
+        "output_timeframe": "4h",
+        "aggregation_rule_version": "us_regular_fixed_4h_v1",
+        "input_start": "2026-08-25T13:30:00+00:00",
+        "input_end": "2026-08-31T20:00:00+00:00",
+        "input_hash": "0d8962a705483b1d57081db86788664af0eda8b0c07f515203b1fac9f5d8c22e",
+        "output_hash": "997911d105f9737e9de3c0f8266f36928708eaed2c9058d0e229dca280d267aa",
+        "bucket_anchor": "09:30",
+        "partial_bucket_policy": "drop_and_record",
+        "partial_bucket_count": 5
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 5,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "us_stock:AAPL",
+      "display_symbol": "AAPL",
+      "display_name": "Apple",
+      "provider_symbol": "AAPL",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "1w",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 4,
+      "latest_closed_timestamp": "2026-08-28T00:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "1d",
+        "output_timeframe": "1w",
+        "aggregation_rule_version": "completed_local_calendar_week_v1",
+        "input_start": "2026-08-03T13:30:00+00:00",
+        "input_end": "2026-08-31T13:30:00+00:00",
+        "input_hash": "8dc3b7ebaad8a7fb068b345e5ccba1515911e4727e938bf1d352e61fbb75af90",
+        "output_hash": "bf305d617ad1dc9a6d3e8939d196c1225e0eaaa86b871c7ddf474502ff907209",
+        "bucket_anchor": "local_week",
+        "partial_bucket_policy": "defer_until_closed",
+        "partial_bucket_count": 1
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 1,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "us_stock:NVDA",
+      "display_symbol": "NVDA",
+      "display_name": "NVIDIA",
+      "provider_symbol": "NVDA",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "15m",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 131,
+      "latest_closed_timestamp": "2026-08-31T20:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/NVDA",
+        "params": {
+          "interval": "15m",
+          "range": "5d",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "15m"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 1346.95,
+        "response_sha256": "d02f154c8ead0184434f226e312a24819332490d72ab3fadadeec8a591ff1e91",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "NVDA",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "NasdaqGS",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "us_stock:NVDA",
+      "display_symbol": "NVDA",
+      "display_name": "NVIDIA",
+      "provider_symbol": "NVDA",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "1h",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 36,
+      "latest_closed_timestamp": "2026-08-31T20:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/NVDA",
+        "params": {
+          "interval": "1h",
+          "range": "5d",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "1h"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 1199.71,
+        "response_sha256": "29845230e359472365865d007c0014c1cb5911e96ae13d4d630799d921dcb21d",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "NVDA",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "NasdaqGS",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "us_stock:NVDA",
+      "display_symbol": "NVDA",
+      "display_name": "NVIDIA",
+      "provider_symbol": "NVDA",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "1d",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 21,
+      "latest_closed_timestamp": "2026-08-31T13:30:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/NVDA",
+        "params": {
+          "interval": "1d",
+          "range": "1mo",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "1d"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 1198.09,
+        "response_sha256": "0b68d828be57be936346355164f6daf62532de03773f9e96d97884e7e2f8be13",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "NVDA",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "NasdaqGS",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "us_stock:NVDA",
+      "display_symbol": "NVDA",
+      "display_name": "NVIDIA",
+      "provider_symbol": "NVDA",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "4h",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 5,
+      "latest_closed_timestamp": "2026-08-31T13:30:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "15m",
+        "output_timeframe": "4h",
+        "aggregation_rule_version": "us_regular_fixed_4h_v1",
+        "input_start": "2026-08-25T13:30:00+00:00",
+        "input_end": "2026-08-31T20:00:00+00:00",
+        "input_hash": "bf8d1d27531fdcb6dd45184ecb3cb590adb044c8deca5695feb8d5f1c601775d",
+        "output_hash": "c0058828d795c3b700db30c99494bab1523d18227e2e5be085eff373a9d0f96a",
+        "bucket_anchor": "09:30",
+        "partial_bucket_policy": "drop_and_record",
+        "partial_bucket_count": 5
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 5,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "us_stock:NVDA",
+      "display_symbol": "NVDA",
+      "display_name": "NVIDIA",
+      "provider_symbol": "NVDA",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "1w",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 4,
+      "latest_closed_timestamp": "2026-08-28T00:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "1d",
+        "output_timeframe": "1w",
+        "aggregation_rule_version": "completed_local_calendar_week_v1",
+        "input_start": "2026-08-03T13:30:00+00:00",
+        "input_end": "2026-08-31T13:30:00+00:00",
+        "input_hash": "53d40f1e656982d25db4638458b47cbeeb2bb525c9a9342fc92ffb6cc24679fb",
+        "output_hash": "13433619608e6c38a0f4fa9d95172242604ce50f3c22be39da2b10ce0e491c7e",
+        "bucket_anchor": "local_week",
+        "partial_bucket_policy": "defer_until_closed",
+        "partial_bucket_count": 1
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 1,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "us_stock:TSLA",
+      "display_symbol": "TSLA",
+      "display_name": "Tesla",
+      "provider_symbol": "TSLA",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "15m",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 131,
+      "latest_closed_timestamp": "2026-08-31T20:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/TSLA",
+        "params": {
+          "interval": "15m",
+          "range": "5d",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "15m"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 1495.19,
+        "response_sha256": "21385ef74ff918fced4e12541f5557659330bb2e7f0c2186076cacdc6ad187a7",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "TSLA",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "NasdaqGS",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "us_stock:TSLA",
+      "display_symbol": "TSLA",
+      "display_name": "Tesla",
+      "provider_symbol": "TSLA",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "1h",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 36,
+      "latest_closed_timestamp": "2026-08-31T20:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/TSLA",
+        "params": {
+          "interval": "1h",
+          "range": "5d",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "1h"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 1308.19,
+        "response_sha256": "9818bc59aca4593fd861b45e63b16f5ec7724d29370fc1a9bf40e88222ca349d",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "TSLA",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "NasdaqGS",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "us_stock:TSLA",
+      "display_symbol": "TSLA",
+      "display_name": "Tesla",
+      "provider_symbol": "TSLA",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "1d",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 21,
+      "latest_closed_timestamp": "2026-08-31T13:30:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/TSLA",
+        "params": {
+          "interval": "1d",
+          "range": "1mo",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "1d"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 829.54,
+        "response_sha256": "a414a4b9bb41fe5afdf7505de6138c2b446dc151552230718c30df19952ccff7",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "TSLA",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "NasdaqGS",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "us_stock:TSLA",
+      "display_symbol": "TSLA",
+      "display_name": "Tesla",
+      "provider_symbol": "TSLA",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "4h",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 5,
+      "latest_closed_timestamp": "2026-08-31T13:30:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "15m",
+        "output_timeframe": "4h",
+        "aggregation_rule_version": "us_regular_fixed_4h_v1",
+        "input_start": "2026-08-25T13:30:00+00:00",
+        "input_end": "2026-08-31T20:00:00+00:00",
+        "input_hash": "3c305b7e66be1a497fd92dd5314178fc9ae1e5ab11e0e90f99bd09a0c98db6b4",
+        "output_hash": "3f538fac6fd185ec5461050a6c7a0c6224e5d63c6d84c37bb896d2d2d576a287",
+        "bucket_anchor": "09:30",
+        "partial_bucket_policy": "drop_and_record",
+        "partial_bucket_count": 5
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 5,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "us_stock:TSLA",
+      "display_symbol": "TSLA",
+      "display_name": "Tesla",
+      "provider_symbol": "TSLA",
+      "asset_class": "us_stock",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "1w",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 4,
+      "latest_closed_timestamp": "2026-08-28T00:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "1d",
+        "output_timeframe": "1w",
+        "aggregation_rule_version": "completed_local_calendar_week_v1",
+        "input_start": "2026-08-03T13:30:00+00:00",
+        "input_end": "2026-08-31T13:30:00+00:00",
+        "input_hash": "d511555f6693afd208d9bb5d0859d119078c401580ba2d224b56b347808d8179",
+        "output_hash": "d4e2b7be359a78d2bfaaf3328d9c40002d9e598f497861355387e53a0749d765",
+        "bucket_anchor": "local_week",
+        "partial_bucket_policy": "defer_until_closed",
+        "partial_bucket_count": 1
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 1,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "index:SPX",
+      "display_symbol": "SPX",
+      "display_name": "标普 500",
+      "provider_symbol": "^GSPC",
+      "asset_class": "index",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "15m",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 131,
+      "latest_closed_timestamp": "2026-08-31T20:00:00+00:00",
+      "volume_semantics": "not_applicable",
+      "volume_scope": "index_not_applicable",
+      "volume_completeness": "not_applicable",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/^GSPC",
+        "params": {
+          "interval": "15m",
+          "range": "5d",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "15m"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 1337.11,
+        "response_sha256": "7b61ce69266aad6d4ba113ab70ec4e4dcf971478e470b65886eb343d952e5276",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "^GSPC",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "SNP",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "index:SPX",
+      "display_symbol": "SPX",
+      "display_name": "标普 500",
+      "provider_symbol": "^GSPC",
+      "asset_class": "index",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "1h",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 36,
+      "latest_closed_timestamp": "2026-08-31T20:00:00+00:00",
+      "volume_semantics": "not_applicable",
+      "volume_scope": "index_not_applicable",
+      "volume_completeness": "not_applicable",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/^GSPC",
+        "params": {
+          "interval": "1h",
+          "range": "5d",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "1h"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 838.15,
+        "response_sha256": "e0de927abe3f6177e819aeaf1d4afa3c216bede0e87ba925141dbe7a012cd526",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "^GSPC",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "SNP",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "index:SPX",
+      "display_symbol": "SPX",
+      "display_name": "标普 500",
+      "provider_symbol": "^GSPC",
+      "asset_class": "index",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "1d",
+      "status": "blocked",
+      "status_reason": "quality_invalid",
+      "row_count": 20,
+      "latest_closed_timestamp": "2026-08-31T13:30:00+00:00",
+      "volume_semantics": "not_applicable",
+      "volume_scope": "index_not_applicable",
+      "volume_completeness": "not_applicable",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "partial",
+        "invalid_rows": 1,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/^GSPC",
+        "params": {
+          "interval": "1d",
+          "range": "1mo",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "1d"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 869.22,
+        "response_sha256": "f1f00d45f84de2eb08adea342be68d55dbf20b818eaf1d47616ec95d0f9e988d",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "^GSPC",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "SNP",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "index:SPX",
+      "display_symbol": "SPX",
+      "display_name": "标普 500",
+      "provider_symbol": "^GSPC",
+      "asset_class": "index",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "4h",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 5,
+      "latest_closed_timestamp": "2026-08-31T13:30:00+00:00",
+      "volume_semantics": "not_applicable",
+      "volume_scope": "index_not_applicable",
+      "volume_completeness": "not_applicable",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "15m",
+        "output_timeframe": "4h",
+        "aggregation_rule_version": "us_regular_fixed_4h_v1",
+        "input_start": "2026-08-25T13:30:00+00:00",
+        "input_end": "2026-08-31T20:00:00+00:00",
+        "input_hash": "5c6be047dc7a2492892454121cc5bdb458d30e47bfe5aeafcabce08d589a544e",
+        "output_hash": "243269023450eeb91eae780970ae9fa52faca09c933a826808f9725389fa535e",
+        "bucket_anchor": "09:30",
+        "partial_bucket_policy": "drop_and_record",
+        "partial_bucket_count": 5
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 5,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "index:SPX",
+      "display_symbol": "SPX",
+      "display_name": "标普 500",
+      "provider_symbol": "^GSPC",
+      "asset_class": "index",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_equities",
+      "timezone": "America/New_York",
+      "timeframe": "1w",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 4,
+      "latest_closed_timestamp": "2026-08-28T00:00:00+00:00",
+      "volume_semantics": "not_applicable",
+      "volume_scope": "index_not_applicable",
+      "volume_completeness": "not_applicable",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "1d",
+        "output_timeframe": "1w",
+        "aggregation_rule_version": "completed_local_calendar_week_v1",
+        "input_start": "2026-08-03T13:30:00+00:00",
+        "input_end": "2026-08-31T13:30:00+00:00",
+        "input_hash": "c7635fb3e1d23cdd0677c650e95968dd5e7d1d70624e22d4b763a5bd9090f005",
+        "output_hash": "58109f695474834027fcd7c0e9c475c70fbaab24b085a1c3524082bc2be04116",
+        "bucket_anchor": "local_week",
+        "partial_bucket_policy": "defer_until_closed",
+        "partial_bucket_count": 1
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 1,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "crypto:BTC",
+      "display_symbol": "BTC",
+      "display_name": "Bitcoin",
+      "provider_symbol": "BTC-USD",
+      "asset_class": "crypto",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "crypto_24x7",
+      "timezone": "UTC",
+      "timeframe": "15m",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 400,
+      "latest_closed_timestamp": "2026-09-01T03:45:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 2,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD",
+        "params": {
+          "interval": "15m",
+          "range": "5d",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "15m"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 986.2,
+        "response_sha256": "0a7550a769c7d1c823703d7a030c3d5c44c002ea407b407ccc439fd669419ea5",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "BTC-USD",
+          "exchange_timezone": "UTC",
+          "exchange_name": "CCC",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "crypto:BTC",
+      "display_symbol": "BTC",
+      "display_name": "Bitcoin",
+      "provider_symbol": "BTC-USD",
+      "asset_class": "crypto",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "crypto_24x7",
+      "timezone": "UTC",
+      "timeframe": "1h",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 100,
+      "latest_closed_timestamp": "2026-09-01T03:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 2,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD",
+        "params": {
+          "interval": "1h",
+          "range": "5d",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "1h"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 1384.82,
+        "response_sha256": "565f39a2b74735ae204e176ed46e1d52504fd4b7764881b1e2b6955a8108c11a",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "BTC-USD",
+          "exchange_timezone": "UTC",
+          "exchange_name": "CCC",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "crypto:BTC",
+      "display_symbol": "BTC",
+      "display_name": "Bitcoin",
+      "provider_symbol": "BTC-USD",
+      "asset_class": "crypto",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "crypto_24x7",
+      "timezone": "UTC",
+      "timeframe": "1d",
+      "status": "blocked",
+      "status_reason": "quality_invalid",
+      "row_count": 30,
+      "latest_closed_timestamp": "2026-08-30T00:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "partial",
+        "invalid_rows": 1,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 1,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD",
+        "params": {
+          "interval": "1d",
+          "range": "1mo",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "1d"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 1188.77,
+        "response_sha256": "cd560029696ab953fde25550d83cc425824d45bcfbfe1b85ee251b421cbaff03",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "BTC-USD",
+          "exchange_timezone": "UTC",
+          "exchange_name": "CCC",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "crypto:BTC",
+      "display_symbol": "BTC",
+      "display_name": "Bitcoin",
+      "provider_symbol": "BTC-USD",
+      "asset_class": "crypto",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "crypto_24x7",
+      "timezone": "UTC",
+      "timeframe": "4h",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 25,
+      "latest_closed_timestamp": "2026-09-01T00:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "15m",
+        "output_timeframe": "4h",
+        "aggregation_rule_version": "utc_fixed_4h_v1",
+        "input_start": "2026-08-28T00:00:00+00:00",
+        "input_end": "2026-09-01T03:45:00+00:00",
+        "input_hash": "f7efac000cc22ddbe49bad206e3a4504e597b67e657650c7975303eb4fa7084a",
+        "output_hash": "169d21c49d75c7458956164ff28793d03c629d13eeb42b4aa3633609f19c5a5e",
+        "bucket_anchor": "00:00",
+        "partial_bucket_policy": "drop_and_record",
+        "partial_bucket_count": 0
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "crypto:BTC",
+      "display_symbol": "BTC",
+      "display_name": "Bitcoin",
+      "provider_symbol": "BTC-USD",
+      "asset_class": "crypto",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "crypto_24x7",
+      "timezone": "UTC",
+      "timeframe": "1w",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 5,
+      "latest_closed_timestamp": "2026-08-30T00:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "1d",
+        "output_timeframe": "1w",
+        "aggregation_rule_version": "completed_local_calendar_week_v1",
+        "input_start": "2026-08-01T00:00:00+00:00",
+        "input_end": "2026-08-30T00:00:00+00:00",
+        "input_hash": "5f54320949bd7ac365db05597d46fbc018b4f6d5e1188f7fbe1e94acb8c8f568",
+        "output_hash": "f44333854bd53321ed83d89ba7249f7ac4bcfe4fbbe70aa61fd00b45b8987441",
+        "bucket_anchor": "local_week",
+        "partial_bucket_policy": "defer_until_closed",
+        "partial_bucket_count": 0
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "commodity:GOLD",
+      "display_symbol": "GOLD",
+      "display_name": "黄金期货",
+      "provider_symbol": "GC=F",
+      "asset_class": "commodity",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_futures",
+      "timezone": "America/Chicago",
+      "timeframe": "15m",
+      "status": "blocked",
+      "status_reason": "quality_invalid",
+      "row_count": 272,
+      "latest_closed_timestamp": "2026-09-01T02:45:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "partial",
+        "invalid_rows": 112,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 1,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/GC=F",
+        "params": {
+          "interval": "15m",
+          "range": "5d",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "15m"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 1411.98,
+        "response_sha256": "8141e9d170aca23237a3974a814cb83295a57f08be08e72d1af9f63a7e2bdd92",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "GC=F",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "COMEX",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "commodity:GOLD",
+      "display_symbol": "GOLD",
+      "display_name": "黄金期货",
+      "provider_symbol": "GC=F",
+      "asset_class": "commodity",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_futures",
+      "timezone": "America/Chicago",
+      "timeframe": "1h",
+      "status": "blocked",
+      "status_reason": "quality_invalid",
+      "row_count": 68,
+      "latest_closed_timestamp": "2026-09-01T02:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "partial",
+        "invalid_rows": 28,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 1,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/GC=F",
+        "params": {
+          "interval": "1h",
+          "range": "5d",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "1h"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 1248.36,
+        "response_sha256": "628a4613ddeef8d942c5a14875702f8207426384147ca685826bd97692446655",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "GC=F",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "COMEX",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "commodity:GOLD",
+      "display_symbol": "GOLD",
+      "display_name": "黄金期货",
+      "provider_symbol": "GC=F",
+      "asset_class": "commodity",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_futures",
+      "timezone": "America/Chicago",
+      "timeframe": "1d",
+      "status": "blocked",
+      "status_reason": "quality_invalid",
+      "row_count": 21,
+      "latest_closed_timestamp": "2026-08-31T04:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": false,
+      "transform": null,
+      "quality": {
+        "status": "partial",
+        "invalid_rows": 1,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {
+        "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/GC=F",
+        "params": {
+          "interval": "1d",
+          "range": "1mo",
+          "includePrePost": "false",
+          "events": "div,splits"
+        },
+        "timeframe": "1d"
+      },
+      "response": {
+        "http_status": 200,
+        "latency_ms": 1218.66,
+        "response_sha256": "7a49714607133494e7f6edee3f4bcb5a00b222f935e48383db4a1e56d99cae30",
+        "rate_limit_observed": false,
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "GC=F",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "COMEX",
+          "currency": "USD"
+        }
+      },
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "commodity:GOLD",
+      "display_symbol": "GOLD",
+      "display_name": "黄金期货",
+      "provider_symbol": "GC=F",
+      "asset_class": "commodity",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_futures",
+      "timezone": "America/Chicago",
+      "timeframe": "4h",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 14,
+      "latest_closed_timestamp": "2026-08-31T23:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "15m",
+        "output_timeframe": "4h",
+        "aggregation_rule_version": "us_futures_utc_fixed_4h_v1",
+        "input_start": "2026-08-27T04:00:00+00:00",
+        "input_end": "2026-09-01T02:45:00+00:00",
+        "input_hash": "f17a73152b2e882e5a8ed32e6cee30c35911457071531cece31b2915fe9bd6b4",
+        "output_hash": "2d52bb7e08af051f919832bb3a4decca45051de52b117a4a99ecf5c06ca5ec37",
+        "bucket_anchor": "18:00",
+        "partial_bucket_policy": "drop_and_record",
+        "partial_bucket_count": 5
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 5,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "commodity:GOLD",
+      "display_symbol": "GOLD",
+      "display_name": "黄金期货",
+      "provider_symbol": "GC=F",
+      "asset_class": "commodity",
+      "source_id": "yahoo_chart",
+      "source_kind": "yahoo_chart",
+      "calendar_id": "us_futures",
+      "timezone": "America/Chicago",
+      "timeframe": "1w",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 5,
+      "latest_closed_timestamp": "2026-08-30T00:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "provider_reported",
+      "volume_completeness": "unknown",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "1d",
+        "output_timeframe": "1w",
+        "aggregation_rule_version": "completed_local_calendar_week_v1",
+        "input_start": "2026-08-03T04:00:00+00:00",
+        "input_end": "2026-08-31T04:00:00+00:00",
+        "input_hash": "43b1464797483dea6fe5d8ed7ae6f3df716d35742987d45c7dbe5b422ff302e7",
+        "output_hash": "6b90eeec4a93bba2421fff7fbcd538b2f396cbc855b40c14e6afd85ff64ec54e",
+        "bucket_anchor": "local_week",
+        "partial_bucket_policy": "defer_until_closed",
+        "partial_bucket_count": 0
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:07:55+00:00",
+      "error": null
+    }
+  ],
+  "idempotency": [
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:AAPL",
+      "timeframe": "15m",
+      "first_inserted": 131,
+      "second_inserted": 0,
+      "row_count_after_rerun": 131,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:AAPL",
+      "timeframe": "1h",
+      "first_inserted": 36,
+      "second_inserted": 0,
+      "row_count_after_rerun": 36,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:AAPL",
+      "timeframe": "1d",
+      "first_inserted": 21,
+      "second_inserted": 0,
+      "row_count_after_rerun": 21,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:AAPL",
+      "timeframe": "4h",
+      "first_inserted": 5,
+      "second_inserted": 0,
+      "row_count_after_rerun": 5,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:AAPL",
+      "timeframe": "1w",
+      "first_inserted": 4,
+      "second_inserted": 0,
+      "row_count_after_rerun": 4,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:NVDA",
+      "timeframe": "15m",
+      "first_inserted": 131,
+      "second_inserted": 0,
+      "row_count_after_rerun": 131,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:NVDA",
+      "timeframe": "1h",
+      "first_inserted": 36,
+      "second_inserted": 0,
+      "row_count_after_rerun": 36,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:NVDA",
+      "timeframe": "1d",
+      "first_inserted": 21,
+      "second_inserted": 0,
+      "row_count_after_rerun": 21,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:NVDA",
+      "timeframe": "4h",
+      "first_inserted": 5,
+      "second_inserted": 0,
+      "row_count_after_rerun": 5,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:NVDA",
+      "timeframe": "1w",
+      "first_inserted": 4,
+      "second_inserted": 0,
+      "row_count_after_rerun": 4,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:TSLA",
+      "timeframe": "15m",
+      "first_inserted": 131,
+      "second_inserted": 0,
+      "row_count_after_rerun": 131,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:TSLA",
+      "timeframe": "1h",
+      "first_inserted": 36,
+      "second_inserted": 0,
+      "row_count_after_rerun": 36,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:TSLA",
+      "timeframe": "1d",
+      "first_inserted": 21,
+      "second_inserted": 0,
+      "row_count_after_rerun": 21,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:TSLA",
+      "timeframe": "4h",
+      "first_inserted": 5,
+      "second_inserted": 0,
+      "row_count_after_rerun": 5,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:TSLA",
+      "timeframe": "1w",
+      "first_inserted": 4,
+      "second_inserted": 0,
+      "row_count_after_rerun": 4,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "index:SPX",
+      "timeframe": "15m",
+      "first_inserted": 131,
+      "second_inserted": 0,
+      "row_count_after_rerun": 131,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "index:SPX",
+      "timeframe": "1h",
+      "first_inserted": 36,
+      "second_inserted": 0,
+      "row_count_after_rerun": 36,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "index:SPX",
+      "timeframe": "1d",
+      "first_inserted": 20,
+      "second_inserted": 0,
+      "row_count_after_rerun": 20,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "index:SPX",
+      "timeframe": "4h",
+      "first_inserted": 5,
+      "second_inserted": 0,
+      "row_count_after_rerun": 5,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "index:SPX",
+      "timeframe": "1w",
+      "first_inserted": 4,
+      "second_inserted": 0,
+      "row_count_after_rerun": 4,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "crypto:BTC",
+      "timeframe": "15m",
+      "first_inserted": 400,
+      "second_inserted": 0,
+      "row_count_after_rerun": 400,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "crypto:BTC",
+      "timeframe": "1h",
+      "first_inserted": 100,
+      "second_inserted": 0,
+      "row_count_after_rerun": 100,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "crypto:BTC",
+      "timeframe": "1d",
+      "first_inserted": 30,
+      "second_inserted": 0,
+      "row_count_after_rerun": 30,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "crypto:BTC",
+      "timeframe": "4h",
+      "first_inserted": 25,
+      "second_inserted": 0,
+      "row_count_after_rerun": 25,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "crypto:BTC",
+      "timeframe": "1w",
+      "first_inserted": 5,
+      "second_inserted": 0,
+      "row_count_after_rerun": 5,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "commodity:GOLD",
+      "timeframe": "15m",
+      "first_inserted": 272,
+      "second_inserted": 0,
+      "row_count_after_rerun": 272,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "commodity:GOLD",
+      "timeframe": "1h",
+      "first_inserted": 68,
+      "second_inserted": 0,
+      "row_count_after_rerun": 68,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "commodity:GOLD",
+      "timeframe": "1d",
+      "first_inserted": 21,
+      "second_inserted": 0,
+      "row_count_after_rerun": 21,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "commodity:GOLD",
+      "timeframe": "4h",
+      "first_inserted": 14,
+      "second_inserted": 0,
+      "row_count_after_rerun": 14,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "commodity:GOLD",
+      "timeframe": "1w",
+      "first_inserted": 5,
+      "second_inserted": 0,
+      "row_count_after_rerun": 5,
+      "duplicate_keys": 0
+    }
+  ],
+  "read_only": true,
+  "database": {
+    "mode": "sqlite_memory",
+    "production_database_touched": false
+  },
+  "decision": {
+    "status": "partial",
+    "canonical_promotion_allowed": false,
+    "next_step": "promote only after policy evidence"
+  },
+  "decision_by_asset_class": {
+    "a_share": {
+      "status": "unavailable",
+      "next_step": "repeat the source smoke when the endpoint is reachable",
+      "canonical_promotion_allowed": false
+    },
+    "commodity": {
+      "status": "partial",
+      "next_step": "keep as pilot candidate; obtain persistence/derived-use evidence before promotion",
+      "canonical_promotion_allowed": false
+    },
+    "crypto": {
+      "status": "partial",
+      "next_step": "keep as pilot candidate; obtain persistence/derived-use evidence before promotion",
+      "canonical_promotion_allowed": false
+    },
+    "index": {
+      "status": "partial",
+      "next_step": "keep as pilot candidate; obtain persistence/derived-use evidence before promotion",
+      "canonical_promotion_allowed": false
+    },
+    "us_stock": {
+      "status": "partial",
+      "next_step": "keep as pilot candidate; obtain persistence/derived-use evidence before promotion",
+      "canonical_promotion_allowed": false
+    }
+  },
+  "first_gate": {
+    "name": "3+3 real end-to-end for 7 days",
+    "status": "partial",
+    "requirement": "technical rows, explicit source rights, closed-bar quality, and idempotent writes"
+  }
+}
