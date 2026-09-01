@@ -60,6 +60,27 @@ def _index_text(index: Any, timeframe: Timeframe) -> str:
     return str(index)
 
 
+def _yahoo_history_argument(value: str | None) -> str | datetime | None:
+    """Convert orchestrator ISO timestamps to a yfinance-compatible value.
+
+    yfinance 1.2 parses string arguments with the narrow ``YYYY-MM-DD``
+    format, while the ingestion contract passes timezone-aware ISO timestamps
+    for intraday windows. Passing the latter through as strings raises
+    ``unconverted data remains: T...`` before Yahoo is contacted. Keep
+    date-only strings unchanged for backwards-compatible request receipts and
+    convert timestamp strings to aware ``datetime`` values for yfinance.
+    """
+
+    if value is None or len(value) == 10:
+        return value
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        # Let yfinance produce its normal validation error for malformed
+        # caller input rather than silently changing the requested window.
+        return value
+
+
 def _invalid_indices(frame: Any) -> list[Any]:
     """Return rows that cannot be represented as a finite OHLCV candle."""
 
@@ -227,7 +248,7 @@ class USStockProvider:
                 "auto_adjust": False,
             }
             if start and end:
-                kwargs["start"] = start
+                kwargs["start"] = _yahoo_history_argument(start)
                 # Give Yahoo a little context beyond the requested cutoff.
                 # Its repair path needs the next session to reconstruct a
                 # live row; the public response is still clipped to `end`
