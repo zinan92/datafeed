@@ -173,12 +173,13 @@ async def health_ui() -> str:
       const item = snapshot.coverage[tf] || {};
       const applicable = Number(item.applicable || 0);
       const ready = Number(item.ready || 0);
-      const ratio = applicable ? Math.round(ready / applicable * 100) : 0;
+      const dataReady = Number(item.technical_ready ?? ready);
+      const ratio = applicable ? Math.round(dataReady / applicable * 100) : 0;
       const blocked = Number(item.blocked || 0);
       const failed = Number(item.failed || 0);
       const problem = ['stale','partial','unavailable'].reduce((sum, key) => sum + Number(item[key] || 0), 0);
       const details = [blocked ? `阻塞 ${blocked}` : '', failed ? `失败 ${failed}` : '', problem ? `其他需关注 ${problem}` : ''].filter(Boolean).join(' · ') || '没有异常单元格';
-      return `<article class="card coverage-card"><div class="label">${timeframeLabels[tf]}</div><div class="ratio"><strong>${ratio}%</strong><span>${ready}/${applicable} 正常</span></div><div class="counts">${details} · 不适用 ${Number(item.not_applicable || 0)} 个</div><div class="progress"><i style="width:${ratio}%"></i></div></article>`;
+      return `<article class="card coverage-card"><div class="label">${timeframeLabels[tf]}</div><div class="ratio"><strong>${ratio}%</strong><span>${dataReady}/${applicable} 有数据</span></div><div class="counts">${details} · 正常 ${ready} · 不适用 ${Number(item.not_applicable || 0)} 个</div><div class="progress"><i style="width:${ratio}%"></i></div></article>`;
     }).join('');
     document.getElementById('coverage-meta').textContent = `共 ${fmtCount(snapshot.cells.length)} 个单元格 · 清单 ${esc(snapshot.manifest_version)}`;
   }

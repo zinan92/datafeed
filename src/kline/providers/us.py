@@ -222,7 +222,12 @@ class USStockProvider:
         }
         try:
             stock = yf.Ticker(ticker.upper())
-            kwargs: dict = {"interval": interval, "repair": False, "keepna": False}
+            kwargs: dict = {
+                "interval": interval,
+                "repair": False,
+                "keepna": False,
+                "auto_adjust": False,
+            }
             if start and end:
                 kwargs["start"] = start
                 # Give Yahoo a little context beyond the requested cutoff.

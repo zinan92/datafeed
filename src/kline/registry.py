@@ -16,6 +16,8 @@ from kline.providers.binance_usdm import BinanceUsdmFuturesProvider
 from kline.providers.commodity import CommodityProvider
 from kline.providers.crypto import CryptoProvider
 from kline.providers.fred import FredCsvProvider
+from kline.providers.free_ashare import AShareFreeProvider
+from kline.providers.free_us import USFreeProvider
 from kline.providers.hyperliquid import HyperliquidPerpetualProvider
 from kline.providers.sina import SinaIndexProvider
 from kline.providers.treasury import TreasuryCsvProvider
@@ -62,6 +64,12 @@ def init(settings: Settings | None = None) -> None:
         ProviderBackedMarketDataAdapter(
             source_manifest("yahoo_finance", AssetClass.US_STOCK),
             _providers[AssetClass.US_STOCK],
+        )
+    )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("yahoo_finance_free", AssetClass.US_STOCK),
+            USFreeProvider(timeout=s.request_timeout),
         )
     )
     register_adapter(
@@ -173,6 +181,12 @@ def init(settings: Settings | None = None) -> None:
         ProviderBackedMarketDataAdapter(
             source_manifest("tushare_pro", AssetClass.A_SHARE),
             _providers[AssetClass.A_SHARE],
+        )
+    )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("tencent_stock_free", AssetClass.A_SHARE),
+            AShareFreeProvider(timeout=s.request_timeout),
         )
     )
 

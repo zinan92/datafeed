@@ -15,9 +15,10 @@ from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 import signal
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 from kline.config import Settings
+from kline.free_source_profile import apply_free_source_profile
 from kline.health_matrix import (
     MVP_DEMO_INSTRUMENT_IDS,
     _safe_run,
@@ -69,11 +70,12 @@ async def run_demo_once(
     now: datetime | None = None,
     interval_seconds: int = MAX_INTERVAL_SECONDS,
     lock_path: str | Path | None = None,
+    adapter_resolver: Callable[[Any], Any] | None = None,
 ) -> dict[str, Any]:
     """Execute one real 3+3 worker attempt and return its read-only snapshot."""
 
     observed_at = _parse_time(now or datetime.now(timezone.utc))
-    manifest = load_manifest(manifest_path)
+    manifest = apply_free_source_profile(load_manifest(manifest_path))
     demo_manifest(manifest)
     database = Path(db_path).expanduser()
     init(Settings(db_path=str(database), load_entrypoint_adapters=False))
@@ -84,6 +86,7 @@ async def run_demo_once(
         interval_seconds=interval_seconds,
         lock_path=lock_path or database.with_suffix(".worker.lock"),
         instrument_ids=DEMO_INSTRUMENT_IDS,
+        adapter_resolver=adapter_resolver,
         clock=lambda: observed_at,
     )
     result = await worker.run_once()
@@ -184,8 +187,9 @@ def audit_reliability(
         "observed_days": round(span_days, 4),
         "required_days": RELIABILITY_DAYS,
     }
+    active_manifest = apply_free_source_profile(manifest)
     health = build_mvp_health_matrix(
-        manifest,
+        active_manifest,
         store,
         scope="demo_3x3",
         now=end,
@@ -249,8 +253,8 @@ def audit_reliability(
         "status": overall,
         "window_start": _iso(start),
         "window_end": _iso(end),
-        "manifest_version": manifest.version,
-        "manifest_hash": manifest_digest(manifest),
+        "manifest_version": active_manifest.version,
+        "manifest_hash": manifest_digest(active_manifest),
         "run_count": len(runs),
         "runs": runs,
         "coverage": health["coverage"],
@@ -258,7 +262,7 @@ def audit_reliability(
         "storage": storage_health,
         "gates": gates,
         "unresolved": {
-            "source_entitlement": "A/US pilot source entitlement remains blocked",
+            "source_entitlement": "A/US free-source entitlement remains unverified",
             "nas_cutover": "not in #71 scope",
         },
     }

@@ -127,6 +127,8 @@ _SOURCE_ALIASES = {
     "binance_usdm_futures_research": "binance_usdm_futures_research",
     "binance_futures_research": "binance_usdm_futures_research",
     "hyperliquid_perpetual_public": "hyperliquid_perpetual_public",
+    "tencent_stock_free": "tencent_stock_free",
+    "yahoo_finance_free": "yahoo_finance_free",
     "hyperliquid_perp": "hyperliquid_perpetual_public",
     "yahoo": "yahoo",
     "yahoo_finance": "yahoo_finance",
@@ -154,8 +156,10 @@ _SOURCE_ASSET_CLASSES = {
     "binance_usdm_futures_research": AssetClass.CRYPTO,
     "hyperliquid_perpetual_public": AssetClass.CRYPTO,
     "yahoo_finance": AssetClass.US_STOCK,
+    "yahoo_finance_free": AssetClass.US_STOCK,
     "yahoo_finance_futures": AssetClass.COMMODITY,
     "tushare_pro": AssetClass.A_SHARE,
+    "tencent_stock_free": AssetClass.A_SHARE,
     "tencent_kline": AssetClass.INDEX,
     "sina_index": AssetClass.INDEX,
     "treasury_official_csv": AssetClass.MACRO,
@@ -208,6 +212,24 @@ _TENCENT_INDEX_META = ProviderMeta(
     realtime_supported=False,
     market_type="index",
     supported_symbols=("sh000001", "sh000688", "sh000015"),
+)
+_TENCENT_STOCK_FREE_META = ProviderMeta(
+    name="tencent_finance",
+    source_mode="tencent_stock_free",
+    quality_flags=("public_api", "market_hours", "research_only", "entitlement_unverified"),
+    continuous=False,
+    execution_venue=False,
+    realtime_supported=False,
+    market_type="equity",
+)
+_YAHOO_FREE_META = ProviderMeta(
+    name="yahoo_finance",
+    source_mode="yahoo_finance_free",
+    quality_flags=("public_api", "market_hours", "research_only", "entitlement_unverified"),
+    continuous=False,
+    execution_venue=False,
+    realtime_supported=False,
+    market_type="equity",
 )
 _US_AUTHORIZED_META = ProviderMeta(
     name="authorized_us_pending",
@@ -355,6 +377,12 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         default_for_asset_class=True,
         blocked_timeframes=(Timeframe.HOUR_4,),
     ),
+    "yahoo_finance_free": SourceManifest(
+        source_id="yahoo_finance_free",
+        asset_class=AssetClass.US_STOCK,
+        meta=_YAHOO_FREE_META,
+        default_for_asset_class=False,
+    ),
     "us_authorized_pending": SourceManifest(
         source_id="us_authorized_pending",
         asset_class=AssetClass.US_STOCK,
@@ -457,6 +485,12 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         asset_class=AssetClass.A_SHARE,
         meta=_PROVIDER_META[AssetClass.A_SHARE],
         default_for_asset_class=True,
+    ),
+    "tencent_stock_free": SourceManifest(
+        source_id="tencent_stock_free",
+        asset_class=AssetClass.A_SHARE,
+        meta=_TENCENT_STOCK_FREE_META,
+        default_for_asset_class=False,
     ),
     "tencent_kline": SourceManifest(
         source_id="tencent_kline",

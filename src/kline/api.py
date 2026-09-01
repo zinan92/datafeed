@@ -21,6 +21,7 @@ from kline.models import (
     TimeframeTransform,
     InstrumentDefinition,
 )
+from kline.free_source_profile import apply_free_source_profile
 from kline.health_matrix import (
     MATRIX_SCOPE_DEMO,
     MATRIX_SCOPE_FULL,
@@ -1110,7 +1111,7 @@ async def mvp_health_matrix(scope: str = MATRIX_SCOPE_FULL) -> dict:
             detail={"error": "unsupported_matrix_scope", "scope": scope},
         )
     try:
-        manifest = load_manifest(manifest_path)
+        manifest = apply_free_source_profile(load_manifest(manifest_path))
         payload = build_mvp_health_matrix(
             manifest,
             get_store(),
