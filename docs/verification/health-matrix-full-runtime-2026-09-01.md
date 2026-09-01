@@ -1,12 +1,12 @@
 # 全量 Health Matrix 运行证据
 
-- 观察时间：2026-09-01T05:49:17+00:00
+- 观察时间：2026-09-01T05:51:59+00:00
 - 运行地址：`http://127.0.0.1:18170/health-ui`
 - 运行方式：隔离临时 SQLite；未连接 resident database、NAS 或公网监听
 - API：`GET /api/mvp/health/matrix`
 - manifest：`mvp_universe_v1`
 - manifest hash：`bf276deacc6fc50606241d7d91ef1656725bc688ccfb3fec720865b510b49f25`
-- response SHA-256：`24006e5017ceaf0dd065bc3f3085f735a3f1dc9197a3a0c34014453fcdcb66cd`
+- response SHA-256：`09d8392614eb5dac31978a763a1ed260eda3ee200ad05d2a87a47d77c522d0b0`
 
 ## API 实测
 
