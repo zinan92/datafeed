@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import math
 from typing import Any, Mapping, Sequence
 
+from kline.market_calendar import calendar_spec, is_trading_session
 from kline.mvp_manifest import MvpManifest, ManifestInstrument, manifest_digest
 from kline.storage import StoragePort
 
 
 MATRIX_TIMEFRAMES = ("15m", "1h", "4h", "1d", "1w")
 MATRIX_STATUSES = ("ready", "partial", "stale", "failed", "blocked", "unavailable")
+MATRIX_SCOPE_DEMO = "demo_3x3"
+MATRIX_SCOPE_FULL = "full_216"
 POLL_INTERVAL_SECONDS = 30
 REQUEST_TIMEOUT_SECONDS = 10
 SNAPSHOT_MAX_AGE_SECONDS = 900
@@ -81,26 +85,122 @@ def _freshness_stale(
     *,
     now: datetime,
 ) -> bool:
-    """Apply a conservative SLA for continuous/futures cells.
+    """Apply calendar-aware freshness without treating a closed session as stale."""
 
-    Session markets are not marked stale solely because they are closed; their
-    next run is determined by the worker/calendar contract. Continuous assets
-    use the same grace values as the approved dashboard spec.
-    """
-
-    if instrument.calendar_id not in {"crypto_24x7", "us_futures"}:
-        return False
     latest = _parse_timestamp(latest_timestamp)
     if latest is None:
         return False
+    expected = _expected_latest_closed_start(instrument, timeframe, now)
+    if expected is None:
+        return False
     grace = {
-        "15m": timedelta(minutes=45),
-        "1h": timedelta(minutes=90),
-        "4h": timedelta(hours=5),
-        "1d": timedelta(hours=26),
-        "1w": timedelta(days=8),
-    }[timeframe]
-    return latest + grace < now.astimezone(timezone.utc)
+        "cn_a": {
+            "15m": timedelta(minutes=45),
+            "1h": timedelta(minutes=90),
+            "4h": timedelta(hours=5),
+            "1d": timedelta(hours=26),
+            "1w": timedelta(days=8),
+        },
+        "us_equities": {
+            "15m": timedelta(minutes=45),
+            "1h": timedelta(minutes=90),
+            "4h": timedelta(hours=5),
+            "1d": timedelta(hours=30),
+            "1w": timedelta(days=8),
+        },
+        "crypto_24x7": {
+            "15m": timedelta(minutes=45),
+            "1h": timedelta(minutes=90),
+            "4h": timedelta(hours=5),
+            "1d": timedelta(hours=26),
+            "1w": timedelta(days=8),
+        },
+        "us_futures": {
+            "15m": timedelta(minutes=45),
+            "1h": timedelta(minutes=90),
+            "4h": timedelta(hours=5),
+            "1d": timedelta(hours=30),
+            "1w": timedelta(days=8),
+        },
+    }.get(instrument.calendar_id, {})
+    return latest + grace.get(timeframe, timedelta(0)) < expected
+
+
+def _expected_latest_closed_start(
+    instrument: ManifestInstrument, timeframe: str, now: datetime
+) -> datetime | None:
+    """Return the latest expected closed bar start for a manifest calendar."""
+
+    try:
+        spec = calendar_spec(instrument.calendar_id)
+    except (KeyError, ValueError):
+        return None
+    try:
+        zone = spec.zone
+    except Exception:
+        return None
+    local_now = now.astimezone(zone)
+    interval = {
+        "15m": timedelta(minutes=15),
+        "1h": timedelta(hours=1),
+        "4h": timedelta(hours=4),
+    }.get(timeframe)
+    if spec.continuous:
+        if timeframe == "1w":
+            monday = local_now.date() - timedelta(days=local_now.weekday())
+            return datetime.combine(monday, datetime.min.time(), tzinfo=zone)
+        if timeframe == "1d":
+            return datetime.combine(local_now.date(), datetime.min.time(), tzinfo=zone)
+        if interval is None:
+            return None
+        elapsed_seconds = local_now.hour * 3600 + local_now.minute * 60 + local_now.second
+        bucket_seconds = int(interval.total_seconds())
+        start_seconds = math.floor(elapsed_seconds / bucket_seconds) * bucket_seconds
+        current_bucket = datetime.combine(local_now.date(), datetime.min.time(), tzinfo=zone)
+        return current_bucket + timedelta(seconds=start_seconds) - interval
+
+    if timeframe == "1w":
+        for offset in range(0, 15):
+            candidate = local_now.date() - timedelta(days=offset)
+            if candidate.weekday() != 4 or not is_trading_session(
+                instrument.calendar_id, candidate
+            ):
+                continue
+            close = spec.sessions[-1].close_time
+            close_at = datetime.combine(candidate, close, tzinfo=zone)
+            if close_at <= local_now:
+                return datetime.combine(
+                    candidate - timedelta(days=4), datetime.min.time(), tzinfo=zone
+                )
+        return None
+    for offset in range(0, 15):
+        candidate = local_now.date() - timedelta(days=offset)
+        if not is_trading_session(instrument.calendar_id, candidate):
+            continue
+        if timeframe == "1d":
+            close = datetime.combine(candidate, spec.sessions[-1].close_time, tzinfo=zone)
+            if close <= local_now:
+                return datetime.combine(candidate, datetime.min.time(), tzinfo=zone)
+            continue
+        if interval is None:
+            continue
+        latest_start: datetime | None = None
+        for window in spec.sessions:
+            open_at = datetime.combine(candidate, window.open_time, tzinfo=zone)
+            close_at = datetime.combine(candidate, window.close_time, tzinfo=zone)
+            if local_now < open_at:
+                continue
+            effective_now = min(local_now, close_at)
+            completed = math.floor(
+                (effective_now - open_at).total_seconds() / interval.total_seconds()
+            )
+            if completed <= 0:
+                continue
+            candidate_start = open_at + interval * (completed - 1)
+            latest_start = max(latest_start, candidate_start) if latest_start else candidate_start
+        if latest_start is not None:
+            return latest_start
+    return None
 
 
 def _redacted_error(error: str | None, *, code: str = "source_error") -> dict[str, Any] | None:
@@ -147,8 +247,12 @@ def _safe_run(run: Mapping[str, Any]) -> dict[str, Any]:
     return payload
 
 
-def _manifest_entitlement(instrument: ManifestInstrument) -> dict[str, Any]:
+def _manifest_entitlement(
+    instrument: ManifestInstrument, receipt: Mapping[str, Any] | None = None
+) -> dict[str, Any]:
     blocked = instrument.source_status == "blocked_for_entitlement"
+    if receipt is not None:
+        return _redacted_value(dict(receipt))
     return {
         "status": "blocked" if blocked else "unverified",
         "persistence_allowed": False if blocked else None,
@@ -156,6 +260,35 @@ def _manifest_entitlement(instrument: ManifestInstrument) -> dict[str, Any]:
         "non_display_allowed": False if blocked else None,
         "evidence_ref": "manifest://blocked" if blocked else "operator_review_required",
     }
+
+
+def _entitlement_block_reason(
+    instrument: ManifestInstrument,
+    timeframe: str,
+    receipt: Mapping[str, Any] | None,
+    *,
+    derived: bool,
+) -> str | None:
+    if instrument.source_status == "blocked_for_entitlement":
+        return "entitlement_blocked"
+    if receipt is None:
+        return "entitlement_unverified"
+    status = str(receipt.get("status") or "unverified").casefold()
+    if status in {"blocked", "missing", "unverified"}:
+        return f"entitlement_{status}"
+    if status == "expired":
+        return "entitlement_expired"
+    if receipt.get("persistence_allowed") is False:
+        return "persistence_not_allowed"
+    if derived and receipt.get("derived_allowed") is False:
+        return "derived_not_allowed"
+    permissions = receipt.get("timeframe_permissions")
+    if isinstance(permissions, Sequence) and not isinstance(permissions, (str, bytes)):
+        if timeframe not in {str(item) for item in permissions}:
+            return "timeframe_not_permitted"
+    else:
+        return "timeframe_permission_unverified"
+    return None
 
 
 def _cell(
@@ -169,6 +302,7 @@ def _cell(
     quality: Mapping[str, Any] | None,
     transform: Mapping[str, Any] | None,
     watermark: Mapping[str, Any] | None,
+    entitlement: Mapping[str, Any] | None,
     now: datetime,
 ) -> dict[str, Any]:
     applicable = (
@@ -244,7 +378,7 @@ def _cell(
         "asset_class": instrument.asset_class,
         "source_id": instrument.source_id,
         "source_mode": instrument.source_id,
-        "entitlement": _manifest_entitlement(instrument),
+        "entitlement": _manifest_entitlement(instrument, entitlement),
         "timeframe": timeframe,
         "applicability": "applicable",
         "status": status,
@@ -302,19 +436,30 @@ def build_mvp_health_matrix(
     *,
     now: datetime | None = None,
     interval_seconds: int = 4 * 60 * 60,
+    scope: str = MATRIX_SCOPE_FULL,
     instrument_ids: Sequence[str] | None = None,
 ) -> dict[str, Any]:
-    """Build the bounded source-aware matrix from persisted facts only.
+    """Build the source-aware matrix from persisted facts only.
 
-    The default is the approved #69 3+3 slice.  Callers may pass an explicit
-    manifest identity list for deterministic tests or the later full-manifest
-    expansion; unknown identities fail closed instead of silently shrinking
-    the requested matrix.
+    The API defaults to the full runtime manifest for #70.  The approved #69
+    slice remains available through ``scope="demo_3x3"`` or an explicit
+    identity list. Unknown identities fail closed instead of silently
+    shrinking the requested matrix.
     """
 
     observed_at = now or datetime.now(timezone.utc)
-    selected_ids = tuple(instrument_ids or MVP_DEMO_INSTRUMENT_IDS)
     by_id = {instrument.instrument_id: instrument for instrument in manifest.instruments}
+    if instrument_ids is not None:
+        selected_ids = tuple(instrument_ids)
+        scope_name = MATRIX_SCOPE_DEMO if selected_ids == MVP_DEMO_INSTRUMENT_IDS else "custom"
+    elif scope == MATRIX_SCOPE_DEMO:
+        selected_ids = MVP_DEMO_INSTRUMENT_IDS
+        scope_name = MATRIX_SCOPE_DEMO
+    elif scope == MATRIX_SCOPE_FULL:
+        selected_ids = tuple(instrument.instrument_id for instrument in manifest.instruments)
+        scope_name = MATRIX_SCOPE_FULL
+    else:
+        raise ValueError(f"unsupported matrix scope: {scope}")
     missing_ids = [instrument_id for instrument_id in selected_ids if instrument_id not in by_id]
     if missing_ids:
         raise ValueError(f"matrix instruments missing from manifest: {', '.join(missing_ids)}")
@@ -340,6 +485,11 @@ def build_mvp_health_matrix(
     watermarks = (
         storage.latest_mvp_watermarks() if hasattr(storage, "latest_mvp_watermarks") else []
     )
+    entitlements = (
+        storage.latest_mvp_entitlement_receipts()
+        if hasattr(storage, "latest_mvp_entitlement_receipts")
+        else []
+    )
     latest_map = {_key(row): row for row in latest_rows}
     observation_map = {_key(row): row for row in observations}
     quality_map = {_key(row): row for row in qualities}
@@ -354,6 +504,9 @@ def build_mvp_health_matrix(
         for row in transforms
     }
     watermark_map = {_key(row): row for row in watermarks}
+    entitlement_map = {
+        str(row.get("source_id") or ""): row for row in entitlements if row.get("source_id")
+    }
 
     cells: list[dict[str, Any]] = []
     for instrument in selected_instruments:
@@ -370,6 +523,7 @@ def build_mvp_health_matrix(
             quality = quality_map.get(key)
             transform = transform_map.get(key)
             watermark = watermark_map.get(key)
+            entitlement = entitlement_map.get(instrument.source_id)
             if timeframe in instrument.not_applicable_timeframes:
                 cells.append(
                     _cell(
@@ -382,15 +536,19 @@ def build_mvp_health_matrix(
                         quality=None,
                         transform=None,
                         watermark=None,
+                        entitlement=None,
                         now=observed_at,
                     )
                 )
                 continue
-            if (
-                instrument.source_status == "blocked_for_entitlement"
-                or timeframe in instrument.blocked_timeframes
-            ):
-                status, reason = "blocked", "entitlement_blocked"
+            entitlement_reason = _entitlement_block_reason(
+                instrument,
+                timeframe,
+                entitlement,
+                derived=bool(transform) or timeframe in {"4h", "1w"},
+            )
+            if entitlement_reason or timeframe in instrument.blocked_timeframes:
+                status, reason = "blocked", entitlement_reason or "timeframe_blocked"
             elif timeframe not in instrument.required_timeframes:
                 cells.append(
                     _cell(
@@ -403,6 +561,7 @@ def build_mvp_health_matrix(
                         quality=None,
                         transform=None,
                         watermark=None,
+                        entitlement=None,
                         now=observed_at,
                     )
                 )
@@ -440,14 +599,21 @@ def build_mvp_health_matrix(
                     quality=quality,
                     transform=transform,
                     watermark=watermark,
+                    entitlement=entitlement,
                     now=observed_at,
                 )
             )
 
     coverage = _status_counts(cells)
     statuses = {str(cell["status"]) for cell in cells if cell["applicability"] == "applicable"}
-    latest_runs = storage.latest_mvp_runs(limit=6) if hasattr(storage, "latest_mvp_runs") else []
+    latest_runs = storage.latest_mvp_runs(limit=24) if hasattr(storage, "latest_mvp_runs") else []
     latest_runs = [_safe_run(run) for run in latest_runs]
+    run_cutoff = observed_at.astimezone(timezone.utc) - timedelta(hours=24)
+    latest_runs = [
+        run
+        for run in latest_runs
+        if (started := _parse_timestamp(run.get("started_at"))) is None or started >= run_cutoff
+    ]
     latest_run = (
         latest_runs[0]
         if latest_runs
@@ -473,7 +639,7 @@ def build_mvp_health_matrix(
         "manifest_version": manifest.version,
         "manifest_hash": manifest_digest(manifest),
         "scope": {
-            "name": "demo_3x3",
+            "name": scope_name,
             "instrument_count": len(selected_instruments),
             "universes": universes,
         },

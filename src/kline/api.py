@@ -21,7 +21,12 @@ from kline.models import (
     TimeframeTransform,
     InstrumentDefinition,
 )
-from kline.health_matrix import build_mvp_health_matrix
+from kline.health_matrix import (
+    MATRIX_SCOPE_DEMO,
+    MATRIX_SCOPE_FULL,
+    MVP_DEMO_INSTRUMENT_IDS,
+    build_mvp_health_matrix,
+)
 from kline.mvp_manifest import load_manifest
 from kline.ports import MarketDataPort
 from kline.providers.base import ProviderError
@@ -36,6 +41,7 @@ from kline.quality import QualityReport, analyze_candles
 from kline.registry import get_adapter_for_source, get_store, provider_status, runtime_status
 
 router = APIRouter()
+_mvp_matrix_last_success_at: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1093,19 +1099,32 @@ async def health() -> dict:
 
 
 @router.get("/mvp/health/matrix")
-async def mvp_health_matrix() -> dict:
+async def mvp_health_matrix(scope: str = MATRIX_SCOPE_FULL) -> dict:
     """Return the source-aware MVP asset × timeframe health matrix."""
 
+    global _mvp_matrix_last_success_at
     manifest_path = Path(__file__).resolve().parents[2] / "configs" / "mvp_manifest.json"
+    if scope not in {MATRIX_SCOPE_FULL, MATRIX_SCOPE_DEMO}:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "unsupported_matrix_scope", "scope": scope},
+        )
     try:
         manifest = load_manifest(manifest_path)
-        return build_mvp_health_matrix(manifest, get_store())
+        payload = build_mvp_health_matrix(
+            manifest,
+            get_store(),
+            scope=scope,
+            instrument_ids=MVP_DEMO_INSTRUMENT_IDS if scope == MATRIX_SCOPE_DEMO else None,
+        )
+        _mvp_matrix_last_success_at = payload["refresh"]["last_success_at"]
+        return payload
     except Exception as error:
         raise HTTPException(
             status_code=503,
             detail={
                 "error": "dashboard_unavailable",
                 "detail": type(error).__name__,
-                "last_success_at": None,
+                "last_success_at": _mvp_matrix_last_success_at,
             },
         ) from error

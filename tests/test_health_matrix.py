@@ -1,16 +1,23 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from dataclasses import replace
 import json
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
 from kline.app import create_app
-from kline.health_matrix import MVP_DEMO_INSTRUMENT_IDS, build_mvp_health_matrix
+from kline.health_matrix import (
+    MVP_DEMO_INSTRUMENT_IDS,
+    _entitlement_block_reason,
+    _freshness_stale,
+    build_mvp_health_matrix,
+)
 from kline.mvp_manifest import load_manifest
 from kline.storage import (
     CandleSeriesKey,
+    EntitlementReceiptWrite,
     MvpCandle,
     MvpRunWrite,
     QualityReceiptWrite,
@@ -54,6 +61,7 @@ def test_matrix_returns_every_manifest_timeframe_cell_and_explicit_statuses(tmp_
     snapshot = build_mvp_health_matrix(
         manifest,
         store,
+        scope="demo_3x3",
         now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
     )
 
@@ -111,6 +119,22 @@ def test_matrix_promotes_ready_cell_from_real_receipts(tmp_path: Path) -> None:
                     run_id=run_id,
                 ),
             ),
+            entitlement_receipts=(
+                EntitlementReceiptWrite(
+                    receipt_id="matrix-entitlement-1",
+                    source_id="hyperliquid_perpetual_public",
+                    status="active",
+                    allowed_history={"days": 365},
+                    timeframe_permissions=("15m", "1h", "4h", "1d", "1w"),
+                    persistence_allowed=True,
+                    derived_allowed=True,
+                    non_display_allowed=True,
+                    valid_from="2026-01-01",
+                    valid_to=None,
+                    evidence_ref="operator://matrix-test",
+                    receipt_hash="c" * 64,
+                ),
+            ),
         )
     )
 
@@ -128,6 +152,7 @@ def test_matrix_promotes_ready_cell_from_real_receipts(tmp_path: Path) -> None:
     assert btc_1h["status"] == "ready"
     assert btc_1h["latest_closed_timestamp"] == candle.timestamp
     assert btc_1h["watermark"]["run_id"] == run_id
+    assert btc_1h["entitlement"]["status"] == "active"
     assert snapshot["coverage"]["1h"]["ready"] == 1
     assert btc_1h["run_id"] == run_id
     serialized = json.dumps(btc_1h, ensure_ascii=False)
@@ -177,7 +202,58 @@ def test_not_applicable_cell_keeps_the_full_null_payload_shape(tmp_path: Path) -
     ):
         assert intraday[field] is None
     assert daily["applicability"] == "applicable"
-    assert daily["status"] == "unavailable"
+    assert daily["status"] == "blocked"
+    assert daily["status_reason"] == "entitlement_unverified"
+
+
+def test_full_scope_preserves_manifest_cartesian_product_and_coverage_invariants(
+    tmp_path: Path,
+) -> None:
+    manifest = load_manifest(MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "matrix-full.db"))
+    snapshot = build_mvp_health_matrix(
+        manifest,
+        store,
+        now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+    )
+
+    assert len(snapshot["cells"]) == 216 * 5
+    assert all(cell["timeframe"] != "30m" for cell in snapshot["cells"])
+    assert snapshot["scope"]["name"] == "full_216"
+    for timeframe, counts in snapshot["coverage"].items():
+        total = sum(1 for cell in snapshot["cells"] if cell["timeframe"] == timeframe)
+        assert counts["applicable"] + counts["not_applicable"] == total
+        assert (
+            sum(
+                counts[state]
+                for state in ("ready", "partial", "stale", "failed", "blocked", "unavailable")
+            )
+            == counts["applicable"]
+        )
+
+
+def test_freshness_uses_session_and_continuous_calendar_slas() -> None:
+    manifest = load_manifest(MANIFEST_PATH)
+    aapl = next(item for item in manifest.instruments if item.display_symbol == "AAPL")
+    aapl = replace(aapl, source_status="configured")
+    now = datetime(2026, 9, 1, 12, tzinfo=timezone.utc)
+    assert _freshness_stale(aapl, "1d", "2026-08-25T00:00:00+00:00", now=now)
+
+    btc = next(item for item in manifest.instruments if item.display_symbol == "BTC")
+    assert _freshness_stale(btc, "1h", "2026-08-31T00:00:00+00:00", now=now)
+
+
+def test_derived_entitlement_does_not_block_native_one_hour_cells() -> None:
+    manifest = load_manifest(MANIFEST_PATH)
+    btc = next(item for item in manifest.instruments if item.display_symbol == "BTC")
+    receipt = {
+        "status": "active",
+        "persistence_allowed": True,
+        "derived_allowed": False,
+        "timeframe_permissions": ("15m", "1h", "4h", "1d", "1w"),
+    }
+    assert _entitlement_block_reason(btc, "1h", receipt, derived=False) is None
+    assert _entitlement_block_reason(btc, "1h", receipt, derived=True) == "derived_not_allowed"
 
 
 def test_health_matrix_api_and_ui_are_chinese_and_read_only(
@@ -193,11 +269,11 @@ def test_health_matrix_api_and_ui_are_chinese_and_read_only(
 
     assert response.status_code == 200
     payload = response.json()
-    assert len(payload["cells"]) == 6 * 5
+    assert len(payload["cells"]) == 216 * 5
     assert payload["scope"] == {
-        "name": "demo_3x3",
-        "instrument_count": 6,
-        "universes": {"a_share": 3, "us_stock": 3},
+        "name": "full_216",
+        "instrument_count": 216,
+        "universes": {"a_share": 100, "us_stock": 100, "cross_market": 16},
     }
     assert payload["refresh"]["poll_interval_seconds"] == 30
     assert payload["refresh"]["request_timeout_seconds"] == 10
@@ -206,3 +282,41 @@ def test_health_matrix_api_and_ui_are_chinese_and_read_only(
     assert "最近一次运行" in page.text
     assert "system notification" not in page.text.lower()
     assert "重试" not in page.text
+
+
+def test_matrix_api_failure_preserves_last_success_timestamp(monkeypatch, tmp_path: Path) -> None:
+    import kline.api as api_module
+    from kline.config import Settings
+    from kline.registry import init
+
+    init(Settings(db_path=str(tmp_path / "api-loss.db"), load_entrypoint_adapters=False))
+
+    with TestClient(create_app()) as client:
+        assert client.get("/api/mvp/health/matrix").status_code == 200
+
+        def fail_manifest(_path: Path):
+            raise RuntimeError("token=should-not-leak")
+
+        monkeypatch.setattr(api_module, "load_manifest", fail_manifest)
+        response = client.get("/api/mvp/health/matrix")
+
+    assert response.status_code == 503
+    detail = response.json()["detail"]
+    assert detail["error"] == "dashboard_unavailable"
+    assert detail["last_success_at"]
+    assert "should-not-leak" not in response.text
+
+
+def test_matrix_api_exposes_demo_scope_only_when_explicit(tmp_path: Path) -> None:
+    from kline.config import Settings
+    from kline.registry import init
+
+    init(Settings(db_path=str(tmp_path / "api-scope.db"), load_entrypoint_adapters=False))
+    with TestClient(create_app()) as client:
+        demo = client.get("/api/mvp/health/matrix?scope=demo_3x3")
+        invalid = client.get("/api/mvp/health/matrix?scope=source_switch")
+
+    assert demo.status_code == 200
+    assert demo.json()["scope"]["name"] == "demo_3x3"
+    assert len(demo.json()["cells"]) == 30
+    assert invalid.status_code == 400

@@ -1118,7 +1118,7 @@ class KlineStore:
         with self._session_factory() as session:
             rows = session.execute(
                 select(MvpRunRow)
-                .order_by(MvpRunRow.created_at.desc(), MvpRunRow.run_id.desc())
+                .order_by(MvpRunRow.started_at.desc(), MvpRunRow.run_id.desc())
                 .limit(bounded_limit)
             ).scalars()
             return [
@@ -1208,6 +1208,39 @@ class KlineStore:
                         "invalid_rows": row.invalid_rows,
                         "blocked_cells": row.blocked_cells,
                         "details": json.loads(row.details_json or "{}"),
+                        "receipt_hash": row.receipt_hash,
+                    }
+                )
+            return result
+
+    def latest_mvp_entitlement_receipts(self) -> list[dict[str, Any]]:
+        """Return the newest entitlement receipt for each source."""
+
+        with self._session_factory() as session:
+            rows = session.execute(
+                select(MvpEntitlementReceiptRow).order_by(
+                    MvpEntitlementReceiptRow.created_at.desc()
+                )
+            ).scalars()
+            seen: set[str] = set()
+            result: list[dict[str, Any]] = []
+            for row in rows:
+                if row.source_id in seen:
+                    continue
+                seen.add(row.source_id)
+                result.append(
+                    {
+                        "receipt_id": row.receipt_id,
+                        "source_id": row.source_id,
+                        "status": row.status,
+                        "allowed_history": json.loads(row.allowed_history_json or "{}"),
+                        "timeframe_permissions": json.loads(row.timeframe_permissions_json or "[]"),
+                        "persistence_allowed": row.persistence_allowed,
+                        "derived_allowed": row.derived_allowed,
+                        "non_display_allowed": row.non_display_allowed,
+                        "valid_from": row.valid_from,
+                        "valid_to": row.valid_to,
+                        "evidence_ref": row.evidence_ref,
                         "receipt_hash": row.receipt_hash,
                     }
                 )
