@@ -224,6 +224,7 @@ class AShareFreeProvider:
         self.last_attempts = []
         self.timeframe_transform = None
         self.last_raw_response = None
+        self.source_identity = {}
         if timeframe == Timeframe.HOUR_4:
             base = await self.fetch(
                 ticker, Timeframe.MIN_15, start=start, end=end, limit=max(limit * 16, 320)
@@ -337,7 +338,9 @@ class AShareFreeProvider:
                 item.get(key), timezone_name="Asia/Shanghai", interval=interval
             )
             if not rows:
-                raise ProviderError("Tencent returned no minute rows")
+                error = ProviderError("Tencent returned no minute rows")
+                error.code = "empty_response"
+                raise error
             self.last_raw_response = {
                 "endpoint": _TENCENT_MINUTE_URL,
                 "http_status": response.status_code,
@@ -362,7 +365,9 @@ class AShareFreeProvider:
                 http_status=response.status_code if response is not None else None,
                 error=str(error),
             )
-            raise ProviderError(f"Tencent minute request failed for {code}: {error}") from error
+            wrapped = ProviderError(f"Tencent minute request failed for {code}: {error}")
+            wrapped.code = getattr(error, "code", "provider_error")
+            raise wrapped from error
 
     async def _tencent_daily(
         self, code: str, *, start: str | None, end: str | None, limit: int
@@ -385,7 +390,9 @@ class AShareFreeProvider:
                 item.get("qfqday") or item.get("day"), timezone_name="Asia/Shanghai"
             )
             if not rows:
-                raise ProviderError("Tencent returned no daily rows")
+                error = ProviderError("Tencent returned no daily rows")
+                error.code = "empty_response"
+                raise error
             self.last_raw_response = {
                 "endpoint": _TENCENT_DAILY_URL,
                 "http_status": response.status_code,
@@ -410,7 +417,9 @@ class AShareFreeProvider:
                 http_status=response.status_code if response is not None else None,
                 error=str(error),
             )
-            raise ProviderError(f"Tencent daily request failed for {code}: {error}") from error
+            wrapped = ProviderError(f"Tencent daily request failed for {code}: {error}")
+            wrapped.code = getattr(error, "code", "provider_error")
+            raise wrapped from error
 
     async def _with_fallback(
         self,
@@ -444,7 +453,9 @@ class AShareFreeProvider:
                 payload = json.loads(match.group(0)) if match else {}
                 rows = parse_10jqka_rows(payload.get("data", ""), timezone_name="Asia/Shanghai")
                 if not rows:
-                    raise ProviderError("Tonghuashun returned no rows")
+                    error = ProviderError("Tonghuashun returned no rows")
+                    error.code = "empty_response"
+                    raise error
                 self.last_raw_response = {
                     "endpoint": str(response.url),
                     "http_status": response.status_code,
@@ -476,9 +487,16 @@ class AShareFreeProvider:
                     http_status=response.status_code if response is not None else None,
                     error=str(fallback_error),
                 )
-                raise ProviderError(
+                error = ProviderError(
                     f"free A-share sources failed for {code}: Tencent={tencent_error}; Tonghuashun={fallback_error}"
-                ) from fallback_error
+                )
+                error.code = (
+                    "empty_response"
+                    if getattr(tencent_error, "code", "") == "empty_response"
+                    and getattr(fallback_error, "code", "") == "empty_response"
+                    else "provider_error"
+                )
+                raise error from fallback_error
 
     @staticmethod
     def _as_mvp(candles: list[Candle], ticker: str, timeframe: str) -> list[MvpCandle]:

@@ -395,6 +395,45 @@ async def test_run_once_persists_failed_attempts_through_provider_adapter(
 
 
 @pytest.mark.asyncio
+async def test_run_once_does_not_retry_terminal_empty_response(tmp_path: Path) -> None:
+    manifest = apply_free_source_profile(load_manifest(MANIFEST_PATH))
+    store = KlineStore(str(tmp_path / "terminal-empty.db"))
+
+    class EmptyAdapter:
+        def __init__(self) -> None:
+            self.calls = 0
+            self.last_attempts: list[dict[str, object]] = []
+
+        async def fetch_candles_with_receipt(self, *_args, **_kwargs) -> FetchReceipt:
+            self.calls += 1
+            self.last_attempts = [
+                {"source": "fake", "status": "error", "http_status": 200, "latency_ms": 1.0}
+            ]
+            error = ProviderError("Tencent returned no minute rows")
+            error.code = "empty_response"
+            raise error
+
+    adapter = EmptyAdapter()
+    receipt = await IngestionOrchestrator(
+        store, adapter_resolver=lambda _instrument: adapter
+    ).run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="run-terminal-empty",
+            now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+            instrument_ids=("CN.A.600519",),
+            timeframes=("15m",),
+            max_retries=2,
+            retry_backoff_seconds=0.001,
+        )
+    )
+
+    assert receipt.status == "partial"
+    assert adapter.calls == 1
+    assert receipt.source_attempts[0]["provider_attempts"][0]["retry_number"] == 1
+
+
+@pytest.mark.asyncio
 async def test_intraday_source_failure_still_persists_daily_and_weekly_data(
     tmp_path: Path,
 ) -> None:

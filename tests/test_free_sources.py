@@ -101,6 +101,30 @@ async def test_free_a_share_provider_reports_both_sources_failed() -> None:
 
 
 @pytest.mark.asyncio
+async def test_free_a_share_empty_response_is_terminal_and_resets_identity() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        code = "sh600519" if "sh600519" in str(request.url) else "sh601989"
+        rows = {
+            "sh600519": [["202609011500", "100", "101", "102", "99", "10"]],
+            "sh601989": [],
+        }[code]
+        return httpx.Response(
+            200,
+            request=request,
+            json={"data": {code: {"m15": rows}}},
+        )
+
+    provider = AShareFreeProvider(transport=httpx.MockTransport(handler))
+    assert await provider.fetch("600519", Timeframe.MIN_15, limit=10)
+    assert provider.source_identity["provider_symbol"] == "sh600519"
+    with pytest.raises(ProviderError) as error:
+        await provider.fetch("601989", Timeframe.MIN_15, limit=10)
+    assert error.value.code == "empty_response"
+    assert len(provider.last_attempts) == 1
+    assert provider.source_identity == {}
+
+
+@pytest.mark.asyncio
 async def test_adapter_exposes_failed_provider_attempts() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(503, request=request)
