@@ -57,6 +57,33 @@ def test_remaining_stock_ids_skip_only_complete_free_series() -> None:
     assert "US.EQ.AAPL" not in remaining["us_stock"]
 
 
+def test_remaining_stock_ids_can_resume_each_phase_independently() -> None:
+    manifest = apply_free_source_profile(load_manifest(MANIFEST_PATH))
+    a_share = next(item for item in manifest.instruments if item.instrument_id == "CN.A.600519")
+    us_stock = next(item for item in manifest.instruments if item.instrument_id == "US.EQ.AAPL")
+
+    class FakeStore:
+        def mvp_latest_closed_bars(self) -> list[dict[str, str]]:
+            return [
+                {
+                    "source_id": item.source_id,
+                    "instrument_id": item.instrument_id,
+                    "timeframe": timeframe,
+                    "adjustment_basis": item.adjustment_basis,
+                    "manifest_version": manifest.version,
+                }
+                for item in (a_share, us_stock)
+                for timeframe in ("1d", "1w")
+            ]
+
+    coarse = remaining_stock_ids(manifest, FakeStore(), required_timeframes=("1d", "1w"))
+    intraday = remaining_stock_ids(manifest, FakeStore(), required_timeframes=("15m", "1h", "4h"))
+    assert len(coarse["a_share"]) == 99
+    assert len(coarse["us_stock"]) == 99
+    assert len(intraday["a_share"]) == 100
+    assert len(intraday["us_stock"]) == 100
+
+
 def test_batches_are_deterministic_and_rate_errors_are_classified() -> None:
     assert _batches(("a", "b", "c", "d", "e"), 2) == [
         ("a", "b"),
