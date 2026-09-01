@@ -154,7 +154,7 @@ async def health_ui() -> str:
   const fmtCount = value => value == null ? '—' : Number(value).toLocaleString('zh-CN');
   const statusText = status => statusLabels[status] || status || '未知';
   const validSnapshot = data => {
-    if (!data || !Array.isArray(data.cells) || !data.coverage || typeof data.coverage !== 'object' || !data.refresh || !Object.prototype.hasOwnProperty.call(statusLabels, data.status)) return false;
+    if (!data || !Array.isArray(data.cells) || !data.coverage || typeof data.coverage !== 'object' || !data.refresh || !data.worker || typeof data.worker !== 'object' || !Array.isArray(data.runs) || !data.infrastructure || typeof data.infrastructure !== 'object' || !Object.prototype.hasOwnProperty.call(statusLabels, data.status)) return false;
     if (!timeframes.every(tf => data.coverage[tf] && Number.isFinite(Number(data.coverage[tf].applicable)) && Number.isFinite(Number(data.coverage[tf].not_applicable)))) return false;
     return data.cells.every(cell => timeframes.includes(cell.timeframe) && ['applicable','not_applicable'].includes(cell.applicability) && Object.prototype.hasOwnProperty.call(statusLabels, cell.status));
   };

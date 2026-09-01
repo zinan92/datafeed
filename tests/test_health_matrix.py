@@ -256,6 +256,30 @@ def test_derived_entitlement_does_not_block_native_one_hour_cells() -> None:
     assert _entitlement_block_reason(btc, "1h", receipt, derived=True) == "derived_not_allowed"
 
 
+def test_run_timeline_does_not_fallback_to_older_than_24_hours(tmp_path: Path) -> None:
+    manifest = load_manifest(MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "matrix-runs.db"))
+    store.commit_mvp_run(
+        MvpRunWrite(
+            run_id="old-run",
+            manifest_version=manifest.version,
+            manifest_hash="a" * 64,
+            started_at="2026-08-01T00:00:00+00:00",
+            window_start=None,
+            window_end=None,
+            policy={},
+            completed_at="2026-08-01T00:01:00+00:00",
+        )
+    )
+    snapshot = build_mvp_health_matrix(
+        manifest,
+        store,
+        scope="demo_3x3",
+        now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+    )
+    assert snapshot["runs"] == []
+
+
 def test_health_matrix_api_and_ui_are_chinese_and_read_only(
     tmp_path: Path,
 ) -> None:

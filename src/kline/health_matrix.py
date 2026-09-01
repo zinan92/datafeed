@@ -7,6 +7,7 @@ import math
 from typing import Any, Mapping, Sequence
 
 from kline.market_calendar import calendar_spec, is_trading_session
+from kline.models import AssetClass
 from kline.mvp_manifest import MvpManifest, ManifestInstrument, manifest_digest
 from kline.storage import StoragePort
 
@@ -262,6 +263,19 @@ def _manifest_entitlement(
     }
 
 
+def _source_mode(instrument: ManifestInstrument) -> str:
+    """Resolve the provider's declared mode without conflating it with identity."""
+
+    try:
+        from kline.provenance import source_manifest
+
+        return source_manifest(
+            instrument.source_id, AssetClass(instrument.asset_class)
+        ).meta.source_mode
+    except (KeyError, ValueError, TypeError):
+        return instrument.source_id
+
+
 def _entitlement_block_reason(
     instrument: ManifestInstrument,
     timeframe: str,
@@ -377,7 +391,7 @@ def _cell(
         "provider_symbol": instrument.provider_symbol,
         "asset_class": instrument.asset_class,
         "source_id": instrument.source_id,
-        "source_mode": instrument.source_id,
+        "source_mode": _source_mode(instrument),
         "entitlement": _manifest_entitlement(instrument, entitlement),
         "timeframe": timeframe,
         "applicability": "applicable",
@@ -606,17 +620,19 @@ def build_mvp_health_matrix(
 
     coverage = _status_counts(cells)
     statuses = {str(cell["status"]) for cell in cells if cell["applicability"] == "applicable"}
-    latest_runs = storage.latest_mvp_runs(limit=24) if hasattr(storage, "latest_mvp_runs") else []
-    latest_runs = [_safe_run(run) for run in latest_runs]
+    persisted_runs = (
+        storage.latest_mvp_runs(limit=24) if hasattr(storage, "latest_mvp_runs") else []
+    )
+    persisted_runs = [_safe_run(run) for run in persisted_runs]
     run_cutoff = observed_at.astimezone(timezone.utc) - timedelta(hours=24)
-    latest_runs = [
+    recent_runs = [
         run
-        for run in latest_runs
+        for run in persisted_runs
         if (started := _parse_timestamp(run.get("started_at"))) is None or started >= run_cutoff
     ]
     latest_run = (
-        latest_runs[0]
-        if latest_runs
+        persisted_runs[0]
+        if persisted_runs
         else (storage.latest_mvp_run() if hasattr(storage, "latest_mvp_run") else None)
     )
     if latest_run is not None:
@@ -651,7 +667,7 @@ def build_mvp_health_matrix(
             "snapshot_max_age_seconds": 900,
         },
         "worker": _worker_payload(storage, now=observed_at, interval_seconds=interval_seconds),
-        "runs": latest_runs or ([latest_run] if latest_run else []),
+        "runs": recent_runs,
         "infrastructure": {
             "worker": _worker_payload(storage, now=observed_at, interval_seconds=interval_seconds),
             "database": {
