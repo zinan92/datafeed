@@ -1,7 +1,7 @@
 # 1h Timeframe Contract Receipt
 
-**Issue:** #68  
-**Observed:** 2026-09-01 (Asia/Shanghai)  
+**Issue:** #68
+**Observed:** 2026-09-01 (Asia/Shanghai)
 **Status:** contract implemented; source entitlement remains explicit
 
 ## Contract

@@ -277,6 +277,28 @@ async def test_ingestion_persists_derived_1h_with_transform_receipt(tmp_path: Pa
                         "partial_bucket_count": 0,
                     },
                 )
+            elif timeframe == Timeframe.HOUR_4:
+                transform = TimeframeTransform(
+                    raw_timeframe=Timeframe.HOUR_1,
+                    timeframe_origin="aggregated",
+                    aggregation={
+                        "rule": "utc_fixed_4h_v1",
+                        "bucket_anchor": "00:00",
+                        "partial_bucket_policy": "drop_and_record",
+                        "partial_bucket_count": 0,
+                    },
+                )
+            elif timeframe == Timeframe.WEEK:
+                transform = TimeframeTransform(
+                    raw_timeframe=Timeframe.DAY,
+                    timeframe_origin="aggregated",
+                    aggregation={
+                        "rule": "completed_local_calendar_week_v1",
+                        "bucket_anchor": "local_week",
+                        "partial_bucket_policy": "defer_until_closed",
+                        "partial_bucket_count": 0,
+                    },
+                )
             return FetchReceipt(
                 candles=[candle],
                 timeframe_transform=transform,
@@ -320,4 +342,5 @@ async def test_ingestion_persists_derived_1h_with_transform_receipt(tmp_path: Pa
     rows = store.query_mvp_candles(key)
     assert len(rows) == 1
     assert rows[0].is_derived is True
+    assert rows[0].transform_receipt_id is not None
     assert store.mvp_storage_health()["transform_receipts"] >= 1
