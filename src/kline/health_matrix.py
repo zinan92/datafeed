@@ -630,13 +630,6 @@ def build_mvp_health_matrix(
         for run in persisted_runs
         if (started := _parse_timestamp(run.get("started_at"))) is None or started >= run_cutoff
     ]
-    latest_run = (
-        persisted_runs[0]
-        if persisted_runs
-        else (storage.latest_mvp_run() if hasattr(storage, "latest_mvp_run") else None)
-    )
-    if latest_run is not None:
-        latest_run = _safe_run(latest_run)
     storage_health = storage.mvp_storage_health() if hasattr(storage, "mvp_storage_health") else {}
     backup = storage.latest_mvp_backup() if hasattr(storage, "latest_mvp_backup") else None
     infrastructure_status = "ready" if storage_health.get("status") in {"ok", "ready"} else "failed"
