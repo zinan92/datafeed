@@ -434,6 +434,75 @@ async def test_run_once_does_not_retry_terminal_empty_response(tmp_path: Path) -
 
 
 @pytest.mark.asyncio
+async def test_run_once_suppresses_watermark_regression_without_failing_transaction(
+    tmp_path: Path,
+) -> None:
+    manifest = load_manifest(MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "watermark-regression.db"))
+    key = "CRYPTO.PERP.BTC"
+    watermark_key = CandleSeriesKey(
+        instrument_id=key,
+        display_symbol="BTC",
+        provider_symbol="BTC",
+        source_id="hyperliquid_perpetual_public",
+        asset_class="crypto",
+        timeframe="1d",
+        adjustment_basis="raw_unadjusted",
+        manifest_version=manifest.version,
+    )
+    first = await IngestionOrchestrator(
+        store, adapter_resolver=lambda _instrument: FakeCryptoAdapter()
+    ).run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="run-watermark-forward",
+            now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+            instrument_ids=(key,),
+            timeframes=("1d",),
+        )
+    )
+    assert first.status == "success"
+
+    class OlderAdapter:
+        async def fetch_candles_with_receipt(self, *_args, **_kwargs) -> FetchReceipt:
+            return FetchReceipt(
+                candles=[
+                    Candle(
+                        timestamp="2026-08-30T00:00:00+00:00",
+                        open=100,
+                        high=102,
+                        low=99,
+                        close=101,
+                        volume=10,
+                    )
+                ],
+                timeframe_transform=None,
+                source_identity={"provider_symbol": "BTC"},
+                raw_response={"row_count": 1},
+                attempts=({"source": "fake", "status": "success", "latency_ms": 1.0},),
+            )
+
+    second = await IngestionOrchestrator(
+        store, adapter_resolver=lambda _instrument: OlderAdapter()
+    ).run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="run-watermark-backward",
+            now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+            instrument_ids=(key,),
+            timeframes=("1d",),
+        )
+    )
+    assert second.status == "partial"
+    assert second.row_counts["watermarks"] == 0
+    assert second.row_counts["watermarks_skipped"] == 1
+    assert second.source_attempts[0]["watermark_regression_suppressed"] is True
+    assert (
+        store.get_mvp_watermark(watermark_key).last_closed_timestamp == "2026-08-31T00:00:00+00:00"
+    )
+
+
+@pytest.mark.asyncio
 async def test_intraday_source_failure_still_persists_daily_and_weekly_data(
     tmp_path: Path,
 ) -> None:

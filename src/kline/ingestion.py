@@ -414,6 +414,7 @@ class IngestionOrchestrator:
         watermarks: list[WatermarkWrite] = []
         request_count = 0
         quality_counts = {"pass": 0, "partial": 0, "fail": 0}
+        watermark_regressions = 0
         last_request_at: float | None = None
 
         def receipt_attempts(value: Any) -> list[dict[str, Any]]:
@@ -644,14 +645,25 @@ class IngestionOrchestrator:
                     )
                     if quality.status == "pass" and mvp_rows:
                         candles.extend(mvp_rows)
-                        watermarks.append(
-                            WatermarkWrite(
-                                key=key,
-                                last_closed_timestamp=latest or end,
-                                cursor=None,
-                                run_id=plan.run_id,
+                        existing_watermark = self._storage.get_mvp_watermark(key)
+                        if (
+                            existing_watermark is not None
+                            and latest is not None
+                            and latest < existing_watermark.last_closed_timestamp
+                        ):
+                            watermark_regressions += 1
+                            source_attempts[-1]["watermark_regression_suppressed"] = True
+                            for provider_attempt in provider_attempts:
+                                provider_attempt["watermark_regression_suppressed"] = True
+                        else:
+                            watermarks.append(
+                                WatermarkWrite(
+                                    key=key,
+                                    last_closed_timestamp=latest or end,
+                                    cursor=None,
+                                    run_id=plan.run_id,
+                                )
                             )
-                        )
                     if fetch_receipt.timeframe_transform is not None and mvp_rows:
                         transform = fetch_receipt.timeframe_transform
                         if transform.timeframe_origin == "aggregated":
@@ -680,6 +692,10 @@ class IngestionOrchestrator:
                                 )
                             )
                     status = "ready" if quality.status == "pass" else quality.status
+                    cell_error = None if quality.status != "fail" else "quality gate failed"
+                    if source_attempts[-1].get("watermark_regression_suppressed"):
+                        status = "partial"
+                        cell_error = "watermark regression suppressed"
                     result = CellResult(
                         instrument.instrument_id,
                         instrument.display_symbol,
@@ -691,10 +707,10 @@ class IngestionOrchestrator:
                         end,
                         len(mvp_rows) if quality.status != "fail" else 0,
                         tuple(issue.status for issue in quality.issues),
-                        None if quality.status != "fail" else "quality gate failed",
+                        cell_error,
                     )
                     cells.append(result)
-                    if quality.status == "fail":
+                    if cell_error is not None:
                         blocked_cells.append(result.to_dict())
                 except EntitlementBlocked as exc:
                     latency_ms = elapsed_ms(fetch_started_at)
@@ -876,6 +892,7 @@ class IngestionOrchestrator:
                 "quality_receipts": len(qualities),
                 "transform_receipts": len(transforms),
                 "watermarks": len(watermarks),
+                "watermarks_skipped": watermark_regressions,
             },
             quality=quality_counts,
             blocked_cells=tuple(blocked_cells),
