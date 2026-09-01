@@ -118,7 +118,7 @@ def _run_times(store: KlineStore, start: datetime, end: datetime) -> list[dict[s
             continue
         if start <= parsed <= end:
             result.append(_safe_run(row))
-    result.sort(key=lambda row: _parse_time(row["started_at"]))
+    result.sort(key=lambda row: _parse_time(row["started_at"]), reverse=True)
     return result
 
 
@@ -140,7 +140,11 @@ def _terminal_gate(
 def _silence_gate(
     runs: Sequence[Mapping[str, Any]], *, start: datetime, end: datetime
 ) -> dict[str, Any]:
-    times = [_parse_time(row["started_at"]) for row in runs if row.get("started_at")]
+    times = sorted(
+        _parse_time(row.get("completed_at") or row["started_at"])
+        for row in runs
+        if row.get("completed_at") or row.get("started_at")
+    )
     gaps = [(later - earlier).total_seconds() / 3600 for earlier, later in zip(times, times[1:])]
     if times:
         gaps.extend(

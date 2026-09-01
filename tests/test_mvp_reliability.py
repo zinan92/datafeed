@@ -9,6 +9,8 @@ from kline.mvp_manifest import load_manifest
 from kline.store import KlineStore
 from ops.mvp_reliability import (
     DEMO_INSTRUMENT_IDS,
+    _silence_gate,
+    _run_times,
     audit_reliability,
     demo_manifest,
     run_demo_once,
@@ -58,3 +60,39 @@ def test_audit_stays_blocked_before_seven_days(tmp_path: Path) -> None:
     assert report["status"] == "blocked"
     assert "terminal_receipt" in report["gates"]
     assert report["gates"]["seven_calendar_days"]["status"] == "blocked"
+
+
+def test_silence_gate_uses_receipt_completion_time() -> None:
+    gate = _silence_gate(
+        [
+            {
+                "started_at": "2026-09-01T00:00:00+00:00",
+                "completed_at": "2026-09-01T00:01:00+00:00",
+            },
+            {
+                "started_at": "2026-09-01T04:00:00+00:00",
+                "completed_at": "2026-09-01T13:01:00+00:00",
+            },
+        ],
+        start=datetime(2026, 9, 1, 0, tzinfo=timezone.utc),
+        end=datetime(2026, 9, 1, 14, tzinfo=timezone.utc),
+    )
+    assert gate["status"] == "failed"
+    assert gate["max_silent_hours"] > 8
+
+
+def test_run_times_are_newest_first_for_the_timeline() -> None:
+    class FakeStore:
+        def latest_mvp_runs(self, *, limit: int):
+            del limit
+            return [
+                {"run_id": "old", "started_at": "2026-09-01T01:00:00+00:00"},
+                {"run_id": "new", "started_at": "2026-09-01T05:00:00+00:00"},
+            ]
+
+    rows = _run_times(
+        FakeStore(),
+        datetime(2026, 9, 1, 0, tzinfo=timezone.utc),
+        datetime(2026, 9, 1, 6, tzinfo=timezone.utc),
+    )
+    assert [row["run_id"] for row in rows] == ["new", "old"]
