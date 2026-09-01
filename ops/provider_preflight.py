@@ -509,8 +509,8 @@ def classify_status(
         return ClassifiedCell(
             target,
             timeframe,
-            "unavailable",
-            "no_closed_bars",
+            "blocked" if is_derived else "unavailable",
+            "no_complete_derived_bars" if is_derived else "no_closed_bars",
             normalized,
             report,
             is_derived,
