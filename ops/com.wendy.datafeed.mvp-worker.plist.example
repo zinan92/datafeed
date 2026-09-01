@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.wendy.datafeed.mvp-worker</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/python3</string>
+        <string>-m</string>
+        <string>ops.mvp_reliability</string>
+        <string>--manifest</string>
+        <string>/Users/wendy/datafeed-runtime/configs/mvp_manifest.json</string>
+        <string>--db</string>
+        <string>/Users/wendy/datafeed-runtime/data/kline.db</string>
+        <string>--lock</string>
+        <string>/Users/wendy/datafeed-runtime/data/mvp-worker.lock</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/wendy/datafeed-runtime</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONPATH</key>
+        <string>/Users/wendy/datafeed-runtime/src</string>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+    <key>StandardOutPath</key>
+    <string>/Users/wendy/Library/Logs/datafeed/mvp-worker.stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/wendy/Library/Logs/datafeed/mvp-worker.stderr.log</string>
+</dict>
+</plist>

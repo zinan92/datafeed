@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -14,6 +14,10 @@ from kline.store import KlineStore
 
 
 MANIFEST_PATH = Path(__file__).parents[1] / "configs" / "mvp_manifest.json"
+
+
+def test_ingestion_watermark_overlap_supports_one_hour() -> None:
+    assert IngestionOrchestrator._interval("1h") == timedelta(hours=1)
 
 
 class FakeCryptoAdapter:
