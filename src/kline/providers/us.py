@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import date, datetime, timedelta, timezone
 import math
@@ -67,10 +68,7 @@ def _invalid_indices(frame: Any) -> list[Any]:
     invalid: list[Any] = []
     for idx, row in frame.iterrows():
         try:
-            values = [
-                float(row[column])
-                for column in ("Open", "High", "Low", "Close")
-            ]
+            values = [float(row[column]) for column in ("Open", "High", "Low", "Close")]
             volume = float(row.get("Volume", 0))
             if not all(math.isfinite(value) for value in (*values, volume)):
                 invalid.append(idx)
@@ -240,7 +238,9 @@ class USStockProvider:
                 period = _DEFAULT_PERIOD.get(timeframe, "2y")
                 kwargs["period"] = period
                 request_params["period"] = period
-            df = stock.history(**kwargs)
+            # yfinance performs synchronous network I/O. Run it off the event
+            # loop so the orchestrator's cell timeout can cancel a stall.
+            df = await asyncio.to_thread(stock.history, **kwargs)
         except Exception as e:
             self.last_raw_response["error"] = str(e)
             raise ProviderError(
@@ -265,11 +265,7 @@ class USStockProvider:
         )
         raw_bad_indices = _invalid_indices(df)
         if timeframe == Timeframe.DAY and cutoff is not None:
-            raw_dates = [
-                _index_date(idx)
-                for idx in df.index
-                if _index_date(idx) <= cutoff
-            ]
+            raw_dates = [_index_date(idx) for idx in df.index if _index_date(idx) <= cutoff]
             # A missing latest session can be represented by a dropped row
             # rather than a NaN row (notably for VIX). Only retry when the
             # requested cutoff is a weekday and the raw data stops earlier.
@@ -297,9 +293,7 @@ class USStockProvider:
             allowed_indices = set(df.index)
             target_index = None
             if timeframe == Timeframe.DAY and cutoff is not None:
-                candidates = [
-                    idx for idx in repaired_df.index if _index_date(idx) <= cutoff
-                ]
+                candidates = [idx for idx in repaired_df.index if _index_date(idx) <= cutoff]
                 if candidates:
                     target_index = max(candidates, key=_index_date)
                     allowed_indices.add(target_index)
@@ -308,8 +302,7 @@ class USStockProvider:
             repaired_indices = [
                 idx
                 for idx in repaired_df.index
-                if idx in allowed_indices
-                and (idx in replace_indices or idx == target_index)
+                if idx in allowed_indices and (idx in replace_indices or idx == target_index)
             ]
             for idx in repaired_indices:
                 if idx in df.index:
@@ -365,9 +358,7 @@ class USStockProvider:
         if timeframe == Timeframe.DAY:
             assert cutoff is not None
             candles = [
-                candle
-                for candle in candles
-                if date.fromisoformat(candle.timestamp[:10]) <= cutoff
+                candle for candle in candles if date.fromisoformat(candle.timestamp[:10]) <= cutoff
             ]
             returned_timestamps = {candle.timestamp[:10] for candle in candles}
             repaired_timestamps = [
@@ -549,9 +540,7 @@ def _aggregate_fixed_4h(
         ]
         expected_stamps = [bucket + timedelta(hours=offset) for offset in range(4)]
         complete = (
-            bucket + timedelta(hours=4) <= now
-            and len(rows) == 4
-            and stamps == expected_stamps
+            bucket + timedelta(hours=4) <= now and len(rows) == 4 and stamps == expected_stamps
         )
         if not complete:
             dropped += 1

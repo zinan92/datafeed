@@ -1,4 +1,6 @@
+import asyncio
 from datetime import date, datetime, timedelta, timezone
+import time
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -87,6 +89,21 @@ async def test_yahoo_1h_is_aggregated_to_complete_4h_and_metadata_is_typed(monke
     assert transform.aggregation["rule"] == "fixed_4h"
     assert transform.aggregation["anchor_hour"] == 13
     assert transform.aggregation["anchor_minute"] == 30
+
+
+@pytest.mark.asyncio
+async def test_yahoo_sync_history_does_not_block_cell_timeout(monkeypatch):
+    class HangingTicker:
+        def history(self, **_kwargs):
+            time.sleep(0.2)
+            return _daily_frame([("2026-08-28", 100, 102, 99, 101)])
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: HangingTicker())
+    provider = USStockProvider()
+    started = time.perf_counter()
+    with pytest.raises(asyncio.TimeoutError):
+        await asyncio.wait_for(provider.fetch("AAPL", Timeframe.DAY), timeout=0.02)
+    assert time.perf_counter() - started < 0.1
 
 
 @pytest.mark.asyncio
