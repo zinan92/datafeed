@@ -75,10 +75,15 @@ def _seeded_keys(store: KlineStore) -> set[tuple[str, str, str, str, str]]:
     }
 
 
-def remaining_stock_ids(manifest: MvpManifest, store: KlineStore) -> dict[str, tuple[str, ...]]:
+def remaining_stock_ids(
+    manifest: MvpManifest,
+    store: KlineStore,
+    required_timeframes: Sequence[str] | None = None,
+) -> dict[str, tuple[str, ...]]:
     """Select stock identities missing at least one required closed-bar series."""
 
     seeded = _seeded_keys(store)
+    timeframes = tuple(required_timeframes or ("15m", "1h", "4h", "1d", "1w"))
     result: dict[str, tuple[str, ...]] = {}
     for universe, ids in stock_instrument_ids(manifest).items():
         remaining: list[str] = []
@@ -95,7 +100,7 @@ def remaining_stock_ids(manifest: MvpManifest, store: KlineStore) -> dict[str, t
                     manifest.version,
                 )
                 in seeded
-                for timeframe in item.required_timeframes
+                for timeframe in timeframes
             )
             if not complete:
                 remaining.append(instrument_id)
@@ -271,17 +276,26 @@ async def run_stock_seed_once(
     database, lock_file = validate_seed_target(db_path, lock_path)
     init(Settings(db_path=str(database), load_entrypoint_adapters=False))
     store = KlineStore(str(database))
-    remaining = (
-        stock_instrument_ids(manifest) if include_seeded else remaining_stock_ids(manifest, store)
-    )
-    selected = {universe: tuple(ids) for universe, ids in remaining.items()}
-    selected_total = sum(len(ids) for ids in selected.values())
     orchestrator = IngestionOrchestrator(store)
     reports: list[dict[str, Any]] = []
+    selected_initial = (
+        stock_instrument_ids(manifest) if include_seeded else remaining_stock_ids(manifest, store)
+    )
+    selected_by_phase: dict[str, dict[str, int]] = {}
     for phase_timeframes in phase_map[phase]:
         phase_name = "coarse" if phase_timeframes == COARSE_TIMEFRAMES else "intraday"
+        phase_selected = (
+            stock_instrument_ids(manifest)
+            if include_seeded
+            else remaining_stock_ids(manifest, store, required_timeframes=phase_timeframes)
+        )
+        selected_by_phase[phase_name] = {
+            universe: len(ids) for universe, ids in phase_selected.items()
+        }
         for universe in STOCK_UNIVERSES:
-            for batch_index, batch in enumerate(_batches(selected[universe], batch_size), start=1):
+            for batch_index, batch in enumerate(
+                _batches(phase_selected[universe], batch_size), start=1
+            ):
                 run_now = datetime.now(timezone.utc)
                 run_id = (
                     f"mvp-stocks-{run_now.astimezone(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
@@ -341,8 +355,9 @@ async def run_stock_seed_once(
         else "partial",
         "manifest_version": manifest.version,
         "manifest_hash": manifest_digest(manifest),
-        "selected": {universe: len(ids) for universe, ids in selected.items()},
-        "selected_total": selected_total,
+        "selected_initial": {universe: len(ids) for universe, ids in selected_initial.items()},
+        "selected_by_phase": selected_by_phase,
+        "selected_total": sum(sum(counts.values()) for counts in selected_by_phase.values()),
         "remaining_after": {universe: len(ids) for universe, ids in final_remaining.items()},
         "batch_size": batch_size,
         "request_interval_seconds": request_interval_seconds,
