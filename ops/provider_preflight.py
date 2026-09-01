@@ -1157,6 +1157,7 @@ def run_preflight(
                     output_timeframe,
                     code="missing_input",
                     message=f"{output_timeframe} requires closed {input_timeframe} input",
+                    status="blocked",
                 )
                 cells.append(cell.as_dict(observed_at=_now_iso(observed_at)))
                 continue
@@ -1273,12 +1274,16 @@ def _decision_by_asset_class(cells: Sequence[Mapping[str, Any]]) -> dict[str, di
         grouped.setdefault(str(cell["asset_class"]), []).append(str(cell["status"]))
     decisions: dict[str, dict[str, Any]] = {}
     for asset_class, statuses in sorted(grouped.items()):
-        if "ready" in statuses or "partial" in statuses:
+        unique_statuses = set(statuses)
+        if unique_statuses == {"ready"}:
+            status = "ready"
+            next_step = "run the bounded 3+3 pilot"
+        elif "ready" in unique_statuses or "partial" in unique_statuses:
             status = "partial"
             next_step = (
                 "keep as pilot candidate; obtain persistence/derived-use evidence before promotion"
             )
-        elif "blocked" in statuses:
+        elif "blocked" in unique_statuses:
             status = "blocked"
             next_step = "resolve entitlement or parser blocker before adapter implementation"
         else:

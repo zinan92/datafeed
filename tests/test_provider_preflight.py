@@ -290,3 +290,90 @@ def test_run_preflight_returns_redacted_receipt_with_derived_cells() -> None:
     assert derived["4h"]["is_derived"] is True
     assert derived["1w"]["is_derived"] is True
     assert all(item["duplicate_keys"] == 0 for item in receipt["idempotency"])
+
+
+def test_missing_derived_input_is_blocked_not_unavailable() -> None:
+    target = PreflightTarget(
+        asset_class="us_stock",
+        display_symbol="AAPL",
+        provider_symbol="AAPL",
+        source_id="yahoo_chart",
+        source_kind="yahoo_chart",
+        calendar_id="us_equities",
+        timezone="America/New_York",
+        volume_semantics="traded",
+        requested_timeframes=("15m", "4h"),
+    )
+
+    def empty_fetcher(url: str, *, params: dict[str, str], timeout: float) -> HttpObservation:
+        del url, params, timeout
+        payload = {
+            "chart": {"result": [{"meta": {}, "timestamp": [], "indicators": {"quote": [{}]}}]}
+        }
+        body = json.dumps(payload).encode("utf-8")
+        return HttpObservation(200, body, payload, 1.0)
+
+    receipt = run_preflight(
+        [target],
+        now=datetime(2026, 8, 31, 21, 0, tzinfo=timezone.utc),
+        fetcher=empty_fetcher,
+    )
+
+    derived = next(cell for cell in receipt["cells"] if cell["timeframe"] == "4h")
+    assert derived["status"] == "blocked"
+    assert derived["status_reason"] == "missing_input"
+
+
+def test_asset_class_decision_can_be_ready_when_all_cells_are_ready() -> None:
+    target = PreflightTarget(
+        asset_class="us_stock",
+        display_symbol="AAPL",
+        provider_symbol="AAPL",
+        source_id="yahoo_chart",
+        source_kind="yahoo_chart",
+        calendar_id="us_equities",
+        timezone="America/New_York",
+        volume_semantics="traded",
+        requested_timeframes=("15m",),
+        policy=PolicyReceipt(
+            status="active",
+            persistence_allowed=True,
+            derived_allowed=True,
+            non_display_allowed=True,
+        ),
+    )
+    payload = {
+        "chart": {
+            "result": [
+                {
+                    "meta": {"exchangeTimezoneName": "America/New_York"},
+                    "timestamp": [1788183000],
+                    "indicators": {
+                        "quote": [
+                            {
+                                "open": [100],
+                                "high": [101],
+                                "low": [99],
+                                "close": [100.5],
+                                "volume": [10],
+                            }
+                        ]
+                    },
+                }
+            ]
+        }
+    }
+
+    def ready_fetcher(url: str, *, params: dict[str, str], timeout: float) -> HttpObservation:
+        del url, params, timeout
+        body = json.dumps(payload).encode("utf-8")
+        return HttpObservation(200, body, payload, 1.0)
+
+    receipt = run_preflight(
+        [target],
+        now=datetime(2026, 8, 31, 21, 0, tzinfo=timezone.utc),
+        fetcher=ready_fetcher,
+    )
+
+    assert receipt["decision_by_asset_class"]["us_stock"]["status"] == "ready"
+    assert receipt["decision_by_asset_class"]["us_stock"]["canonical_promotion_allowed"] is True
