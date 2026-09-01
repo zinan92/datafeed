@@ -251,11 +251,24 @@ async def health_ui() -> str:
     const applicable = snapshot.cells.filter(cell => cell.applicability === 'applicable');
     const blocked = applicable.filter(cell => cell.status === 'blocked').length;
     const failed = applicable.filter(cell => cell.status === 'failed').length;
-    const overallText = snapshot.status === 'failed' && blocked && !failed ? '总体状态：授权阻塞' : `总体状态：${statusText(snapshot.status)}`;
+    const unavailable = applicable.filter(cell => cell.status === 'unavailable').length;
+    const technicalReady = applicable.filter(cell => cell.technical_status === 'ready' || cell.status === 'ready').length;
+    const mixedTechnicalState = technicalReady > 0 && (blocked || failed || unavailable);
+    const overallText = mixedTechnicalState && snapshot.status === 'failed' && blocked && !failed
+      ? '总体状态：部分可用（含授权阻塞）'
+      : snapshot.status === 'failed' && blocked && !failed
+        ? '总体状态：授权阻塞'
+        : `总体状态：${statusText(snapshot.status)}`;
     document.getElementById('overall').textContent = overallText;
     document.getElementById('snapshot-meta').textContent = `数据时间 ${fmtTime(snapshot.as_of)} · 自动读取间隔 30 秒 · 请求上限 10 秒`;
     if (snapshot.status === 'failed') {
-      if (blocked && !failed) showBanner(`当前 ${blocked} 个单元格因授权阻塞，尚无可展示数据；不是采集程序崩溃`, 'error');
+      if (blocked && !failed && technicalReady) {
+        const details = [`已有 ${technicalReady} 个单元格有技术数据`, `${blocked} 个单元格因授权未核实`];
+        if (unavailable) details.push(`${unavailable} 个单元格暂无数据`);
+        showBanner(`${details.join('；')}。不是采集程序崩溃，请按资产和时间级别查看`, 'warn');
+      } else if (blocked && !failed) {
+        showBanner(`当前 ${blocked} 个单元格因授权阻塞，尚无可展示数据；不是采集程序崩溃`, 'error');
+      }
       else if (blocked) showBanner(`当前有 ${failed} 个采集失败单元格和 ${blocked} 个授权阻塞单元格，请分别查看详情`, 'error');
       else showBanner(`当前有 ${failed} 个采集失败单元格，请查看矩阵详情`, 'error');
     } else if (snapshot.status === 'partial') {

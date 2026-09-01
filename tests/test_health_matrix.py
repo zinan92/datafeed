@@ -384,6 +384,8 @@ def test_health_matrix_api_and_ui_are_chinese_and_read_only(
     assert payload["refresh"]["request_timeout_seconds"] == 10
     assert page.status_code == 200
     assert "资产 × 时间级别健康矩阵" in page.text
+    assert "部分可用（含授权阻塞）" in page.text
+    assert "有技术数据" in page.text
     assert "最近一次运行" in page.text
     assert "system notification" not in page.text.lower()
     assert "重试" not in page.text
