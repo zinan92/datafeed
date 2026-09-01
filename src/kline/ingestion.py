@@ -33,6 +33,12 @@ class IngestionError(RuntimeError):
     """The run could not produce a trustworthy storage receipt."""
 
 
+# Coarse bars are the minimum useful fallback. Fetch them before potentially
+# slow/flaky intraday endpoints so a degraded run still produces daily/weekly
+# data for the dashboard.
+INGESTION_TIMEFRAMES = ("1d", "1w", "15m", "1h", "4h")
+
+
 @dataclass(frozen=True)
 class IngestionPlan:
     manifest: MvpManifest
@@ -364,7 +370,7 @@ class IngestionOrchestrator:
         for instrument in manifest.instruments:
             if selected_ids is not None and instrument.instrument_id not in selected_ids:
                 continue
-            for timeframe in ("15m", "1h", "4h", "1d", "1w"):
+            for timeframe in INGESTION_TIMEFRAMES:
                 if timeframe in instrument.not_applicable_timeframes:
                     cells.append(
                         CellResult(
@@ -494,7 +500,11 @@ class IngestionOrchestrator:
                             request_start=request_start,
                             request_end=end,
                             response_hash=response_hash,
-                            policy={"fallback": "none", "overlap_bars": plan.overlap_bars},
+                            policy={
+                                "fallback": "none",
+                                "overlap_bars": plan.overlap_bars,
+                                "source_identity": dict(fetch_receipt.source_identity),
+                            },
                             candle_count=len(mvp_rows),
                             latest_timestamp=latest,
                             served_from="upstream",

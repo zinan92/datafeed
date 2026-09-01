@@ -8,13 +8,14 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from kline.app import create_app
+from kline.free_source_profile import apply_free_source_profile
 from kline.health_matrix import (
     MVP_DEMO_INSTRUMENT_IDS,
     _entitlement_block_reason,
     _freshness_stale,
     build_mvp_health_matrix,
 )
-from kline.mvp_manifest import load_manifest
+from kline.mvp_manifest import load_manifest, manifest_digest
 from kline.storage import (
     CandleSeriesKey,
     EntitlementReceiptWrite,
@@ -154,6 +155,7 @@ def test_matrix_promotes_ready_cell_from_real_receipts(tmp_path: Path) -> None:
     assert btc_1h["watermark"]["run_id"] == run_id
     assert btc_1h["entitlement"]["status"] == "active"
     assert snapshot["coverage"]["1h"]["ready"] == 1
+    assert snapshot["coverage"]["1h"]["technical_ready"] == 1
     assert btc_1h["run_id"] == run_id
     serialized = json.dumps(btc_1h, ensure_ascii=False)
     assert "supersecret" not in serialized
@@ -256,6 +258,77 @@ def test_derived_entitlement_does_not_block_native_one_hour_cells() -> None:
     assert _entitlement_block_reason(btc, "1h", receipt, derived=True) == "derived_not_allowed"
 
 
+def test_health_matrix_joins_receipts_to_a_qfq_free_profile_cell(tmp_path: Path) -> None:
+    manifest = apply_free_source_profile(load_manifest(MANIFEST_PATH))
+    store = KlineStore(str(tmp_path / "matrix-qfq.db"))
+    key = CandleSeriesKey(
+        instrument_id="CN.A.600519",
+        display_symbol="600519",
+        provider_symbol="600519.SH",
+        source_id="tencent_stock_free",
+        asset_class="a_share",
+        timeframe="15m",
+        adjustment_basis="qfq",
+        manifest_version=manifest.version,
+    )
+    run_id = "qfq-run-1"
+    candle = MvpCandle(
+        key=key,
+        timestamp="2026-09-01T06:45:00+00:00",
+        open=100,
+        high=102,
+        low=99,
+        close=101,
+        volume=10,
+    )
+    store.commit_mvp_run(
+        MvpRunWrite(
+            run_id=run_id,
+            manifest_version=manifest.version,
+            manifest_hash=manifest_digest(manifest),
+            started_at="2026-09-01T07:00:00+00:00",
+            window_start=None,
+            window_end="2026-09-01T07:00:00+00:00",
+            policy={},
+            candles=(candle,),
+            source_observations=(
+                SourceObservationWrite(
+                    run_id=run_id,
+                    key=key,
+                    success=True,
+                    request_start=None,
+                    request_end=None,
+                    response_hash=None,
+                    candle_count=1,
+                    latest_timestamp=candle.timestamp,
+                    policy={"source_identity": {"selected_source": "tencent"}},
+                ),
+            ),
+            quality_receipts=(QualityReceiptWrite(run_id=run_id, key=key, status="pass"),),
+            watermarks=(
+                WatermarkWrite(
+                    key=key,
+                    last_closed_timestamp=candle.timestamp,
+                    cursor=None,
+                    run_id=run_id,
+                ),
+            ),
+        )
+    )
+    snapshot = build_mvp_health_matrix(
+        manifest, store, scope="demo_3x3", now=datetime(2026, 9, 1, 8, tzinfo=timezone.utc)
+    )
+    cell = next(
+        item
+        for item in snapshot["cells"]
+        if item["display_symbol"] == "600519" and item["timeframe"] == "15m"
+    )
+    assert cell["status"] == "partial"
+    assert cell["technical_status"] == "ready"
+    assert cell["row_count"] == 1
+    assert cell["policy"]["source_identity"]["selected_source"] == "tencent"
+
+
 def test_run_timeline_does_not_fallback_to_older_than_24_hours(tmp_path: Path) -> None:
     manifest = load_manifest(MANIFEST_PATH)
     store = KlineStore(str(tmp_path / "matrix-runs.db"))
@@ -299,6 +372,14 @@ def test_health_matrix_api_and_ui_are_chinese_and_read_only(
         "instrument_count": 216,
         "universes": {"a_share": 100, "us_stock": 100, "cross_market": 16},
     }
+    assert (
+        next(cell for cell in payload["cells"] if cell["display_symbol"] == "AAPL")["source_id"]
+        == "yahoo_finance_free"
+    )
+    assert (
+        next(cell for cell in payload["cells"] if cell["display_symbol"] == "600519")["source_id"]
+        == "tencent_stock_free"
+    )
     assert payload["refresh"]["poll_interval_seconds"] == 30
     assert payload["refresh"]["request_timeout_seconds"] == 10
     assert page.status_code == 200

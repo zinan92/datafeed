@@ -30,6 +30,7 @@ MVP_DEMO_INSTRUMENT_IDS = (
     "US.EQ.NVDA",
     "US.EQ.TSLA",
 )
+FREE_SOURCE_IDS = frozenset({"tencent_stock_free", "yahoo_finance_free"})
 
 
 def _iso(value: datetime) -> str:
@@ -53,7 +54,12 @@ def _parse_timestamp(value: str | None) -> datetime | None:
 def _status_counts(cells: Sequence[Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
     coverage: dict[str, dict[str, Any]] = {}
     for timeframe in MATRIX_TIMEFRAMES:
-        states = {"applicable": 0, "not_applicable": 0, **{status: 0 for status in MATRIX_STATUSES}}
+        states = {
+            "applicable": 0,
+            "not_applicable": 0,
+            "technical_ready": 0,
+            **{status: 0 for status in MATRIX_STATUSES},
+        }
         for cell in cells:
             if cell["timeframe"] != timeframe:
                 continue
@@ -62,6 +68,8 @@ def _status_counts(cells: Sequence[Mapping[str, Any]]) -> dict[str, dict[str, An
             else:
                 states["applicable"] += 1
                 states[cell["status"]] += 1
+                if cell.get("technical_status") == "ready":
+                    states["technical_ready"] += 1
         states["ratio"] = (
             round(states["ready"] / states["applicable"], 4) if states["applicable"] else None
         )
@@ -286,7 +294,7 @@ def _entitlement_block_reason(
     if instrument.source_status == "blocked_for_entitlement":
         return "entitlement_blocked"
     if receipt is None:
-        return "entitlement_unverified"
+        return None if instrument.source_id in FREE_SOURCE_IDS else "entitlement_unverified"
     status = str(receipt.get("status") or "unverified").casefold()
     if status in {"blocked", "missing", "unverified"}:
         return f"entitlement_{status}"
@@ -346,6 +354,7 @@ def _cell(
             "last_success_at": None,
             "run_id": None,
             "policy": None,
+            "technical_status": None,
             "coverage": None,
             "quality": None,
             "watermark": None,
@@ -384,6 +393,14 @@ def _cell(
         or (watermark or {}).get("run_id")
         or (transform or {}).get("run_id")
     )
+    technical_status = (
+        "ready"
+        if latest is not None
+        and quality is not None
+        and quality.get("status") in {"pass", "ready"}
+        and watermark is not None
+        else status
+    )
     return {
         "instrument_id": instrument.instrument_id,
         "display_symbol": instrument.display_symbol,
@@ -405,6 +422,7 @@ def _cell(
         "last_success_at": last_success,
         "run_id": run_id,
         "policy": policy,
+        "technical_status": technical_status,
         "coverage": {
             "expected_bars": None,
             "stored_bars": int(latest.get("row_count", 0)) if latest else 0,
@@ -505,19 +523,33 @@ def build_mvp_health_matrix(
         else []
     )
     latest_map = {_key(row): row for row in latest_rows}
-    observation_map = {_key(row): row for row in observations}
-    quality_map = {_key(row): row for row in qualities}
+    adjustment_by_instrument = {
+        instrument.instrument_id: instrument.adjustment_basis for instrument in manifest.instruments
+    }
+
+    def receipt_key(row: Mapping[str, Any]) -> tuple[str, str, str, str, str]:
+        instrument_id = str(row.get("instrument_id") or "")
+        return _key(
+            {
+                **row,
+                "adjustment_basis": row.get("adjustment_basis")
+                or adjustment_by_instrument.get(instrument_id, "raw_unadjusted"),
+            }
+        )
+
+    observation_map = {receipt_key(row): row for row in observations}
+    quality_map = {receipt_key(row): row for row in qualities}
     transform_map = {
         (
             str(row.get("source_id") or ""),
             str(row.get("instrument_id") or ""),
             str(row.get("output_timeframe") or ""),
-            "raw_unadjusted",
+            adjustment_by_instrument.get(str(row.get("instrument_id") or ""), "raw_unadjusted"),
             str(row.get("manifest_version") or ""),
         ): row
         for row in transforms
     }
-    watermark_map = {_key(row): row for row in watermarks}
+    watermark_map = {receipt_key(row): row for row in watermarks}
     entitlement_map = {
         str(row.get("source_id") or ""): row for row in entitlements if row.get("source_id")
     }
@@ -602,6 +634,12 @@ def build_mvp_health_matrix(
                 status, reason = "partial", "watermark_missing"
             else:
                 status, reason = "ready", "closed_bar_quality_passed"
+            if (
+                status == "ready"
+                and entitlement is None
+                and instrument.source_id in FREE_SOURCE_IDS
+            ):
+                status, reason = "partial", "entitlement_unverified"
             cells.append(
                 _cell(
                     instrument,

@@ -25,7 +25,7 @@ fail timeframe not supported → supported list
 fail TuShare-only A-share no token → setup instructions; Phase 1 indices need no token
 ```
 
-Built-in sources: `tushare_pro`, `tencent_kline`, `sina_index`,
+Built-in sources: `tushare_pro`, `tencent_stock_free`, `yahoo_finance_free`, `tencent_kline`, `sina_index`,
 `treasury_official_csv`, `treasury_official_csv_derived`, `yahoo_finance`,
 `yahoo_finance_index`, `yahoo_finance_etf`, `yahoo_finance_futures`,
 `binance_spot_public`, `binance_usdm_futures`, `binance_usdm_futures_research`,
@@ -51,8 +51,9 @@ MarketDataPort
         │
         ├─ Binance USD-M Futures adapter
         ├─ Binance Spot adapter
-        ├─ Yahoo adapter
+        ├─ Yahoo adapter + free Sina daily fallback
         ├─ TuShare adapter
+        ├─ Free Tencent A-share adapter + Tonghuashun fallback
         ├─ Tencent A-share index adapter
         ├─ Sina A-share index fallback adapter
         ├─ Official U.S. Treasury yield adapter
@@ -133,6 +134,39 @@ keeps `fallback_policy=none`.
   incomplete bucket count.
 - Daily → weekly responses retain `raw_timeframe=1d`, completed-week rule,
   bucket timezone and input source identity.
+
+### No-membership personal MVP profile
+
+The local MVP does not require a current TuShare subscription or a paid U.S.
+market-data plan. Its runtime free profile keeps canonical instrument IDs but
+routes A-share stocks through `tencent_stock_free` (Tonghuashun is a bounded
+fallback for 1h/daily) and U.S. stocks through `yahoo_finance_free` (Sina is a
+daily fallback). Yahoo/Tencent/Sina responses are recorded as
+`entitlement_unverified` and therefore remain `partial` until the operator
+documents the personal-use terms; HTTP 200 is never promoted to commercial or
+`verified` status. The Tencent path is requested as qfq; a Tonghuashun fallback
+also records `adjustment_basis` provenance as unverified rather than silently
+claiming that its raw line response is adjusted. Baidu and AKShare remain
+probe/fallback candidates because their current network paths are unstable in
+this environment.
+
+The reliability worker uses the same profile:
+
+```bash
+PYTHONPATH=src python3 -m ops.mvp_reliability --once \
+  --manifest configs/mvp_manifest.json --db data/kline.db --interval 14400
+```
+
+The command writes only source-bound OHLCV and receipts; it does not emit
+MACD/RSI columns, synthesize missing candles, switch to a paid source, or
+expose data publicly.
+
+The worker requests daily and weekly first, then intraday. If an intraday
+endpoint is unavailable, it degrades per cell instead of aborting the asset:
+the 15m/1h/4h cells remain `unavailable` or `failed`, while a successful daily
+request is still persisted and used to produce the completed weekly bar. The
+run is explicitly `partial`, so missing intraday coverage cannot be mistaken
+for a healthy feed.
 
 ## Canonical local runtime
 

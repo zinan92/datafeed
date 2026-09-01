@@ -35,6 +35,7 @@ async def test_run_demo_once_writes_a_terminal_receipt_without_network_calls(
         db_path=db_path,
         manifest_path=MANIFEST_PATH,
         now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+        adapter_resolver=lambda _instrument: None,
     )
     assert result["status"] == "partial"
     assert result["run_id"]
