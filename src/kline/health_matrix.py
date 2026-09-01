@@ -140,6 +140,13 @@ def _redacted_value(value: Any) -> Any:
     return value
 
 
+def _safe_run(run: Mapping[str, Any]) -> dict[str, Any]:
+    payload = dict(run)
+    if payload.get("error"):
+        payload["error"] = _redacted_error(str(payload["error"]), code="run_error")
+    return payload
+
+
 def _manifest_entitlement(instrument: ManifestInstrument) -> dict[str, Any]:
     blocked = instrument.source_status == "blocked_for_entitlement"
     return {
@@ -207,7 +214,7 @@ def _cell(
         "duplicates": int(quality.get("duplicates", 0)) if quality else 0,
         "invalid_rows": int(quality.get("invalid_rows", 0)) if quality else 0,
         "blocked_cells": int(quality.get("blocked_cells", 0)) if quality else 0,
-        "details": quality.get("details", {}) if quality else {},
+        "details": _redacted_value(quality.get("details", {})) if quality else {},
     }
     if quality is None:
         quality_payload["status"] = "missing"
@@ -440,11 +447,14 @@ def build_mvp_health_matrix(
     coverage = _status_counts(cells)
     statuses = {str(cell["status"]) for cell in cells if cell["applicability"] == "applicable"}
     latest_runs = storage.latest_mvp_runs(limit=6) if hasattr(storage, "latest_mvp_runs") else []
+    latest_runs = [_safe_run(run) for run in latest_runs]
     latest_run = (
         latest_runs[0]
         if latest_runs
         else (storage.latest_mvp_run() if hasattr(storage, "latest_mvp_run") else None)
     )
+    if latest_run is not None:
+        latest_run = _safe_run(latest_run)
     storage_health = storage.mvp_storage_health() if hasattr(storage, "mvp_storage_health") else {}
     backup = storage.latest_mvp_backup() if hasattr(storage, "latest_mvp_backup") else None
     infrastructure_status = "ready" if storage_health.get("status") in {"ok", "ready"} else "failed"

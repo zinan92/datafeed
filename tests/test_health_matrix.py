@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import json
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -94,9 +95,11 @@ def test_matrix_promotes_ready_cell_from_real_receipts(tmp_path: Path) -> None:
                     request_start="2026-08-30T00:00:00+00:00",
                     request_end="2026-09-01T00:00:00+00:00",
                     response_hash="b" * 64,
+                    policy={"api_key": "supersecret", "safe": "keep"},
                     candle_count=1,
                     latest_timestamp=candle.timestamp,
                     observed_at="2026-09-01T00:00:00+00:00",
+                    error="token=abc secretvalue",
                 ),
             ),
             quality_receipts=(QualityReceiptWrite(run_id=run_id, key=key, status="pass"),),
@@ -126,6 +129,10 @@ def test_matrix_promotes_ready_cell_from_real_receipts(tmp_path: Path) -> None:
     assert btc_1h["latest_closed_timestamp"] == candle.timestamp
     assert btc_1h["watermark"]["run_id"] == run_id
     assert snapshot["coverage"]["1h"]["ready"] == 1
+    assert btc_1h["run_id"] == run_id
+    serialized = json.dumps(btc_1h, ensure_ascii=False)
+    assert "supersecret" not in serialized
+    assert "abc" not in serialized
     assert snapshot["coverage"]["1h"]["applicable"] == 1
     assert (
         snapshot["coverage"]["1h"]["ready"]
@@ -136,6 +143,41 @@ def test_matrix_promotes_ready_cell_from_real_receipts(tmp_path: Path) -> None:
         + snapshot["coverage"]["1h"]["unavailable"]
         == snapshot["coverage"]["1h"]["applicable"]
     )
+
+
+def test_not_applicable_cell_keeps_the_full_null_payload_shape(tmp_path: Path) -> None:
+    manifest = load_manifest(MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "matrix-not-applicable.db"))
+    snapshot = build_mvp_health_matrix(
+        manifest,
+        store,
+        instrument_ids=("US.ETF.UUP",),
+        now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+    )
+
+    intraday = next(cell for cell in snapshot["cells"] if cell["timeframe"] == "15m")
+    daily = next(cell for cell in snapshot["cells"] if cell["timeframe"] == "1d")
+    assert intraday["applicability"] == "not_applicable"
+    assert intraday["status"] == "not_applicable"
+    for field in (
+        "provider_symbol",
+        "source_id",
+        "source_mode",
+        "entitlement",
+        "latest_closed_timestamp",
+        "transform",
+        "last_attempt_at",
+        "last_success_at",
+        "run_id",
+        "policy",
+        "coverage",
+        "quality",
+        "watermark",
+        "error",
+    ):
+        assert intraday[field] is None
+    assert daily["applicability"] == "applicable"
+    assert daily["status"] == "unavailable"
 
 
 def test_health_matrix_api_and_ui_are_chinese_and_read_only(
