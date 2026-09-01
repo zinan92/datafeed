@@ -10,7 +10,7 @@
 - Park 2026-07-21 裁定为产品(非基础设施),上 Portfolio 板。
 - `main@f57b5dd` 已合并 MVP #44–#52、#66、#68、#69、#70、#71 runner、#77 audit 修复及 #79 状态文案修复：216 instrument manifest、独立 `mvp_*` storage/receipt/watermark schema、15m/1h/4h/1d/1w 时间级别、calendar/1h/4H/weekly quality seam、TuShare/授权 US gate、16 cross-market mapping、resumable run_once、独立 ≤4h worker/health、SSD/NAS backup/restore safeguards、只读 provider preflight receipts、中文 3+3×5 到全量 216×5 Health Matrix/API/UI、3+3 四小时可靠性 runner/audit 已就绪；A/US entitlement 和部分源覆盖仍 pending/partial，七天可靠性门槛尚未完成，manifest 不会宣称 verified，resident DB/NAS 尚未切换。
 - #66 preflight 真实证据：easy_tdx MacClient 的 3 个 A 股样本在 15m/1h/1d/1w 返回非零成交量；4h 因会话输入不完整明确 blocked。Yahoo 美股样本技术可取但持久化/派生/展示权利未核实，仍为 partial。证据见 `docs/research/provider-preflight-2026-09-01.*` 和 `provider-preflight-easy-tdx-2026-09-01.*`。
-- 当前工作 frontier：#71 七天可靠性与 worker/备份运行证据（已启动，尚未通过；承接 #70 全量矩阵）；随后回到 #54 真实 30-day database acceptance。#70 的全量运行证据见 `docs/verification/health-matrix-full-runtime-2026-09-01.md`，#71 启动证据见 `docs/verification/health-matrix-reliability-2026-09-01.md`。
+- 当前工作 frontier：#71 七天可靠性与 worker/备份运行证据（已启动，尚未通过；承接 #70 全量矩阵）。全红问题的根因和修复见 `docs/verification/health-matrix-debug-2026-09-01.md`；随后回到 #54 真实 30-day database acceptance。#70 的全量运行证据见 `docs/verification/health-matrix-full-runtime-2026-09-01.md`，#71 启动证据见 `docs/verification/health-matrix-reliability-2026-09-01.md`。
 - 观察服务：`http://127.0.0.1:18171/health-ui` 由 `com.wendy.datafeed.mvp-api` KeepAlive 托管；`com.wendy.datafeed.mvp-worker` 每 4 小时写入 `/Users/wendy/datafeed-runtime-issue-71/data/kline.db`。这是隔离的可靠性观察库，不替换现有 8100 服务、resident DB、SSD 或 NAS。
 
 ## 下一步
