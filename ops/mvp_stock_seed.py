@@ -35,6 +35,7 @@ DEFAULT_BATCH_SIZE = 10
 DEFAULT_REQUEST_INTERVAL_SECONDS = 0.25
 DEFAULT_MAX_RETRIES = 2
 DEFAULT_RETRY_BACKOFF_SECONDS = 1.0
+DEFAULT_PROVIDER_TIMEOUT_SECONDS = 45.0
 SAFE_OBSERVER_DB = Path("/Users/wendy/datafeed-runtime-issue-71/data/kline.db")
 _RATE_MARKERS = ("429", "rate limit", "too many", "throttl", "quota")
 _FORBIDDEN_MARKERS = ("403", "forbidden", "blocked")
@@ -251,6 +252,7 @@ async def run_stock_seed_once(
     request_interval_seconds: float = DEFAULT_REQUEST_INTERVAL_SECONDS,
     max_retries: int = DEFAULT_MAX_RETRIES,
     retry_backoff_seconds: float = DEFAULT_RETRY_BACKOFF_SECONDS,
+    provider_timeout_seconds: float = DEFAULT_PROVIDER_TIMEOUT_SECONDS,
     phase: str = "all",
     include_seeded: bool = False,
     lock_path: str | Path | None = None,
@@ -265,6 +267,8 @@ async def run_stock_seed_once(
         raise ValueError("max_retries must be non-negative")
     if retry_backoff_seconds < 0:
         raise ValueError("retry_backoff_seconds must be non-negative")
+    if provider_timeout_seconds <= 0:
+        raise ValueError("provider_timeout_seconds must be positive")
     phase_map = {
         "coarse": (COARSE_TIMEFRAMES,),
         "intraday": (INTRADAY_TIMEFRAMES,),
@@ -313,6 +317,7 @@ async def run_stock_seed_once(
                             timeframes=phase_timeframes,
                             max_retries=max_retries,
                             retry_backoff_seconds=retry_backoff_seconds,
+                            provider_timeout_seconds=provider_timeout_seconds,
                             request_interval_seconds=request_interval_seconds,
                             policy={
                                 "runner": "mvp_stock_seed",
@@ -322,6 +327,7 @@ async def run_stock_seed_once(
                                 "request_interval_seconds": request_interval_seconds,
                                 "max_retries": max_retries,
                                 "retry_backoff_seconds": retry_backoff_seconds,
+                                "provider_timeout_seconds": provider_timeout_seconds,
                             },
                         )
                     )
@@ -365,6 +371,7 @@ async def run_stock_seed_once(
         "request_interval_seconds": request_interval_seconds,
         "max_retries": max_retries,
         "retry_backoff_seconds": retry_backoff_seconds,
+        "provider_timeout_seconds": provider_timeout_seconds,
         "phase": phase,
         "batch_count": len(reports),
         "batch_status_counts": dict(status_counts),
@@ -388,6 +395,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--request-interval", type=float, default=DEFAULT_REQUEST_INTERVAL_SECONDS)
     parser.add_argument("--max-retries", type=int, default=DEFAULT_MAX_RETRIES)
     parser.add_argument("--retry-backoff", type=float, default=DEFAULT_RETRY_BACKOFF_SECONDS)
+    parser.add_argument("--provider-timeout", type=float, default=DEFAULT_PROVIDER_TIMEOUT_SECONDS)
     parser.add_argument("--phase", choices=("coarse", "intraday", "all"), default="all")
     parser.add_argument("--include-seeded", action="store_true")
     parser.add_argument("--receipt", default=None)
@@ -412,6 +420,7 @@ async def _run_forever(args: argparse.Namespace) -> None:
             request_interval_seconds=args.request_interval,
             max_retries=args.max_retries,
             retry_backoff_seconds=args.retry_backoff,
+            provider_timeout_seconds=args.provider_timeout,
             phase=args.phase,
             include_seeded=args.include_seeded,
             lock_path=args.lock,
@@ -452,6 +461,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             request_interval_seconds=args.request_interval,
             max_retries=args.max_retries,
             retry_backoff_seconds=args.retry_backoff,
+            provider_timeout_seconds=args.provider_timeout,
             phase=args.phase,
             include_seeded=args.include_seeded,
             lock_path=args.lock,
