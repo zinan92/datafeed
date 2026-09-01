@@ -111,7 +111,7 @@ async def test_adapter_exposes_failed_provider_attempts() -> None:
 
 
 @pytest.mark.asyncio
-async def test_free_us_provider_uses_yahoo_and_declares_source(
+async def test_free_us_provider_uses_yahoo_for_intraday_and_declares_source(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     async def yahoo_success(
@@ -128,7 +128,7 @@ async def test_free_us_provider_uses_yahoo_and_declares_source(
 
     monkeypatch.setattr(USStockProvider, "fetch", yahoo_success)
     provider = USFreeProvider()
-    candles = await provider.fetch("AAPL", Timeframe.DAY, limit=10)
+    candles = await provider.fetch("AAPL", Timeframe.HOUR_1, limit=10)
     assert len(candles) == 1
     assert provider.source_identity["source_id"] == "yahoo_finance_free"
     assert provider.source_identity["selected_source"] == "yahoo"
@@ -144,20 +144,7 @@ async def test_free_us_provider_uses_yahoo_and_declares_source(
 
 
 @pytest.mark.asyncio
-async def test_free_us_provider_falls_back_to_sina_daily(monkeypatch: pytest.MonkeyPatch) -> None:
-    async def unavailable(
-        _self,
-        _ticker: str,
-        _timeframe: Timeframe,
-        *,
-        start: str | None,
-        end: str | None,
-        limit: int,
-    ) -> list[Candle]:
-        del start, end, limit
-        raise ProviderError("Yahoo unavailable")
-
-    monkeypatch.setattr(USStockProvider, "fetch", unavailable)
+async def test_free_us_provider_prefers_sina_for_daily() -> None:
     payload = '[{"d":"2026-09-01","o":"100","h":"102","l":"99","c":"101","v":"10","a":"1000"}]'
     provider = USFreeProvider(
         transport=httpx.MockTransport(
@@ -168,8 +155,53 @@ async def test_free_us_provider_falls_back_to_sina_daily(monkeypatch: pytest.Mon
     assert len(candles) == 1
     assert candles[0].close == 101
     assert provider.source_identity["selected_source"] == "sina"
-    assert provider.source_identity["fallback_from"] == "yahoo"
-    assert [item["source"] for item in provider.last_attempts] == ["yahoo", "sina"]
+    assert provider.source_identity["fallback_from"] is None
+    assert [item["source"] for item in provider.last_attempts] == ["sina"]
+
+
+@pytest.mark.asyncio
+async def test_free_us_provider_falls_back_to_yahoo_when_sina_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def sina_unavailable(*_args, **_kwargs) -> list[Candle]:
+        raise ProviderError("Sina unavailable")
+
+    async def yahoo_success(
+        _self,
+        _ticker: str,
+        _timeframe: Timeframe,
+        *,
+        start: str | None,
+        end: str | None,
+        limit: int,
+    ) -> list[Candle]:
+        del start, end, limit
+        return [Candle(timestamp="2026-09-01", open=100, high=102, low=99, close=101, volume=10)]
+
+    monkeypatch.setattr(USFreeProvider, "_fetch_sina_daily", sina_unavailable)
+    monkeypatch.setattr(USStockProvider, "fetch", yahoo_success)
+    provider = USFreeProvider()
+    candles = await provider.fetch("AAPL", Timeframe.DAY, limit=10)
+    assert len(candles) == 1
+    assert provider.source_identity["selected_source"] == "yahoo"
+    assert provider.source_identity["fallback_from"] == "sina"
+    assert [item["source"] for item in provider.last_attempts] == ["sina", "yahoo"]
+
+
+@pytest.mark.asyncio
+async def test_free_us_provider_weekly_provenance_uses_sina_daily(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def sina_daily(*_args, **_kwargs) -> list[Candle]:
+        return [Candle(timestamp="2026-08-28", open=100, high=102, low=99, close=101, volume=10)]
+
+    monkeypatch.setattr(USFreeProvider, "_fetch_sina_daily", sina_daily)
+    provider = USFreeProvider()
+    candles = await provider.fetch("AAPL", Timeframe.WEEK, limit=10)
+    assert candles
+    assert provider.source_identity["selected_source"] == "sina"
+    assert provider.timeframe_transform is not None
+    assert provider.timeframe_transform.timeframe_origin == "aggregated"
 
 
 def test_free_source_manifests_are_registered_for_the_right_asset_classes() -> None:
