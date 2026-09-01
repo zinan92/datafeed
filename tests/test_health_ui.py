@@ -16,4 +16,6 @@ def test_health_ui_is_browser_visible():
     assert "MAX_SNAPSHOT_MS = 900000" in response.text
     assert "AbortController" in response.text
     assert "cache:'no-store'" in response.text
+    assert "授权阻塞" in response.text
+    assert "阻塞 ${blocked}" in response.text
     assert "重试" not in response.text
