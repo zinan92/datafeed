@@ -493,7 +493,10 @@ class AShareFreeProvider:
                 error.code = (
                     "empty_response"
                     if getattr(tencent_error, "code", "") == "empty_response"
-                    and getattr(fallback_error, "code", "") == "empty_response"
+                    and (
+                        getattr(fallback_error, "code", "") == "empty_response"
+                        or "404" in str(fallback_error)
+                    )
                     else "provider_error"
                 )
                 raise error from fallback_error

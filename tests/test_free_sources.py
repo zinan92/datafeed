@@ -125,6 +125,20 @@ async def test_free_a_share_empty_response_is_terminal_and_resets_identity() -> 
 
 
 @pytest.mark.asyncio
+async def test_free_a_share_empty_plus_fallback_404_is_terminal() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if "ifzq.gtimg.cn" in str(request.url):
+            return httpx.Response(200, request=request, json={"data": {"sh601989": {"m60": []}}})
+        return httpx.Response(404, request=request)
+
+    provider = AShareFreeProvider(transport=httpx.MockTransport(handler))
+    with pytest.raises(ProviderError) as error:
+        await provider.fetch("601989", Timeframe.HOUR_1, limit=10)
+    assert error.value.code == "empty_response"
+    assert len(provider.last_attempts) == 2
+
+
+@pytest.mark.asyncio
 async def test_adapter_exposes_failed_provider_attempts() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(503, request=request)
