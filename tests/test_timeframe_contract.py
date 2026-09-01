@@ -302,6 +302,36 @@ async def test_yahoo_explicit_range_does_not_add_default_period(monkeypatch):
     assert provider.last_raw_response["request_params"]["repair_context_end"] == "2026-08-26"
 
 
+@pytest.mark.asyncio
+async def test_yahoo_intraday_accepts_timezone_aware_iso_window(monkeypatch):
+    calls: dict = {}
+
+    class FakeTicker:
+        def history(self, **kwargs):
+            calls.update(kwargs)
+            return _daily_frame(
+                [("2026-08-31T16:00:00", 100, 105, 99, 104)],
+            )
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda ticker: FakeTicker())
+    provider = USStockProvider()
+
+    candles = await provider.fetch(
+        "AAPL",
+        Timeframe.HOUR_1,
+        start="2026-08-31T16:00:00+00:00",
+        end="2026-09-01T00:00:00+00:00",
+        limit=10,
+    )
+
+    assert len(candles) == 1
+    assert calls["start"] == datetime.fromisoformat("2026-08-31T16:00:00+00:00")
+    assert calls["start"].tzinfo is not None
+    assert calls["end"] == "2026-09-08"
+    assert provider.last_raw_response is not None
+    assert provider.last_raw_response["request_params"]["start"] == "2026-08-31T16:00:00+00:00"
+
+
 def test_yahoo_symbol_timeframe_allowlist_is_explicit():
     index = source_manifest("yahoo_finance_index", AssetClass.INDEX)
     etf = source_manifest("yahoo_finance_etf", AssetClass.ETF)
