@@ -19,8 +19,9 @@ from kline.storage import CandleSeriesKey, MvpCandle, TransformReceiptWrite
 
 
 _FOUR_HOURS = timedelta(hours=4)
+_ONE_HOUR = timedelta(hours=1)
 _FIFTEEN_MINUTES = timedelta(minutes=15)
-_ALLOWED_TIMEFRAMES = frozenset({"15m", "4h", "1d", "1w"})
+_ALLOWED_TIMEFRAMES = frozenset({"15m", "1h", "4h", "1d", "1w"})
 
 
 class CalendarError(ValueError):
@@ -214,6 +215,8 @@ def _bar_end(candle: MvpCandle, *, timeframe: str, spec: CalendarSpec) -> dateti
         return start + _FIFTEEN_MINUTES
     if timeframe == "4h":
         return start + _FOUR_HOURS
+    if timeframe == "1h":
+        return start + _ONE_HOUR
     if timeframe == "1d":
         if spec.continuous:
             return start + timedelta(days=1)
@@ -431,6 +434,109 @@ def aggregate_15m_to_4h(
     )
 
 
+def aggregate_15m_to_1h(
+    candles: Sequence[MvpCandle],
+    *,
+    calendar_id: str,
+    cutoff: datetime | str,
+    run_id: str = "aggregation-preview",
+) -> AggregationResult:
+    """Aggregate closed 15m rows into complete, calendar-aware 1H buckets."""
+
+    if not candles:
+        return AggregationResult((), None, (), (), ())
+    if not all(isinstance(candle, MvpCandle) for candle in candles):
+        raise CalendarError("malformed candle input")
+    key = candles[0].key
+    if key.timeframe != "15m":
+        raise CalendarError("1H aggregation requires 15m input")
+    if any(candle.key != key for candle in candles):
+        raise CalendarError("mixed source/instrument identity in 1H input")
+    if len({candle.volume_semantics for candle in candles}) > 1:
+        raise CalendarError("mixed volume semantics in 1H input")
+    spec = calendar_spec(calendar_id)
+    cutoff_utc = _parse_cutoff(cutoff)
+    issues = _sequence_issues(candles)
+    if any(issue.status == "mixed_source" for issue in issues):
+        raise CalendarError("mixed source input cannot be aggregated")
+
+    grouped: dict[datetime, list[MvpCandle]] = {}
+    excluded_forming: list[str] = []
+    for candle in candles:
+        stamp = _parse_stamp(candle.timestamp)
+        local = stamp.astimezone(spec.zone)
+        if _bar_end(candle, timeframe="15m", spec=spec) > cutoff_utc:
+            excluded_forming.append(candle.timestamp)
+            issues.append(AggregationIssue("forming", "bar ends after cutoff", candle.timestamp))
+            continue
+        if not spec.continuous and not _inside_session(local, spec):
+            issues.append(
+                AggregationIssue(
+                    "out_of_session", "bar is outside regular session", candle.timestamp
+                )
+            )
+            continue
+        if not spec.continuous and not is_trading_session(calendar_id, local.date()):
+            issues.append(
+                AggregationIssue("holiday", "bar falls on a non-session date", candle.timestamp)
+            )
+            continue
+        if spec.calendar_id == "cn_a":
+            local_time = local.timetz().replace(tzinfo=None)
+            anchor_time = time(13, 0) if local_time >= time(13, 0) else time(9, 30)
+            anchor = datetime.combine(local.date(), anchor_time, tzinfo=spec.zone)
+            bucket = anchor + ((local - anchor) // _ONE_HOUR) * _ONE_HOUR
+        else:
+            anchor = datetime.combine(local.date(), spec.four_hour_anchor, tzinfo=spec.zone)
+            if local < anchor:
+                anchor -= timedelta(days=1)
+            bucket = anchor + ((local - anchor) // _ONE_HOUR) * _ONE_HOUR
+        grouped.setdefault(bucket.astimezone(timezone.utc), []).append(candle)
+
+    output_key = _output_key(key, "1h")
+    output: list[MvpCandle] = []
+    partial: list[str] = []
+    for bucket, rows in sorted(grouped.items()):
+        rows.sort(key=lambda item: _parse_stamp(item.timestamp))
+        local_bucket = bucket.astimezone(spec.zone)
+        expected_stamps = [
+            (local_bucket + timedelta(minutes=15 * offset)).astimezone(timezone.utc)
+            for offset in range(4)
+        ]
+        actual_stamps = [_parse_stamp(row.timestamp) for row in rows]
+        if len(rows) != len(expected_stamps) or actual_stamps != sorted(expected_stamps):
+            partial.append(bucket.isoformat())
+            issues.append(AggregationIssue("partial", "incomplete 1H bucket", bucket.isoformat()))
+            continue
+        output.append(_aggregate_rows(rows, output_key, bucket.isoformat(), derived=True))
+
+    receipt = None
+    if output:
+        receipt = TransformReceiptWrite(
+            run_id=run_id,
+            manifest_version=key.manifest_version,
+            instrument_id=key.instrument_id,
+            source_id=key.source_id,
+            output_timeframe="1h",
+            input_timeframe="15m",
+            aggregation_rule_version=(
+                "cn_a_session_1h_v1"
+                if spec.calendar_id == "cn_a"
+                else f"{spec.calendar_id}_fixed_1h_v1"
+            ),
+            input_start=min(candle.timestamp for candle in candles),
+            input_end=max(candle.timestamp for candle in candles),
+            input_hash=_hash_candles(candles),
+            output_hash=_hash_candles(output),
+            bucket_anchor=spec.four_hour_anchor.strftime("%H:%M"),
+            partial_bucket_policy="drop_and_record",
+            partial_bucket_count=len(partial),
+        )
+    return AggregationResult(
+        tuple(output), receipt, tuple(partial), tuple(excluded_forming), tuple(issues)
+    )
+
+
 def aggregate_daily_to_weekly(
     candles: Sequence[MvpCandle],
     *,
@@ -547,7 +653,11 @@ def assess_quality(
             continue
         local = _parse_stamp(candle.timestamp).astimezone(spec.zone)
         observed_dates.add(local.date())
-        if timeframe in {"15m", "4h"} and not spec.continuous and not _inside_session(local, spec):
+        if (
+            timeframe in {"15m", "1h", "4h"}
+            and not spec.continuous
+            and not _inside_session(local, spec)
+        ):
             issues.append(
                 AggregationIssue("malformed", "bar is outside regular session", candle.timestamp)
             )
@@ -561,6 +671,7 @@ def assess_quality(
             closed_stamps.append((_parse_stamp(candle.timestamp), end))
     interval = {
         "15m": _FIFTEEN_MINUTES,
+        "1h": _ONE_HOUR,
         "4h": _FOUR_HOURS,
         "1d": timedelta(days=1),
         "1w": timedelta(days=7),

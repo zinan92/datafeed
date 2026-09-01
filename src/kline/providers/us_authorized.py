@@ -25,7 +25,13 @@ from kline.providers.base import EntitlementBlocked, ProviderError
 from kline.storage import CandleSeriesKey, EntitlementReceiptWrite, MvpCandle
 
 
-MVP_US_TIMEFRAMES = (Timeframe.MIN_15, Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK)
+MVP_US_TIMEFRAMES = (
+    Timeframe.MIN_15,
+    Timeframe.HOUR_1,
+    Timeframe.HOUR_4,
+    Timeframe.DAY,
+    Timeframe.WEEK,
+)
 _US_ZONE = ZoneInfo("America/New_York")
 
 
@@ -57,7 +63,7 @@ class USDataEntitlement:
 
     source_id: str = "us_authorized_pending"
     status: str = "active"
-    allowed_timeframes: tuple[str, ...] = ("15m", "4h", "1d", "1w")
+    allowed_timeframes: tuple[str, ...] = ("15m", "1h", "4h", "1d", "1w")
     persistence_allowed: bool = False
     derived_allowed: bool = False
     non_display_allowed: bool = False
@@ -290,7 +296,7 @@ class AuthorizedUSProvider:
         end: str | None,
         limit: int,
     ) -> list[Candle]:
-        if timeframe not in {Timeframe.MIN_15, Timeframe.DAY}:
+        if timeframe not in {Timeframe.MIN_15, Timeframe.HOUR_1, Timeframe.DAY}:
             raise ProviderError(f"US native timeframe {timeframe.value} is unsupported")
         client = self._get_client()
         request_params = {
@@ -505,8 +511,13 @@ class AuthorizedUSProvider:
                 timestamp = raw.get("timestamp", raw.get("t", raw.get("time")))
                 stamp = self._parse_timestamp(timestamp, timeframe)
                 local = stamp.astimezone(_US_ZONE)
-                if timeframe == Timeframe.MIN_15:
-                    if stamp + timedelta(minutes=15) > now:
+                if timeframe in {Timeframe.MIN_15, Timeframe.HOUR_1}:
+                    interval = (
+                        timedelta(minutes=15)
+                        if timeframe == Timeframe.MIN_15
+                        else timedelta(hours=1)
+                    )
+                    if stamp + interval > now:
                         continue
                 else:
                     close = datetime.combine(local.date(), time(16, 0), tzinfo=_US_ZONE).astimezone(
@@ -559,7 +570,9 @@ class AuthorizedUSProvider:
         parsed = datetime.fromisoformat(text)
         if parsed.tzinfo is None:
             parsed = parsed.replace(
-                tzinfo=_US_ZONE if timeframe == Timeframe.MIN_15 else timezone.utc
+                tzinfo=_US_ZONE
+                if timeframe in {Timeframe.MIN_15, Timeframe.HOUR_1}
+                else timezone.utc
             )
         return parsed.astimezone(timezone.utc)
 

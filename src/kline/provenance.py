@@ -324,6 +324,7 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
             "BTC": (
                 Timeframe.MIN_15,
                 Timeframe.MIN_30,
+                Timeframe.HOUR_1,
                 Timeframe.HOUR_4,
                 Timeframe.DAY,
                 Timeframe.WEEK,
@@ -331,6 +332,7 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
             "ETH": (
                 Timeframe.MIN_15,
                 Timeframe.MIN_30,
+                Timeframe.HOUR_1,
                 Timeframe.HOUR_4,
                 Timeframe.DAY,
                 Timeframe.WEEK,
@@ -338,6 +340,7 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
             "HYPE": (
                 Timeframe.MIN_15,
                 Timeframe.MIN_30,
+                Timeframe.HOUR_1,
                 Timeframe.HOUR_4,
                 Timeframe.DAY,
                 Timeframe.WEEK,

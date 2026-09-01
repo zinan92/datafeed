@@ -29,6 +29,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -65,6 +66,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -101,6 +103,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -137,6 +140,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -173,6 +177,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -209,6 +214,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -245,6 +251,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -281,6 +288,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -317,6 +325,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -353,6 +362,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -389,6 +399,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -425,6 +436,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -461,6 +473,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -497,6 +510,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -533,6 +547,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -569,6 +584,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -605,6 +621,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -641,6 +658,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -677,6 +695,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -713,6 +732,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -749,6 +769,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -785,6 +806,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -821,6 +843,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -857,6 +880,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -893,6 +917,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -929,6 +954,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -965,6 +991,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1001,6 +1028,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1037,6 +1065,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1073,6 +1102,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1109,6 +1139,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1145,6 +1176,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1181,6 +1213,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1217,6 +1250,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1253,6 +1287,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1289,6 +1324,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1325,6 +1361,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1361,6 +1398,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1397,6 +1435,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1433,6 +1472,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1469,6 +1509,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1505,6 +1546,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1541,6 +1583,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1577,6 +1620,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1613,6 +1657,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1649,6 +1694,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1685,6 +1731,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1721,6 +1768,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1757,6 +1805,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1793,6 +1842,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1829,6 +1879,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1865,6 +1916,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1901,6 +1953,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1937,6 +1990,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -1973,6 +2027,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2009,6 +2064,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2045,6 +2101,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2081,6 +2138,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2117,6 +2175,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2153,6 +2212,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2189,6 +2249,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2225,6 +2286,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2261,6 +2323,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2297,6 +2360,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2333,6 +2397,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2369,6 +2434,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2405,6 +2471,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2441,6 +2508,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2477,6 +2545,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2513,6 +2582,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2549,6 +2619,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2585,6 +2656,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2621,6 +2693,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2657,6 +2730,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2693,6 +2767,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2729,6 +2804,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2765,6 +2841,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2801,6 +2878,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2837,6 +2915,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2873,6 +2952,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2909,6 +2989,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2945,6 +3026,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -2981,6 +3063,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3017,6 +3100,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3053,6 +3137,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3089,6 +3174,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3125,6 +3211,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3161,6 +3248,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3197,6 +3285,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3233,6 +3322,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3269,6 +3359,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3305,6 +3396,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3341,6 +3433,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3377,6 +3470,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3413,6 +3507,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3449,6 +3544,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3485,6 +3581,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3521,6 +3618,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3557,6 +3655,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3593,6 +3692,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3629,6 +3729,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3665,6 +3766,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3701,6 +3803,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3737,6 +3840,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3773,6 +3877,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3811,6 +3916,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3852,6 +3958,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3888,6 +3995,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3924,6 +4032,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3960,6 +4069,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -3996,6 +4106,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4032,6 +4143,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4068,6 +4180,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4104,6 +4217,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4142,6 +4256,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4177,6 +4292,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4213,6 +4329,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4249,6 +4366,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4285,6 +4403,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4321,6 +4440,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4357,6 +4477,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4393,6 +4514,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4429,6 +4551,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4465,6 +4588,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4501,6 +4625,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4537,6 +4662,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4573,6 +4699,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4609,6 +4736,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4645,6 +4773,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4682,6 +4811,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4719,6 +4849,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4756,6 +4887,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4792,6 +4924,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4828,6 +4961,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4864,6 +4998,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4900,6 +5035,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4936,6 +5072,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -4973,6 +5110,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5010,6 +5148,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5047,6 +5186,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5083,6 +5223,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5119,6 +5260,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5155,6 +5297,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5191,6 +5334,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5227,6 +5371,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5263,6 +5408,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5299,6 +5445,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5335,6 +5482,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5371,6 +5519,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5407,6 +5556,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5443,6 +5593,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5479,6 +5630,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5515,6 +5667,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5551,6 +5704,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5587,6 +5741,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5623,6 +5778,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5659,6 +5815,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5695,6 +5852,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5731,6 +5889,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5767,6 +5926,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5806,6 +5966,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5851,6 +6012,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5887,6 +6049,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5923,6 +6086,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5959,6 +6123,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -5995,6 +6160,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6031,6 +6197,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6067,6 +6234,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6103,6 +6271,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6139,6 +6308,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6175,6 +6345,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6211,6 +6382,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6247,6 +6419,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6283,6 +6456,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6319,6 +6493,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6355,6 +6530,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6391,6 +6567,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6427,6 +6604,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6463,6 +6641,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6499,6 +6678,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6535,6 +6715,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6571,6 +6752,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6607,6 +6789,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6643,6 +6826,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6679,6 +6863,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6715,6 +6900,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6751,6 +6937,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6787,6 +6974,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6823,6 +7011,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6859,6 +7048,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6895,6 +7085,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6931,6 +7122,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -6967,6 +7159,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7003,6 +7196,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7039,6 +7233,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7075,6 +7270,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7111,6 +7307,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7147,6 +7344,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7183,6 +7381,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7219,6 +7418,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7257,6 +7457,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7295,6 +7496,7 @@
       },
       "blocked_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7320,6 +7522,7 @@
       ],
       "not_applicable_timeframes": [
         "15m",
+        "1h",
         "4h"
       ],
       "calendar_id": "us_equities",
@@ -7359,6 +7562,7 @@
       ],
       "not_applicable_timeframes": [
         "15m",
+        "1h",
         "4h"
       ],
       "calendar_id": "us_equities",
@@ -7412,6 +7616,7 @@
         "fallback_policy": "none"
       },
       "blocked_timeframes": [
+        "1h",
         "1d",
         "1w"
       ],
@@ -7432,6 +7637,7 @@
       "provider_symbol": "BTC",
       "required_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7472,6 +7678,7 @@
       "provider_symbol": "ETH",
       "required_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7512,6 +7719,7 @@
       "provider_symbol": "HYPE",
       "required_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7556,6 +7764,7 @@
       ],
       "not_applicable_timeframes": [
         "15m",
+        "1h",
         "4h"
       ],
       "calendar_id": "cn_a",
@@ -7596,6 +7805,7 @@
       ],
       "not_applicable_timeframes": [
         "15m",
+        "1h",
         "4h"
       ],
       "calendar_id": "cn_a",
@@ -7636,6 +7846,7 @@
       ],
       "not_applicable_timeframes": [
         "15m",
+        "1h",
         "4h"
       ],
       "calendar_id": "cn_a",
@@ -7676,6 +7887,7 @@
       ],
       "not_applicable_timeframes": [
         "15m",
+        "1h",
         "4h"
       ],
       "calendar_id": "jp_equities",
@@ -7715,6 +7927,7 @@
       ],
       "not_applicable_timeframes": [
         "15m",
+        "1h",
         "4h"
       ],
       "calendar_id": "kr_equities",
@@ -7750,6 +7963,7 @@
       "provider_symbol": "CL=F",
       "required_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7790,6 +8004,7 @@
       "provider_symbol": "GC=F",
       "required_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7830,6 +8045,7 @@
       "provider_symbol": "SI=F",
       "required_timeframes": [
         "15m",
+        "1h",
         "4h",
         "1d",
         "1w"
@@ -7979,6 +8195,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8021,6 +8238,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8063,6 +8281,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8105,6 +8324,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8147,6 +8367,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8189,6 +8410,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8231,6 +8453,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8273,6 +8496,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8315,6 +8539,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8357,6 +8582,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8399,6 +8625,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8441,6 +8668,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8483,6 +8711,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8525,6 +8754,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8567,6 +8797,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8609,6 +8840,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8651,6 +8883,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8693,6 +8926,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8735,6 +8969,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8777,6 +9012,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8821,6 +9057,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8863,6 +9100,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8905,6 +9143,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8947,6 +9186,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -8989,6 +9229,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9031,6 +9272,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9073,6 +9315,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9115,6 +9358,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9157,6 +9401,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9199,6 +9444,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9241,6 +9487,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9283,6 +9530,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9325,6 +9573,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9367,6 +9616,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9409,6 +9659,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9451,6 +9702,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9493,6 +9745,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9535,6 +9788,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9577,6 +9831,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"
@@ -9619,6 +9874,7 @@
           "not_applicable_timeframes": [],
           "blocked_timeframes": [
             "15m",
+            "1h",
             "4h",
             "1d",
             "1w"

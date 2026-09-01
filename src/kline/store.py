@@ -558,11 +558,13 @@ class KlineStore:
                 raise StorageError("transform receipt identity does not match run")
             if transform.output_timeframe not in {
                 "15m",
+                "1h",
                 "4h",
                 "1d",
                 "1w",
             } or transform.input_timeframe not in {
                 "15m",
+                "1h",
                 "4h",
                 "1d",
                 "1w",
@@ -625,7 +627,8 @@ class KlineStore:
             ):
                 raise StorageError("timeframe_permissions must be a sequence")
             if any(
-                item not in {"15m", "4h", "1d", "1w"} for item in entitlement.timeframe_permissions
+                item not in {"15m", "1h", "4h", "1d", "1w"}
+                for item in entitlement.timeframe_permissions
             ):
                 raise StorageError("timeframe_permissions contains unsupported timeframe")
             if not all(

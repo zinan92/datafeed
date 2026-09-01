@@ -13,7 +13,7 @@ import math
 from typing import Any, Mapping, Protocol, Sequence
 
 
-MVP_TIMEFRAMES = frozenset({"15m", "4h", "1d", "1w"})
+MVP_TIMEFRAMES = frozenset({"15m", "1h", "4h", "1d", "1w"})
 VOLUME_SEMANTICS = frozenset({"traded", "quote_derived", "not_applicable"})
 
 

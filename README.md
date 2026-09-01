@@ -170,10 +170,10 @@ the source of truth for readiness.
 
 - `is_synthetic` 恒为 `false`，没有合成/占位数据路径。
 - `cache_policy=bypass` / `profile=realtime` / `profile=execution_live` 不读 cache。
-- Phase 1 `1d` / `1w` / `4h` cache rows without a persisted timeframe receipt are
+- Phase 1 `1h` / `1d` / `1w` / `4h` cache rows without a persisted timeframe receipt are
   blocked rather than relabeled; use `cache_policy=bypass` to obtain a fresh,
   source-bound response.
-- Phase 1 fresh `1d` / `1w` / `4h` upstream results are not written to the legacy
+- Phase 1 fresh `1h` / `1d` / `1w` / `4h` upstream results are not written to the legacy
   candle cache until the transformation receipt has a storage schema; `allow`
   may fetch upstream, while `require` returns `cache_miss`.
 - `quality=strict` 下，上游失败、空数据、陈旧、gap、乱序都返回错误/blocked envelope。
@@ -375,7 +375,7 @@ python -m kline
 
 | Source | Asset class | Provider | Market type | Realtime | Execution venue | 支持 Timeframe |
 |--------|-------------|----------|-------------|----------|-----------------|---------------|
-| `tushare_pro` | `a_share` | TuShare Pro | equity | false | false | 1d, 1w |
+| `tushare_pro` | `a_share` | TuShare Pro | equity | false | false | 1h, 1d, 1w (entitlement-gated) |
 | `tencent_kline` | `index` | Tencent Finance | A-share index | false | false | sh000001/sh000688/sh000015: 1d, 1w |
 | `sina_index` | `index` | Sina Finance | A-share index fallback | false | false | sh000001/sh000688/sh000015: 1d, 1w |
 | `treasury_official_csv` | `macro` | U.S. Treasury | yield level | false | false | DGS2/DGS10: 1d, 1w |
@@ -387,7 +387,7 @@ python -m kline
 | `binance_spot_public` | `crypto` | Binance Spot API | spot | true | false | BTC/BTCUSDT: 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w; other symbols: no Phase 1 4h guarantee |
 | `binance_usdm_futures` | `commodity` | Binance USD-M Futures | USD-M futures | true | true | XAUUSDT: 1m, 5m, 15m, 30m, 1h, 4h |
 | `binance_usdm_futures_research` | `crypto` | Binance USD-M Futures | USD-M perpetuals | true | false | BTCUSDT/ETHUSDT: 4h, 1d, 1w |
-| `hyperliquid_perpetual_public` | `crypto` | Hyperliquid public API | perpetual futures | false | false | BTC/ETH/HYPE: 30m, 4h, 1d, 1w |
+| `hyperliquid_perpetual_public` | `crypto` | Hyperliquid public API | perpetual futures | false | false | BTC/ETH/HYPE: 30m, 1h, 4h, 1d, 1w |
 
 ## 技术栈
 

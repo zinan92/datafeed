@@ -12,7 +12,7 @@ from typing import Any, Mapping
 
 
 MVP_MANIFEST_VERSION = "mvp_universe_v1"
-ALLOWED_TIMEFRAMES = ("15m", "4h", "1d", "1w")
+ALLOWED_TIMEFRAMES = ("15m", "1h", "4h", "1d", "1w")
 EXPECTED_COUNTS = {"a_share": 100, "us_stock": 100, "cross_market": 16}
 LEGACY_EXCLUSIONS = {
     "treasury_symbols": ["DGS2", "DGS10", "T10Y2Y"],

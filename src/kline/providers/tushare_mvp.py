@@ -26,7 +26,13 @@ from kline.providers.base import EntitlementBlocked, ProviderError
 from kline.storage import CandleSeriesKey, EntitlementReceiptWrite, MvpCandle
 
 
-MVP_TUSHARE_TIMEFRAMES = (Timeframe.MIN_15, Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK)
+MVP_TUSHARE_TIMEFRAMES = (
+    Timeframe.MIN_15,
+    Timeframe.HOUR_1,
+    Timeframe.HOUR_4,
+    Timeframe.DAY,
+    Timeframe.WEEK,
+)
 _A_SHARE_CALENDAR = "cn_a"
 _A_SHARE_ZONE = timezone(timedelta(hours=8))
 
@@ -37,7 +43,7 @@ class TuShareEntitlement:
 
     source_id: str = "tushare_pro"
     status: str = "active"
-    allowed_timeframes: tuple[str, ...] = ("15m", "4h", "1d", "1w")
+    allowed_timeframes: tuple[str, ...] = ("15m", "1h", "4h", "1d", "1w")
     persistence_allowed: bool = False
     derived_allowed: bool = False
     non_display_allowed: bool = False
@@ -246,7 +252,13 @@ class TuShareMvpProvider:
             "start_date": start,
             "end_date": end,
             "limit": limit,
-            "freq": "15min" if timeframe == Timeframe.MIN_15 else None,
+            "freq": (
+                "15min"
+                if timeframe == Timeframe.MIN_15
+                else "60min"
+                if timeframe == Timeframe.HOUR_1
+                else None
+            ),
         }
         self.last_raw_response = {
             "request_params": request_params,
@@ -255,13 +267,14 @@ class TuShareMvpProvider:
             "error": None,
         }
         try:
-            if timeframe == Timeframe.MIN_15:
+            if timeframe in {Timeframe.MIN_15, Timeframe.HOUR_1}:
+                freq = "15min" if timeframe == Timeframe.MIN_15 else "60min"
                 frame = await self._call(
                     lambda: client.stk_mins(
                         ts_code=ts_code,
                         start_date=start,
                         end_date=end,
-                        freq="15min",
+                        freq=freq,
                     )
                 )
             elif timeframe == Timeframe.DAY:
@@ -427,6 +440,8 @@ class TuShareMvpProvider:
                 close_boundary = (
                     stamp + timedelta(minutes=15)
                     if timeframe == Timeframe.MIN_15
+                    else stamp + timedelta(hours=1)
+                    if timeframe == Timeframe.HOUR_1
                     else self._daily_close(stamp)
                 )
                 if close_boundary > now:
@@ -481,7 +496,9 @@ class TuShareMvpProvider:
         parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
         if parsed.tzinfo is None:
             parsed = parsed.replace(
-                tzinfo=_A_SHARE_ZONE if timeframe == Timeframe.MIN_15 else timezone.utc
+                tzinfo=_A_SHARE_ZONE
+                if timeframe in {Timeframe.MIN_15, Timeframe.HOUR_1}
+                else timezone.utc
             )
         return parsed.astimezone(timezone.utc)
 

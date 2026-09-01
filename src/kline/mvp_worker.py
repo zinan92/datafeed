@@ -291,7 +291,7 @@ def _source_states(manifest: MvpManifest) -> list[dict[str, Any]]:
         state["instruments"] += 1
         if item.source_status == "blocked_for_entitlement":
             state["status"] = "blocked_for_entitlement"
-            state["blocked_cells"] += len(item.blocked_timeframes) or 4
+            state["blocked_cells"] += len(item.blocked_timeframes) or 5
     return sorted(grouped.values(), key=lambda value: value["source_id"])
 
 
@@ -361,7 +361,7 @@ def build_mvp_serving_status(
     }
     cells: list[dict[str, Any]] = []
     for instrument in manifest.instruments:
-        for timeframe in ("15m", "4h", "1d", "1w"):
+        for timeframe in ("15m", "1h", "4h", "1d", "1w"):
             status = "ready"
             if timeframe in instrument.not_applicable_timeframes:
                 status = "not_applicable"
@@ -396,6 +396,7 @@ def build_mvp_serving_status(
                         ).total_seconds()
                         max_age = {
                             "15m": 45 * 60,
+                            "1h": 90 * 60,
                             "4h": 12 * 60 * 60,
                             "1d": 3 * 24 * 60 * 60,
                             "1w": 21 * 24 * 60 * 60,
