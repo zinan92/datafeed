@@ -143,6 +143,7 @@ async def health_ui() -> str:
   const timeframes = ['15m','1h','4h','1d','1w'];
   const timeframeLabels = {'15m':'15 分钟','1h':'1 小时','4h':'4 小时','1d':'日线','1w':'周线'};
   const statusLabels = {ready:'正常',partial:'部分',stale:'过期',failed:'失败',blocked:'阻塞',unavailable:'不可用',not_applicable:'不适用'};
+  const reasonLabels = {entitlement_blocked:'授权未核实',entitlement_unverified:'授权未核实',entitlement_expired:'授权已过期',persistence_not_allowed:'不允许持久化',derived_not_allowed:'不允许派生',timeframe_not_permitted:'级别未授权',timeframe_permission_unverified:'级别授权未核实'};
   const universeLabels = {a_share:'A 股',us_stock:'美股',cross_market:'跨市场'};
   let latestSnapshot = null;
   let latestReceivedAt = 0;
@@ -173,8 +174,11 @@ async def health_ui() -> str:
       const applicable = Number(item.applicable || 0);
       const ready = Number(item.ready || 0);
       const ratio = applicable ? Math.round(ready / applicable * 100) : 0;
-      const problem = ['failed','blocked','stale','partial','unavailable'].reduce((sum, key) => sum + Number(item[key] || 0), 0);
-      return `<article class="card coverage-card"><div class="label">${timeframeLabels[tf]}</div><div class="ratio"><strong>${ratio}%</strong><span>${ready}/${applicable} 正常</span></div><div class="counts">${problem ? `需关注 ${problem} 个` : '没有异常单元格'} · 不适用 ${Number(item.not_applicable || 0)} 个</div><div class="progress"><i style="width:${ratio}%"></i></div></article>`;
+      const blocked = Number(item.blocked || 0);
+      const failed = Number(item.failed || 0);
+      const problem = ['stale','partial','unavailable'].reduce((sum, key) => sum + Number(item[key] || 0), 0);
+      const details = [blocked ? `阻塞 ${blocked}` : '', failed ? `失败 ${failed}` : '', problem ? `其他需关注 ${problem}` : ''].filter(Boolean).join(' · ') || '没有异常单元格';
+      return `<article class="card coverage-card"><div class="label">${timeframeLabels[tf]}</div><div class="ratio"><strong>${ratio}%</strong><span>${ready}/${applicable} 正常</span></div><div class="counts">${details} · 不适用 ${Number(item.not_applicable || 0)} 个</div><div class="progress"><i style="width:${ratio}%"></i></div></article>`;
     }).join('');
     document.getElementById('coverage-meta').textContent = `共 ${fmtCount(snapshot.cells.length)} 个单元格 · 清单 ${esc(snapshot.manifest_version)}`;
   }
@@ -202,7 +206,7 @@ async def health_ui() -> str:
       const rowHtml = collapsed ? '' : Array.from(rows.values()).filter(row => timeframeFilter === 'all' || row.cells[timeframeFilter]).map(row => `<tr><td class="asset"><strong>${esc(row.symbol)}</strong><small>${esc(row.name)}</small></td>${timeframes.map(tf => {
         const cell = row.cells[tf];
         if (!cell) return '<td><div class="empty">—</div></td>';
-        const latest = cell.latest_closed_timestamp ? fmtTime(cell.latest_closed_timestamp) : '暂无收盘数据';
+        const latest = reasonLabels[cell.status_reason] || (cell.latest_closed_timestamp ? fmtTime(cell.latest_closed_timestamp) : '暂无收盘数据');
         return `<td><button class="cell ${esc(cell.status)}" type="button" data-cell="${esc(JSON.stringify(cell))}"><span class="cell-top"><span class="state">${esc(statusText(cell.status))}</span><span>${esc(timeframeLabels[tf])}</span></span><span class="age">${esc(latest)}</span></button></td>`;
       }).join('')}</tr>`).join('');
       return `<tr class="group-row"><td colspan="6"><button class="group-toggle" type="button" data-group-toggle="${esc(universe)}">${collapsed ? '展开' : '收起'} · ${esc(universeLabels[universe])}（${rows.size} 个资产）</button></td></tr>${rowHtml}`;
@@ -243,10 +247,16 @@ async def health_ui() -> str:
   function render(snapshot) {
     latestSnapshot = snapshot;
     renderCoverage(snapshot); renderMatrix(snapshot); renderRuns(snapshot); renderInfrastructure(snapshot);
-    document.getElementById('overall').textContent = `总体状态：${statusText(snapshot.status)}`;
+    const applicable = snapshot.cells.filter(cell => cell.applicability === 'applicable');
+    const blocked = applicable.filter(cell => cell.status === 'blocked').length;
+    const failed = applicable.filter(cell => cell.status === 'failed').length;
+    const overallText = snapshot.status === 'failed' && blocked && !failed ? '总体状态：授权阻塞' : `总体状态：${statusText(snapshot.status)}`;
+    document.getElementById('overall').textContent = overallText;
     document.getElementById('snapshot-meta').textContent = `数据时间 ${fmtTime(snapshot.as_of)} · 自动读取间隔 30 秒 · 请求上限 10 秒`;
     if (snapshot.status === 'failed') {
-      showBanner('数据源或存储存在失败、阻塞单元格，请查看矩阵详情', 'error');
+      if (blocked && !failed) showBanner(`当前 ${blocked} 个单元格因授权阻塞，尚无可展示数据；不是采集程序崩溃`, 'error');
+      else if (blocked) showBanner(`当前有 ${failed} 个采集失败单元格和 ${blocked} 个授权阻塞单元格，请分别查看详情`, 'error');
+      else showBanner(`当前有 ${failed} 个采集失败单元格，请查看矩阵详情`, 'error');
     } else if (snapshot.status === 'partial') {
       showBanner('数据源存在过期、部分或不可用单元格，请查看覆盖概览', 'warn');
     } else {
