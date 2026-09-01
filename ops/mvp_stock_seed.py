@@ -41,6 +41,7 @@ _FORBIDDEN_MARKERS = ("403", "forbidden", "blocked")
 _SERVER_MARKERS = ("500", "502", "503", "504", "server error", "bad gateway", "service unavailable")
 _TIMEOUT_MARKERS = ("timeout", "timed out", "deadline")
 _EMPTY_MARKERS = ("no data", "no rows", "empty")
+_EMPTY_PATTERN = re.compile(r"\bno\s+\w+\s+rows?\b")
 
 
 def _iso(value: datetime) -> str:
@@ -144,7 +145,7 @@ def _classify_attempt(attempt: Mapping[str, Any]) -> str | None:
         return "server_error"
     if any(marker in text for marker in _TIMEOUT_MARKERS):
         return "timeout"
-    if any(marker in text for marker in _EMPTY_MARKERS):
+    if any(marker in text for marker in _EMPTY_MARKERS) or _EMPTY_PATTERN.search(text):
         return "empty_response"
     if status in {
         "failed",

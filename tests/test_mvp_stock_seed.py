@@ -76,6 +76,14 @@ def test_batches_are_deterministic_and_rate_errors_are_classified() -> None:
         _classify_attempt({"status": "unavailable", "error": "No data returned"})
         == "empty_response"
     )
+    assert (
+        _classify_attempt({"status": "error", "error": "Tencent returned no minute rows"})
+        == "empty_response"
+    )
+    assert (
+        _classify_attempt({"status": "error", "error": "Sina returned no daily rows"})
+        == "empty_response"
+    )
     assert _classify_attempt({"status": "error", "http_status": 503}) == "server_error"
 
 
