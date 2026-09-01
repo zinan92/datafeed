@@ -134,3 +134,24 @@ def test_easy_tdx_preflight_records_native_and_derived_rows() -> None:
 
 def test_default_easy_tdx_targets_are_the_three_a_share_pilot_names() -> None:
     assert [target.display_symbol for target in A_SHARE_TARGETS] == ["600519", "300750", "688981"]
+
+
+def test_easy_tdx_preflight_keeps_missing_derived_cell_explicitly_blocked() -> None:
+    target = _target()
+
+    class EmptyClient:
+        def get_stock_kline(self, market: int, code: str, *, period, count: int, adjust: int):
+            del market, code, period, count, adjust
+            return FakeFrame([])
+
+    receipt = run_easy_tdx_preflight(
+        [PreflightTarget(**{**target.__dict__, "requested_timeframes": ("15m", "4h")})],
+        client=EmptyClient(),
+        periods={"15m": "15m"},
+        now=datetime(2026, 8, 31, 8, 0, tzinfo=timezone.utc),
+    )
+
+    assert [cell["timeframe"] for cell in receipt["cells"]] == ["15m", "4h"]
+    derived = receipt["cells"][1]
+    assert derived["status"] == "blocked"
+    assert derived["status_reason"] == "no_complete_derived_bars"

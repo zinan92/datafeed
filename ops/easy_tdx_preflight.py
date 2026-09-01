@@ -216,6 +216,8 @@ def run_easy_tdx_preflight(
     for target in targets:
         base: dict[str, tuple[tuple[Bar, ...], Any]] = {}
         for timeframe, period in active_periods.items():
+            if timeframe not in target.requested_timeframes:
+                continue
             started = time.monotonic()
             request = {
                 "provider": "easy_tdx_mac",
@@ -284,6 +286,14 @@ def run_easy_tdx_preflight(
         for output_timeframe, input_timeframe in (("4h", "15m"),):
             source = base.get(input_timeframe)
             if source is None or not source[0]:
+                cell = classify_status(
+                    target,
+                    output_timeframe,
+                    (),
+                    policy=target.policy,
+                    is_derived=True,
+                )
+                cells.append(cell.as_dict(observed_at=_stamp(observed_at)))
                 continue
             derived = derive_series(
                 target,

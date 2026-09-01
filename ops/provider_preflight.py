@@ -527,6 +527,17 @@ def classify_status(
             is_derived,
             transform,
         )
+    if is_derived and report.gaps:
+        return ClassifiedCell(
+            target,
+            timeframe,
+            "blocked",
+            "transform_incomplete",
+            normalized,
+            report,
+            is_derived,
+            transform,
+        )
     if target.volume_semantics != "not_applicable" and report.missing_volume:
         return ClassifiedCell(
             target,

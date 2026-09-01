@@ -6,6 +6,7 @@ from ops.provider_preflight import (
     Bar,
     PolicyReceipt,
     PreflightTarget,
+    QualityReport,
     classify_status,
     derive_series,
     idempotency_check,
@@ -154,6 +155,37 @@ def test_derived_permission_only_blocks_derived_cell() -> None:
     assert derived.status == "blocked"
     assert derived.status_reason == "derived_not_allowed"
     assert native.status == "ready"
+
+
+def test_incomplete_derived_bucket_is_blocked() -> None:
+    target = PreflightTarget(
+        asset_class="us_stock",
+        display_symbol="AAPL",
+        provider_symbol="AAPL",
+        source_id="yahoo_chart",
+        source_kind="yahoo_chart",
+        calendar_id="us_equities",
+        timezone="America/New_York",
+        volume_semantics="traded",
+        policy=PolicyReceipt(
+            status="active",
+            persistence_allowed=True,
+            derived_allowed=True,
+            non_display_allowed=True,
+        ),
+    )
+    bars = (Bar("2026-08-31T13:30:00+00:00", 1, 2, 0.5, 1.5, 10, None),)
+    cell = classify_status(
+        target,
+        "4h",
+        bars,
+        policy=target.policy,
+        quality=QualityReport("ready", gaps=1),
+        is_derived=True,
+    )
+
+    assert cell.status == "blocked"
+    assert cell.status_reason == "transform_incomplete"
 
 
 def test_cn_15m_derives_completed_4h_with_transform_receipt() -> None:

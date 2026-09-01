@@ -1,6 +1,6 @@
 # Provider Preflight Receipt
 
-- Observed at: `2026-09-01T04:24:02+00:00`
+- Observed at: `2026-09-01T04:36:42+00:00`
 - Targets: `9`
 - Cells: `45`
 - Decision: **partial**
@@ -25,35 +25,35 @@
 | 688981 | eastmoney_kline | 1d | unavailable | request_failed | 0 | — | unverified |
 | 688981 | eastmoney_kline | 4h | blocked | missing_input | 0 | — | unverified |
 | 688981 | eastmoney_kline | 1w | blocked | missing_input | 0 | — | unverified |
-| AAPL | yahoo_chart | 15m | unavailable | request_failed | 0 | — | unverified |
+| AAPL | yahoo_chart | 15m | partial | entitlement_unverified | 131 | 2026-08-31T20:00:00+00:00 | unverified |
 | AAPL | yahoo_chart | 1h | partial | entitlement_unverified | 36 | 2026-08-31T20:00:00+00:00 | unverified |
 | AAPL | yahoo_chart | 1d | partial | entitlement_unverified | 21 | 2026-08-31T13:30:00+00:00 | unverified |
-| AAPL | yahoo_chart | 4h | blocked | missing_input | 0 | — | unverified |
-| AAPL | yahoo_chart | 1w | partial | entitlement_unverified | 4 | 2026-08-28T00:00:00+00:00 | unverified |
+| AAPL | yahoo_chart | 4h | blocked | transform_incomplete | 5 | 2026-08-31T13:30:00+00:00 | unverified |
+| AAPL | yahoo_chart | 1w | blocked | transform_incomplete | 4 | 2026-08-28T00:00:00+00:00 | unverified |
 | NVDA | yahoo_chart | 15m | partial | entitlement_unverified | 131 | 2026-08-31T20:00:00+00:00 | unverified |
-| NVDA | yahoo_chart | 1h | unavailable | request_failed | 0 | — | unverified |
+| NVDA | yahoo_chart | 1h | partial | entitlement_unverified | 36 | 2026-08-31T20:00:00+00:00 | unverified |
 | NVDA | yahoo_chart | 1d | partial | entitlement_unverified | 21 | 2026-08-31T13:30:00+00:00 | unverified |
-| NVDA | yahoo_chart | 4h | partial | entitlement_unverified | 5 | 2026-08-31T13:30:00+00:00 | unverified |
-| NVDA | yahoo_chart | 1w | partial | entitlement_unverified | 4 | 2026-08-28T00:00:00+00:00 | unverified |
+| NVDA | yahoo_chart | 4h | blocked | transform_incomplete | 5 | 2026-08-31T13:30:00+00:00 | unverified |
+| NVDA | yahoo_chart | 1w | blocked | transform_incomplete | 4 | 2026-08-28T00:00:00+00:00 | unverified |
 | TSLA | yahoo_chart | 15m | partial | entitlement_unverified | 131 | 2026-08-31T20:00:00+00:00 | unverified |
 | TSLA | yahoo_chart | 1h | partial | entitlement_unverified | 36 | 2026-08-31T20:00:00+00:00 | unverified |
 | TSLA | yahoo_chart | 1d | partial | entitlement_unverified | 21 | 2026-08-31T13:30:00+00:00 | unverified |
-| TSLA | yahoo_chart | 4h | partial | entitlement_unverified | 5 | 2026-08-31T13:30:00+00:00 | unverified |
-| TSLA | yahoo_chart | 1w | partial | entitlement_unverified | 4 | 2026-08-28T00:00:00+00:00 | unverified |
+| TSLA | yahoo_chart | 4h | blocked | transform_incomplete | 5 | 2026-08-31T13:30:00+00:00 | unverified |
+| TSLA | yahoo_chart | 1w | blocked | transform_incomplete | 4 | 2026-08-28T00:00:00+00:00 | unverified |
 | SPX | yahoo_chart | 15m | partial | entitlement_unverified | 131 | 2026-08-31T20:00:00+00:00 | unverified |
 | SPX | yahoo_chart | 1h | partial | entitlement_unverified | 36 | 2026-08-31T20:00:00+00:00 | unverified |
 | SPX | yahoo_chart | 1d | blocked | quality_invalid | 20 | 2026-08-31T13:30:00+00:00 | unverified |
-| SPX | yahoo_chart | 4h | partial | entitlement_unverified | 5 | 2026-08-31T13:30:00+00:00 | unverified |
-| SPX | yahoo_chart | 1w | partial | entitlement_unverified | 4 | 2026-08-28T00:00:00+00:00 | unverified |
-| BTC | yahoo_chart | 15m | partial | entitlement_unverified | 401 | 2026-09-01T04:00:00+00:00 | unverified |
+| SPX | yahoo_chart | 4h | blocked | transform_incomplete | 5 | 2026-08-31T13:30:00+00:00 | unverified |
+| SPX | yahoo_chart | 1w | blocked | transform_incomplete | 4 | 2026-08-28T00:00:00+00:00 | unverified |
+| BTC | yahoo_chart | 15m | partial | entitlement_unverified | 402 | 2026-09-01T04:15:00+00:00 | unverified |
 | BTC | yahoo_chart | 1h | partial | entitlement_unverified | 100 | 2026-09-01T03:00:00+00:00 | unverified |
-| BTC | yahoo_chart | 1d | unavailable | request_failed | 0 | — | unverified |
-| BTC | yahoo_chart | 4h | partial | entitlement_unverified | 25 | 2026-09-01T00:00:00+00:00 | unverified |
-| BTC | yahoo_chart | 1w | blocked | missing_input | 0 | — | unverified |
-| GOLD | yahoo_chart | 15m | blocked | quality_invalid | 273 | 2026-09-01T04:00:00+00:00 | unverified |
+| BTC | yahoo_chart | 1d | blocked | quality_invalid | 30 | 2026-08-30T00:00:00+00:00 | unverified |
+| BTC | yahoo_chart | 4h | blocked | transform_incomplete | 25 | 2026-09-01T00:00:00+00:00 | unverified |
+| BTC | yahoo_chart | 1w | partial | entitlement_unverified | 5 | 2026-08-30T00:00:00+00:00 | unverified |
+| GOLD | yahoo_chart | 15m | blocked | quality_invalid | 274 | 2026-09-01T04:15:00+00:00 | unverified |
 | GOLD | yahoo_chart | 1h | blocked | quality_invalid | 68 | 2026-09-01T02:00:00+00:00 | unverified |
 | GOLD | yahoo_chart | 1d | partial | entitlement_unverified | 22 | 2026-09-01T04:00:00+00:00 | unverified |
-| GOLD | yahoo_chart | 4h | partial | entitlement_unverified | 14 | 2026-08-31T23:00:00+00:00 | unverified |
+| GOLD | yahoo_chart | 4h | blocked | transform_incomplete | 14 | 2026-08-31T23:00:00+00:00 | unverified |
 | GOLD | yahoo_chart | 1w | partial | entitlement_unverified | 5 | 2026-08-30T00:00:00+00:00 | unverified |
 
 ## Next path by asset class

@@ -1,6 +1,6 @@
 {
   "schema_version": "provider-preflight-v1",
-  "observed_at": "2026-09-01T04:24:02+00:00",
+  "observed_at": "2026-09-01T04:36:42+00:00",
   "target_count": 9,
   "targets": [
     {
@@ -214,33 +214,32 @@
   "summary": {
     "cells": 45,
     "by_status": {
-      "blocked": 11,
-      "partial": 22,
-      "unavailable": 12
+      "blocked": 20,
+      "partial": 16,
+      "unavailable": 9
     },
     "by_timeframe": {
       "15m": {
         "blocked": 1,
-        "partial": 4,
-        "unavailable": 4
+        "partial": 5,
+        "unavailable": 3
       },
       "1d": {
-        "blocked": 1,
+        "blocked": 2,
         "partial": 4,
-        "unavailable": 4
+        "unavailable": 3
       },
       "1h": {
         "blocked": 1,
-        "partial": 4,
-        "unavailable": 4
+        "partial": 5,
+        "unavailable": 3
       },
       "1w": {
-        "blocked": 4,
-        "partial": 5
+        "blocked": 7,
+        "partial": 2
       },
       "4h": {
-        "blocked": 4,
-        "partial": 5
+        "blocked": 9
       }
     }
   },
@@ -299,12 +298,12 @@
       },
       "response": {
         "http_status": 0,
-        "latency_ms": 5932.06,
+        "latency_ms": 5807.66,
         "response_sha256": null,
         "rate_limit_observed": false,
         "attempts": 1
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "request_failed",
         "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
@@ -366,12 +365,12 @@
       },
       "response": {
         "http_status": 0,
-        "latency_ms": 6073.19,
+        "latency_ms": 5859.08,
         "response_sha256": null,
         "rate_limit_observed": false,
         "attempts": 1
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "request_failed",
         "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
@@ -433,12 +432,12 @@
       },
       "response": {
         "http_status": 0,
-        "latency_ms": 6264.58,
+        "latency_ms": 6310.16,
         "response_sha256": null,
         "rate_limit_observed": false,
         "attempts": 1
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "request_failed",
         "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
@@ -486,7 +485,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "missing_input",
         "message": "4h requires closed 15m input",
@@ -534,7 +533,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "missing_input",
         "message": "1w requires closed 1d input",
@@ -596,16 +595,16 @@
       },
       "response": {
         "http_status": 0,
-        "latency_ms": 10593.46,
+        "latency_ms": 6118.03,
         "response_sha256": null,
         "rate_limit_observed": false,
         "attempts": 1
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "request_failed",
-        "message": "TimeoutError: The read operation timed out",
-        "redacted_raw": "TimeoutError: The read operation timed out",
+        "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "redacted_raw": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
         "next_step": "inspect the provider receipt and keep the cell blocked"
       }
     },
@@ -663,12 +662,12 @@
       },
       "response": {
         "http_status": 0,
-        "latency_ms": 6047.31,
+        "latency_ms": 5697.32,
         "response_sha256": null,
         "rate_limit_observed": false,
         "attempts": 1
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "request_failed",
         "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
@@ -730,12 +729,12 @@
       },
       "response": {
         "http_status": 0,
-        "latency_ms": 5699.62,
+        "latency_ms": 5892.03,
         "response_sha256": null,
         "rate_limit_observed": false,
         "attempts": 1
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "request_failed",
         "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
@@ -783,7 +782,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "missing_input",
         "message": "4h requires closed 15m input",
@@ -831,7 +830,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "missing_input",
         "message": "1w requires closed 1d input",
@@ -893,12 +892,12 @@
       },
       "response": {
         "http_status": 0,
-        "latency_ms": 5677.71,
+        "latency_ms": 5718.62,
         "response_sha256": null,
         "rate_limit_observed": false,
         "attempts": 1
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "request_failed",
         "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
@@ -960,16 +959,16 @@
       },
       "response": {
         "http_status": 0,
-        "latency_ms": 6091.59,
+        "latency_ms": 5885.17,
         "response_sha256": null,
         "rate_limit_observed": false,
         "attempts": 1
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "request_failed",
-        "message": "RemoteDisconnected: Remote end closed connection without response",
-        "redacted_raw": "RemoteDisconnected: Remote end closed connection without response",
+        "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "redacted_raw": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
         "next_step": "inspect the provider receipt and keep the cell blocked"
       }
     },
@@ -1027,16 +1026,16 @@
       },
       "response": {
         "http_status": 0,
-        "latency_ms": 5004.25,
+        "latency_ms": 6333.05,
         "response_sha256": null,
         "rate_limit_observed": false,
         "attempts": 1
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "request_failed",
-        "message": "URLError: <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)>",
-        "redacted_raw": "URLError: <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)>",
+        "message": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
+        "redacted_raw": "SSLError: [SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2657)",
         "next_step": "inspect the provider receipt and keep the cell blocked"
       }
     },
@@ -1080,7 +1079,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "missing_input",
         "message": "4h requires closed 15m input",
@@ -1128,7 +1127,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": {
         "code": "missing_input",
         "message": "1w requires closed 1d input",
@@ -1147,17 +1146,17 @@
       "calendar_id": "us_equities",
       "timezone": "America/New_York",
       "timeframe": "15m",
-      "status": "unavailable",
-      "status_reason": "request_failed",
-      "row_count": 0,
-      "latest_closed_timestamp": null,
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 131,
+      "latest_closed_timestamp": "2026-08-31T20:00:00+00:00",
       "volume_semantics": "traded",
       "volume_scope": "provider_reported",
       "volume_completeness": "unknown",
-      "is_derived": null,
+      "is_derived": false,
       "transform": null,
       "quality": {
-        "status": "unavailable",
+        "status": "ready",
         "invalid_rows": 0,
         "duplicates": 0,
         "out_of_order": 0,
@@ -1185,19 +1184,21 @@
         "timeframe": "15m"
       },
       "response": {
-        "http_status": 0,
-        "latency_ms": 5001.66,
-        "response_sha256": null,
+        "http_status": 200,
+        "latency_ms": 1340.28,
+        "response_sha256": "8b00ba1ca3579adb14c4764fc6896fda57333ec5c07422832ba4d2aac4cf3254",
         "rate_limit_observed": false,
-        "attempts": 1
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "AAPL",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "NasdaqGS",
+          "currency": "USD"
+        }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
-      "error": {
-        "code": "request_failed",
-        "message": "URLError: <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)>",
-        "redacted_raw": "URLError: <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)>",
-        "next_step": "inspect the provider receipt and keep the cell blocked"
-      }
+      "observed_at": "2026-09-01T04:36:42+00:00",
+      "error": null
     },
     {
       "instrument_id": "us_stock:AAPL",
@@ -1249,8 +1250,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 1241.65,
-        "response_sha256": "79eeda3bc4d565e0ea9a2292b2968206ad44d89fd05ce8ec08d7d1c329b01a08",
+        "latency_ms": 1288.69,
+        "response_sha256": "b426ec315ce35b91dabbfec37a02b81f1af45ed9d6f0cbd084f7b557f5c47cd8",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -1261,7 +1262,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -1314,8 +1315,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 1255.0,
-        "response_sha256": "5f67e49e7b40aed35d55ddeaa01b526f4c060125ca0efe81f7c24f12f08fab01",
+        "latency_ms": 1240.7,
+        "response_sha256": "bd80b17596953b23e2bebe09d6bcf5da9c1b58ca24fd4978850c98d8288ca12a",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -1326,7 +1327,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -1341,20 +1342,31 @@
       "timezone": "America/New_York",
       "timeframe": "4h",
       "status": "blocked",
-      "status_reason": "missing_input",
-      "row_count": 0,
-      "latest_closed_timestamp": null,
+      "status_reason": "transform_incomplete",
+      "row_count": 5,
+      "latest_closed_timestamp": "2026-08-31T13:30:00+00:00",
       "volume_semantics": "traded",
       "volume_scope": "provider_reported",
       "volume_completeness": "unknown",
-      "is_derived": null,
-      "transform": null,
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "15m",
+        "output_timeframe": "4h",
+        "aggregation_rule_version": "us_regular_fixed_4h_v1",
+        "input_start": "2026-08-25T13:30:00+00:00",
+        "input_end": "2026-08-31T20:00:00+00:00",
+        "input_hash": "0d8962a705483b1d57081db86788664af0eda8b0c07f515203b1fac9f5d8c22e",
+        "output_hash": "997911d105f9737e9de3c0f8266f36928708eaed2c9058d0e229dca280d267aa",
+        "bucket_anchor": "09:30",
+        "partial_bucket_policy": "drop_and_record",
+        "partial_bucket_count": 5
+      },
       "quality": {
-        "status": "unavailable",
+        "status": "ready",
         "invalid_rows": 0,
         "duplicates": 0,
         "out_of_order": 0,
-        "gaps": 0,
+        "gaps": 5,
         "forming_rows": 0,
         "missing_volume": 0
       },
@@ -1369,13 +1381,8 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
-      "error": {
-        "code": "missing_input",
-        "message": "4h requires closed 15m input",
-        "redacted_raw": "4h requires closed 15m input",
-        "next_step": "inspect the provider receipt and keep the cell blocked"
-      }
+      "observed_at": "2026-09-01T04:36:42+00:00",
+      "error": null
     },
     {
       "instrument_id": "us_stock:AAPL",
@@ -1388,8 +1395,8 @@
       "calendar_id": "us_equities",
       "timezone": "America/New_York",
       "timeframe": "1w",
-      "status": "partial",
-      "status_reason": "entitlement_unverified",
+      "status": "blocked",
+      "status_reason": "transform_incomplete",
       "row_count": 4,
       "latest_closed_timestamp": "2026-08-28T00:00:00+00:00",
       "volume_semantics": "traded",
@@ -1428,7 +1435,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -1481,8 +1488,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 1007.57,
-        "response_sha256": "24db02d696eee9d4237da55dc2537bea00ff52cd751ca8182943d860561a45d5",
+        "latency_ms": 1494.51,
+        "response_sha256": "d35b55c4412498d03cde498cda35d241accd1de8ec6aaa20a7a77b24e9e854e8",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -1493,7 +1500,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -1507,17 +1514,17 @@
       "calendar_id": "us_equities",
       "timezone": "America/New_York",
       "timeframe": "1h",
-      "status": "unavailable",
-      "status_reason": "request_failed",
-      "row_count": 0,
-      "latest_closed_timestamp": null,
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 36,
+      "latest_closed_timestamp": "2026-08-31T20:00:00+00:00",
       "volume_semantics": "traded",
       "volume_scope": "provider_reported",
       "volume_completeness": "unknown",
-      "is_derived": null,
+      "is_derived": false,
       "transform": null,
       "quality": {
-        "status": "unavailable",
+        "status": "ready",
         "invalid_rows": 0,
         "duplicates": 0,
         "out_of_order": 0,
@@ -1545,19 +1552,21 @@
         "timeframe": "1h"
       },
       "response": {
-        "http_status": 0,
-        "latency_ms": 5001.64,
-        "response_sha256": null,
+        "http_status": 200,
+        "latency_ms": 1249.92,
+        "response_sha256": "00212692539c35c5ba6f6bb37df4ec7720d592089c7af5e210486294c74be607",
         "rate_limit_observed": false,
-        "attempts": 1
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "NVDA",
+          "exchange_timezone": "America/New_York",
+          "exchange_name": "NasdaqGS",
+          "currency": "USD"
+        }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
-      "error": {
-        "code": "request_failed",
-        "message": "URLError: <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)>",
-        "redacted_raw": "URLError: <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)>",
-        "next_step": "inspect the provider receipt and keep the cell blocked"
-      }
+      "observed_at": "2026-09-01T04:36:42+00:00",
+      "error": null
     },
     {
       "instrument_id": "us_stock:NVDA",
@@ -1609,8 +1618,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 1276.35,
-        "response_sha256": "a827139935eb515785d7b40359a0a727975d97eb04d1cf1e3fe28d5952c57831",
+        "latency_ms": 1268.1,
+        "response_sha256": "60caebc8fa325b344d03545fe2d6f2aac151a2d0921e6c54f1f69cb666c63a1b",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -1621,7 +1630,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -1635,8 +1644,8 @@
       "calendar_id": "us_equities",
       "timezone": "America/New_York",
       "timeframe": "4h",
-      "status": "partial",
-      "status_reason": "entitlement_unverified",
+      "status": "blocked",
+      "status_reason": "transform_incomplete",
       "row_count": 5,
       "latest_closed_timestamp": "2026-08-31T13:30:00+00:00",
       "volume_semantics": "traded",
@@ -1675,7 +1684,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -1689,8 +1698,8 @@
       "calendar_id": "us_equities",
       "timezone": "America/New_York",
       "timeframe": "1w",
-      "status": "partial",
-      "status_reason": "entitlement_unverified",
+      "status": "blocked",
+      "status_reason": "transform_incomplete",
       "row_count": 4,
       "latest_closed_timestamp": "2026-08-28T00:00:00+00:00",
       "volume_semantics": "traded",
@@ -1729,7 +1738,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -1782,8 +1791,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 1361.79,
-        "response_sha256": "e034d882777027cd058b8c5075212ecff8173375dc95f934db98ade62a1dc6d4",
+        "latency_ms": 1096.1,
+        "response_sha256": "fe3fde357242e9c57ee7c3ba47b7ffb838fa175e42f2d2ba2e158e918697dc64",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -1794,7 +1803,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -1847,8 +1856,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 897.0,
-        "response_sha256": "8336b87768141314bbd52bda1461b01217d1d839b4bc4afd93367c24596e6898",
+        "latency_ms": 1269.13,
+        "response_sha256": "ed6aede1448ca291b779cd80cc461ff28c50e6438d832892da81050ad9455284",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -1859,7 +1868,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -1912,8 +1921,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 1281.37,
-        "response_sha256": "0533cc4fcacd6975fd8faec6f9199d9d0923eed75d6f7a9521b4f66e7955aefa",
+        "latency_ms": 1280.0,
+        "response_sha256": "22ae5b5c281dd3e23b22b953616cfbe0685ff6ac74f3a6b3515c77f9f96d7c05",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -1924,7 +1933,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -1938,8 +1947,8 @@
       "calendar_id": "us_equities",
       "timezone": "America/New_York",
       "timeframe": "4h",
-      "status": "partial",
-      "status_reason": "entitlement_unverified",
+      "status": "blocked",
+      "status_reason": "transform_incomplete",
       "row_count": 5,
       "latest_closed_timestamp": "2026-08-31T13:30:00+00:00",
       "volume_semantics": "traded",
@@ -1978,7 +1987,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -1992,8 +2001,8 @@
       "calendar_id": "us_equities",
       "timezone": "America/New_York",
       "timeframe": "1w",
-      "status": "partial",
-      "status_reason": "entitlement_unverified",
+      "status": "blocked",
+      "status_reason": "transform_incomplete",
       "row_count": 4,
       "latest_closed_timestamp": "2026-08-28T00:00:00+00:00",
       "volume_semantics": "traded",
@@ -2032,7 +2041,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -2085,8 +2094,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 1313.13,
-        "response_sha256": "894968cf21152ef1411fde89edbb66df7d1441488c7199109f6166741c583bac",
+        "latency_ms": 1000.38,
+        "response_sha256": "a36318d3252bd026e52f50fb1804ca9c3dd0641f55635d7c8d977bde72cea192",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -2097,7 +2106,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -2150,8 +2159,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 879.91,
-        "response_sha256": "6975b09f6e3837b5f5682eb82912a1a89377f5c014a73c6e5c1f9eabe258bb63",
+        "latency_ms": 910.23,
+        "response_sha256": "fb5daf24065e0a75095a74e14b69995b22cf7f9f35a1bf0c2459cce44f9bfd2c",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -2162,7 +2171,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -2215,8 +2224,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 1177.91,
-        "response_sha256": "d065453968950cf148f76e5ba550ddea52c3a879133d53463ea3bddc5423c94a",
+        "latency_ms": 1158.86,
+        "response_sha256": "99c9384922ff5a72a61720f898e03d980171a26fb52a89707e59ea2da770c3be",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -2227,7 +2236,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -2241,8 +2250,8 @@
       "calendar_id": "us_equities",
       "timezone": "America/New_York",
       "timeframe": "4h",
-      "status": "partial",
-      "status_reason": "entitlement_unverified",
+      "status": "blocked",
+      "status_reason": "transform_incomplete",
       "row_count": 5,
       "latest_closed_timestamp": "2026-08-31T13:30:00+00:00",
       "volume_semantics": "not_applicable",
@@ -2281,7 +2290,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -2295,8 +2304,8 @@
       "calendar_id": "us_equities",
       "timezone": "America/New_York",
       "timeframe": "1w",
-      "status": "partial",
-      "status_reason": "entitlement_unverified",
+      "status": "blocked",
+      "status_reason": "transform_incomplete",
       "row_count": 4,
       "latest_closed_timestamp": "2026-08-28T00:00:00+00:00",
       "volume_semantics": "not_applicable",
@@ -2335,7 +2344,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -2351,8 +2360,8 @@
       "timeframe": "15m",
       "status": "partial",
       "status_reason": "entitlement_unverified",
-      "row_count": 401,
-      "latest_closed_timestamp": "2026-09-01T04:00:00+00:00",
+      "row_count": 402,
+      "latest_closed_timestamp": "2026-09-01T04:15:00+00:00",
       "volume_semantics": "traded",
       "volume_scope": "provider_reported",
       "volume_completeness": "unknown",
@@ -2388,8 +2397,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 1584.38,
-        "response_sha256": "884f64711e2f75b6bcd598f19e41d3915d98c7f2d005ac5816513f1b3bcb66a7",
+        "latency_ms": 1626.71,
+        "response_sha256": "fcb18ae3dca0018c2c599d58d51ccbb6b7119ae39ab1467f1616088fe19cfaf1",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -2400,7 +2409,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -2453,8 +2462,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 976.71,
-        "response_sha256": "103dbe4a5a225ba9bed4a1e7619d99d8baf3b04799d5070987abc669b8970d44",
+        "latency_ms": 905.11,
+        "response_sha256": "958d1a62329ca7946c5815b00d361e66a300199da78b2ea78b0d0b838eb2d72c",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -2465,7 +2474,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -2479,22 +2488,22 @@
       "calendar_id": "crypto_24x7",
       "timezone": "UTC",
       "timeframe": "1d",
-      "status": "unavailable",
-      "status_reason": "request_failed",
-      "row_count": 0,
-      "latest_closed_timestamp": null,
+      "status": "blocked",
+      "status_reason": "quality_invalid",
+      "row_count": 30,
+      "latest_closed_timestamp": "2026-08-30T00:00:00+00:00",
       "volume_semantics": "traded",
       "volume_scope": "provider_reported",
       "volume_completeness": "unknown",
-      "is_derived": null,
+      "is_derived": false,
       "transform": null,
       "quality": {
-        "status": "unavailable",
-        "invalid_rows": 0,
+        "status": "partial",
+        "invalid_rows": 1,
         "duplicates": 0,
         "out_of_order": 0,
         "gaps": 0,
-        "forming_rows": 0,
+        "forming_rows": 1,
         "missing_volume": 0
       },
       "entitlement": {
@@ -2517,19 +2526,21 @@
         "timeframe": "1d"
       },
       "response": {
-        "http_status": 0,
-        "latency_ms": 5002.04,
-        "response_sha256": null,
+        "http_status": 200,
+        "latency_ms": 1239.04,
+        "response_sha256": "65ea63dccb6a38d90eb2f468e37f1b0b406ecb43eaeabea4b3f9f5690886c490",
         "rate_limit_observed": false,
-        "attempts": 1
+        "attempts": 1,
+        "provider_metadata": {
+          "provider": "yahoo_finance",
+          "provider_symbol": "BTC-USD",
+          "exchange_timezone": "UTC",
+          "exchange_name": "CCC",
+          "currency": "USD"
+        }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
-      "error": {
-        "code": "request_failed",
-        "message": "URLError: <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)>",
-        "redacted_raw": "URLError: <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)>",
-        "next_step": "inspect the provider receipt and keep the cell blocked"
-      }
+      "observed_at": "2026-09-01T04:36:42+00:00",
+      "error": null
     },
     {
       "instrument_id": "crypto:BTC",
@@ -2542,8 +2553,8 @@
       "calendar_id": "crypto_24x7",
       "timezone": "UTC",
       "timeframe": "4h",
-      "status": "partial",
-      "status_reason": "entitlement_unverified",
+      "status": "blocked",
+      "status_reason": "transform_incomplete",
       "row_count": 25,
       "latest_closed_timestamp": "2026-09-01T00:00:00+00:00",
       "volume_semantics": "traded",
@@ -2555,8 +2566,8 @@
         "output_timeframe": "4h",
         "aggregation_rule_version": "utc_fixed_4h_v1",
         "input_start": "2026-08-28T00:00:00+00:00",
-        "input_end": "2026-09-01T04:00:00+00:00",
-        "input_hash": "dc87e10c620c7802f0a34d99ee632579d72c5dbcf83c3a6efea260360a4fbc43",
+        "input_end": "2026-09-01T04:15:00+00:00",
+        "input_hash": "447c259b253baf9c24edf046d90f8b7d56f4b7810077d28b64c231032d418376",
         "output_hash": "169d21c49d75c7458956164ff28793d03c629d13eeb42b4aa3633609f19c5a5e",
         "bucket_anchor": "00:00",
         "partial_bucket_policy": "drop_and_record",
@@ -2582,7 +2593,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -2596,17 +2607,28 @@
       "calendar_id": "crypto_24x7",
       "timezone": "UTC",
       "timeframe": "1w",
-      "status": "blocked",
-      "status_reason": "missing_input",
-      "row_count": 0,
-      "latest_closed_timestamp": null,
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 5,
+      "latest_closed_timestamp": "2026-08-30T00:00:00+00:00",
       "volume_semantics": "traded",
       "volume_scope": "provider_reported",
       "volume_completeness": "unknown",
-      "is_derived": null,
-      "transform": null,
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "1d",
+        "output_timeframe": "1w",
+        "aggregation_rule_version": "completed_local_calendar_week_v1",
+        "input_start": "2026-08-01T00:00:00+00:00",
+        "input_end": "2026-08-30T00:00:00+00:00",
+        "input_hash": "5f54320949bd7ac365db05597d46fbc018b4f6d5e1188f7fbe1e94acb8c8f568",
+        "output_hash": "f44333854bd53321ed83d89ba7249f7ac4bcfe4fbbe70aa61fd00b45b8987441",
+        "bucket_anchor": "local_week",
+        "partial_bucket_policy": "defer_until_closed",
+        "partial_bucket_count": 0
+      },
       "quality": {
-        "status": "unavailable",
+        "status": "ready",
         "invalid_rows": 0,
         "duplicates": 0,
         "out_of_order": 0,
@@ -2625,13 +2647,8 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
-      "error": {
-        "code": "missing_input",
-        "message": "1w requires closed 1d input",
-        "redacted_raw": "1w requires closed 1d input",
-        "next_step": "inspect the provider receipt and keep the cell blocked"
-      }
+      "observed_at": "2026-09-01T04:36:42+00:00",
+      "error": null
     },
     {
       "instrument_id": "commodity:GOLD",
@@ -2646,8 +2663,8 @@
       "timeframe": "15m",
       "status": "blocked",
       "status_reason": "quality_invalid",
-      "row_count": 273,
-      "latest_closed_timestamp": "2026-09-01T04:00:00+00:00",
+      "row_count": 274,
+      "latest_closed_timestamp": "2026-09-01T04:15:00+00:00",
       "volume_semantics": "traded",
       "volume_scope": "provider_reported",
       "volume_completeness": "unknown",
@@ -2659,7 +2676,7 @@
         "duplicates": 0,
         "out_of_order": 0,
         "gaps": 0,
-        "forming_rows": 2,
+        "forming_rows": 1,
         "missing_volume": 0
       },
       "entitlement": {
@@ -2683,8 +2700,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 951.07,
-        "response_sha256": "d80ccee4d530ce093a1ff81f5b98ee775c1680e330784804c3cbf4909e52499b",
+        "latency_ms": 1602.1,
+        "response_sha256": "23a7503242a40aec45c18aeef5ad5dc4d11198fc9e710f645c508285d222372c",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -2695,7 +2712,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -2748,8 +2765,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 864.17,
-        "response_sha256": "0282f250c0ad496a4ff381fe8371fe01605b145068ac03934a6c75d66d66aa04",
+        "latency_ms": 1246.98,
+        "response_sha256": "6da188ddf6c63e58f9ff2f4eaed3a2ad30cc6f6766adb55bcb7bbf5cc2ad0358",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -2760,7 +2777,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -2813,8 +2830,8 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 1397.21,
-        "response_sha256": "9189c1f7ce34d81f1051083984f9c409ef6855c58d24b0bdb6d30d4548508ce2",
+        "latency_ms": 900.54,
+        "response_sha256": "6abda7b715c025cde9ea69f5e74848f953750ca3805715ef0ae5d7a967f26446",
         "rate_limit_observed": false,
         "attempts": 1,
         "provider_metadata": {
@@ -2825,7 +2842,7 @@
           "currency": "USD"
         }
       },
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -2839,8 +2856,8 @@
       "calendar_id": "us_futures",
       "timezone": "America/Chicago",
       "timeframe": "4h",
-      "status": "partial",
-      "status_reason": "entitlement_unverified",
+      "status": "blocked",
+      "status_reason": "transform_incomplete",
       "row_count": 14,
       "latest_closed_timestamp": "2026-08-31T23:00:00+00:00",
       "volume_semantics": "traded",
@@ -2852,8 +2869,8 @@
         "output_timeframe": "4h",
         "aggregation_rule_version": "us_futures_utc_fixed_4h_v1",
         "input_start": "2026-08-27T04:00:00+00:00",
-        "input_end": "2026-09-01T04:00:00+00:00",
-        "input_hash": "c0c66e77aa8de7dcc4247d20d778bb5f94a9803ce652d960d2706e34a18c1fba",
+        "input_end": "2026-09-01T04:15:00+00:00",
+        "input_hash": "608d98c762c43b2cc5f556a0075159b6c0b5d10fea3305ce8caac987c62b5473",
         "output_hash": "2d52bb7e08af051f919832bb3a4decca45051de52b117a4a99ecf5c06ca5ec37",
         "bucket_anchor": "18:00",
         "partial_bucket_policy": "drop_and_record",
@@ -2879,7 +2896,7 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     },
     {
@@ -2907,7 +2924,7 @@
         "aggregation_rule_version": "completed_local_calendar_week_v1",
         "input_start": "2026-08-03T04:00:00+00:00",
         "input_end": "2026-09-01T04:00:00+00:00",
-        "input_hash": "a1371983b1112aba88acf9092123f9ccb53a42d18478a3d594de4c1554b1d3c5",
+        "input_hash": "184a97c45f34e148de010016176042c1755d13cfcbf7654ced45b70c6b928dfc",
         "output_hash": "6b90eeec4a93bba2421fff7fbcd538b2f396cbc855b40c14e6afd85ff64ec54e",
         "bucket_anchor": "local_week",
         "partial_bucket_policy": "defer_until_closed",
@@ -2933,11 +2950,20 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:24:02+00:00",
+      "observed_at": "2026-09-01T04:36:42+00:00",
       "error": null
     }
   ],
   "idempotency": [
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:AAPL",
+      "timeframe": "15m",
+      "first_inserted": 131,
+      "second_inserted": 0,
+      "row_count_after_rerun": 131,
+      "duplicate_keys": 0
+    },
     {
       "source_id": "yahoo_chart",
       "instrument_id": "us_stock:AAPL",
@@ -2959,6 +2985,15 @@
     {
       "source_id": "yahoo_chart",
       "instrument_id": "us_stock:AAPL",
+      "timeframe": "4h",
+      "first_inserted": 5,
+      "second_inserted": 0,
+      "row_count_after_rerun": 5,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:AAPL",
       "timeframe": "1w",
       "first_inserted": 4,
       "second_inserted": 0,
@@ -2972,6 +3007,15 @@
       "first_inserted": 131,
       "second_inserted": 0,
       "row_count_after_rerun": 131,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "us_stock:NVDA",
+      "timeframe": "1h",
+      "first_inserted": 36,
+      "second_inserted": 0,
+      "row_count_after_rerun": 36,
       "duplicate_keys": 0
     },
     {
@@ -3095,9 +3139,9 @@
       "source_id": "yahoo_chart",
       "instrument_id": "crypto:BTC",
       "timeframe": "15m",
-      "first_inserted": 401,
+      "first_inserted": 402,
       "second_inserted": 0,
-      "row_count_after_rerun": 401,
+      "row_count_after_rerun": 402,
       "duplicate_keys": 0
     },
     {
@@ -3112,6 +3156,15 @@
     {
       "source_id": "yahoo_chart",
       "instrument_id": "crypto:BTC",
+      "timeframe": "1d",
+      "first_inserted": 30,
+      "second_inserted": 0,
+      "row_count_after_rerun": 30,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
+      "instrument_id": "crypto:BTC",
       "timeframe": "4h",
       "first_inserted": 25,
       "second_inserted": 0,
@@ -3120,11 +3173,20 @@
     },
     {
       "source_id": "yahoo_chart",
+      "instrument_id": "crypto:BTC",
+      "timeframe": "1w",
+      "first_inserted": 5,
+      "second_inserted": 0,
+      "row_count_after_rerun": 5,
+      "duplicate_keys": 0
+    },
+    {
+      "source_id": "yahoo_chart",
       "instrument_id": "commodity:GOLD",
       "timeframe": "15m",
-      "first_inserted": 273,
+      "first_inserted": 274,
       "second_inserted": 0,
-      "row_count_after_rerun": 273,
+      "row_count_after_rerun": 274,
       "duplicate_keys": 0
     },
     {
