@@ -38,6 +38,7 @@ _settings: Settings | None = None
 _providers: dict[AssetClass, Provider] = {}
 _live_providers: dict[str, Provider] = {}
 _adapters: dict[str, MarketDataPort] = {}
+_FREE_PROVIDER_TIMEOUT_SECONDS = 15.0
 
 
 def init(settings: Settings | None = None) -> None:
@@ -69,7 +70,7 @@ def init(settings: Settings | None = None) -> None:
     register_adapter(
         ProviderBackedMarketDataAdapter(
             source_manifest("yahoo_finance_free", AssetClass.US_STOCK),
-            USFreeProvider(timeout=s.request_timeout),
+            USFreeProvider(timeout=min(s.request_timeout, _FREE_PROVIDER_TIMEOUT_SECONDS)),
         )
     )
     register_adapter(
@@ -186,7 +187,7 @@ def init(settings: Settings | None = None) -> None:
     register_adapter(
         ProviderBackedMarketDataAdapter(
             source_manifest("tencent_stock_free", AssetClass.A_SHARE),
-            AShareFreeProvider(timeout=s.request_timeout),
+            AShareFreeProvider(timeout=min(s.request_timeout, _FREE_PROVIDER_TIMEOUT_SECONDS)),
         )
     )
 

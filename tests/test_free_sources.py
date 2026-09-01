@@ -269,14 +269,21 @@ def test_registry_exposes_free_adapters_without_tokens(tmp_path: Path) -> None:
     from kline.config import Settings
     from kline.registry import get_adapter_for_source, init
 
-    init(Settings(db_path=str(tmp_path / "free-adapters.db"), load_entrypoint_adapters=False))
-    assert get_adapter_for_source("tencent_stock_free", AssetClass.A_SHARE).supported_timeframes()
-    assert get_adapter_for_source(
-        "yahoo_finance_free", AssetClass.US_STOCK
-    ).supported_timeframes() == [
+    init(
+        Settings(
+            db_path=str(tmp_path / "free-adapters.db"),
+            load_entrypoint_adapters=False,
+            request_timeout=60,
+        )
+    )
+    ashare_adapter = get_adapter_for_source("tencent_stock_free", AssetClass.A_SHARE)
+    us_adapter = get_adapter_for_source("yahoo_finance_free", AssetClass.US_STOCK)
+    assert ashare_adapter.supported_timeframes()
+    assert us_adapter.supported_timeframes() == [
         Timeframe.MIN_15,
         Timeframe.HOUR_1,
         Timeframe.HOUR_4,
         Timeframe.DAY,
         Timeframe.WEEK,
     ]
+    assert ashare_adapter._provider._timeout == us_adapter._provider._timeout == 15.0
