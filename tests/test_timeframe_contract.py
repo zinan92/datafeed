@@ -107,6 +107,23 @@ async def test_yahoo_sync_history_does_not_block_cell_timeout(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_yahoo_sync_repair_does_not_block_cell_timeout(monkeypatch):
+    class RepairHangingTicker:
+        def history(self, **kwargs):
+            if kwargs.get("repair"):
+                time.sleep(0.2)
+                return _repaired_daily_frame()
+            return _broken_daily_frame()
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: RepairHangingTicker())
+    provider = USStockProvider()
+    started = time.perf_counter()
+    with pytest.raises(asyncio.TimeoutError):
+        await asyncio.wait_for(provider.fetch("AAPL", Timeframe.DAY), timeout=0.02)
+    assert time.perf_counter() - started < 0.1
+
+
+@pytest.mark.asyncio
 async def test_yahoo_weekly_excludes_current_partial_week(monkeypatch):
     rows = [
         ("2026-08-10", 100, 105, 99, 104),
