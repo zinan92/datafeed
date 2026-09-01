@@ -3,14 +3,17 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import httpx
 import pytest
 
 from kline.free_source_profile import apply_free_source_profile
 from kline.ingestion import IngestionError, IngestionOrchestrator, IngestionPlan
-from kline.models import Candle, Timeframe, TimeframeTransform
+from kline.models import AssetClass, Candle, Timeframe, TimeframeTransform
 from kline.mvp_manifest import load_manifest
-from kline.ports import FetchReceipt
+from kline.ports import FetchReceipt, ProviderBackedMarketDataAdapter
 from kline.providers.base import ProviderError
+from kline.providers.free_ashare import AShareFreeProvider
+from kline.provenance import source_manifest
 from kline.storage import CandleSeriesKey
 from kline.store import KlineStore
 
@@ -207,6 +210,191 @@ async def test_run_once_rate_budget_blocks_remaining_required_cells(tmp_path: Pa
 
 
 @pytest.mark.asyncio
+async def test_run_once_accepts_coarse_first_phase_selection(tmp_path: Path) -> None:
+    manifest = load_manifest(MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "phase-selection.db"))
+    adapter = FakeCryptoAdapter()
+
+    receipt = await IngestionOrchestrator(
+        store, adapter_resolver=lambda _instrument: adapter
+    ).run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="run-coarse-phase",
+            now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+            fetch_limit=10,
+            instrument_ids=("CRYPTO.PERP.BTC",),
+            timeframes=("1d", "1w"),
+            request_interval_seconds=0.001,
+        )
+    )
+
+    assert [cell.timeframe for cell in receipt.requested_cells] == ["1d", "1w"]
+    assert [cell.status for cell in receipt.requested_cells] == ["ready", "ready"]
+    assert receipt.row_counts["promoted_candles"] == 2
+
+
+@pytest.mark.asyncio
+async def test_run_once_preserves_retry_attempts_and_latency_metrics(tmp_path: Path) -> None:
+    manifest = load_manifest(MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "attempt-metrics.db"))
+
+    class RetryingAdapter:
+        def __init__(self) -> None:
+            self.calls = 0
+            self.last_attempts: list[dict[str, object]] = []
+
+        async def fetch_candles_with_receipt(
+            self,
+            _ticker: str,
+            _timeframe: Timeframe,
+            *,
+            start: str | None,
+            end: str,
+            limit: int,
+        ) -> FetchReceipt:
+            del start, end, limit
+            self.calls += 1
+            if self.calls == 1:
+                self.last_attempts = [
+                    {"source": "fake", "status": "error", "http_status": 429, "latency_ms": 1.0}
+                ]
+                raise ProviderError("HTTP 429 rate limit")
+            self.last_attempts = [
+                {"source": "fake", "status": "success", "http_status": 200, "latency_ms": 2.0}
+            ]
+            return FetchReceipt(
+                candles=[
+                    Candle(
+                        timestamp="2026-08-31T00:00:00+00:00",
+                        open=100,
+                        high=102,
+                        low=99,
+                        close=101,
+                        volume=10,
+                    )
+                ],
+                timeframe_transform=None,
+                source_identity={"selected_source": "fake"},
+                raw_response={"http_status": 200, "row_count": 1},
+                attempts=tuple(self.last_attempts),
+            )
+
+    adapter = RetryingAdapter()
+    receipt = await IngestionOrchestrator(
+        store, adapter_resolver=lambda _instrument: adapter
+    ).run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="run-attempt-metrics",
+            now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+            instrument_ids=("CRYPTO.PERP.BTC",),
+            timeframes=("1d",),
+            max_retries=1,
+            retry_backoff_seconds=0.001,
+        )
+    )
+
+    assert receipt.status == "success"
+    attempt = receipt.source_attempts[0]
+    assert attempt["latency_ms"] >= 0
+    assert [item["retry_number"] for item in attempt["provider_attempts"]] == [1, 2]
+    observation = store.latest_mvp_source_observations()[0]
+    assert observation["latency_ms"] >= 0
+    assert len(observation["policy"]["provider_attempts"]) == 2
+
+
+@pytest.mark.asyncio
+async def test_run_once_persists_failed_provider_attempts(tmp_path: Path) -> None:
+    manifest = apply_free_source_profile(load_manifest(MANIFEST_PATH))
+    store = KlineStore(str(tmp_path / "failed-attempt-metrics.db"))
+
+    class AlwaysFailAdapter:
+        def __init__(self) -> None:
+            self.calls = 0
+            self.last_attempts: list[dict[str, object]] = []
+
+        async def fetch_candles_with_receipt(
+            self,
+            _ticker: str,
+            _timeframe: Timeframe,
+            *,
+            start: str | None,
+            end: str,
+            limit: int,
+        ) -> FetchReceipt:
+            del start, end, limit
+            self.calls += 1
+            self.last_attempts = [
+                {
+                    "source": "fake",
+                    "status": "error",
+                    "http_status": 503,
+                    "latency_ms": float(self.calls),
+                }
+            ]
+            raise ProviderError("HTTP 503 service unavailable")
+
+    adapter = AlwaysFailAdapter()
+    receipt = await IngestionOrchestrator(
+        store, adapter_resolver=lambda _instrument: adapter
+    ).run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="run-failed-attempt-metrics",
+            now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+            instrument_ids=("CN.A.600519",),
+            timeframes=("1d",),
+            max_retries=1,
+            retry_backoff_seconds=0.001,
+        )
+    )
+
+    assert receipt.status == "partial"
+    assert len(receipt.source_attempts[0]["provider_attempts"]) == 2
+    observation = store.latest_mvp_source_observations()[0]
+    assert observation["success"] is False
+    assert len(observation["policy"]["provider_attempts"]) == 2
+
+
+@pytest.mark.asyncio
+async def test_run_once_persists_failed_attempts_through_provider_adapter(
+    tmp_path: Path,
+) -> None:
+    manifest = apply_free_source_profile(load_manifest(MANIFEST_PATH))
+    store = KlineStore(str(tmp_path / "wrapped-failed-attempts.db"))
+
+    def handler(request):
+        return httpx.Response(503, request=request)
+
+    provider = AShareFreeProvider(transport=httpx.MockTransport(handler))
+    adapter = ProviderBackedMarketDataAdapter(
+        source_manifest("tencent_stock_free", AssetClass.A_SHARE),
+        provider,
+    )
+    receipt = await IngestionOrchestrator(
+        store, adapter_resolver=lambda _instrument: adapter
+    ).run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="run-wrapped-failed-attempts",
+            now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+            instrument_ids=("CN.A.600519",),
+            timeframes=("1h",),
+            max_retries=0,
+        )
+    )
+
+    assert receipt.status == "partial"
+    assert [item["source"] for item in receipt.source_attempts[0]["provider_attempts"]] == [
+        "tencent",
+        "tonghuashun",
+    ]
+    observation = store.latest_mvp_source_observations()[0]
+    assert len(observation["policy"]["provider_attempts"]) == 2
+
+
+@pytest.mark.asyncio
 async def test_intraday_source_failure_still_persists_daily_and_weekly_data(
     tmp_path: Path,
 ) -> None:
@@ -266,7 +454,9 @@ async def test_intraday_source_failure_still_persists_daily_and_weekly_data(
             )
 
     adapter = IntradayUnavailableAdapter()
-    receipt = await IngestionOrchestrator(store, adapter_resolver=lambda _instrument: adapter).run_once(
+    receipt = await IngestionOrchestrator(
+        store, adapter_resolver=lambda _instrument: adapter
+    ).run_once(
         IngestionPlan(
             manifest=manifest,
             run_id="run-daily-weekly-fallback",

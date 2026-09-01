@@ -8,6 +8,7 @@ import pytest
 from kline.free_source_profile import apply_free_source_profile
 from kline.models import AssetClass, Candle, Timeframe
 from kline.mvp_manifest import load_manifest, manifest_digest
+from kline.ports import ProviderBackedMarketDataAdapter
 from kline.provenance import source_asset_class, source_manifest
 from kline.providers.base import ProviderError
 from kline.providers.free_ashare import (
@@ -78,6 +79,7 @@ async def test_free_a_share_provider_falls_back_to_tonghuashun() -> None:
     assert provider.source_identity["fallback_from"] == "tencent"
     assert provider.source_identity["adjustment_basis"] == "unverified"
     assert provider.source_identity["adjustment_basis_evidence"] == "tonghuashun_unverified"
+    assert [item["source"] for item in provider.last_attempts] == ["tencent", "tonghuashun"]
 
 
 @pytest.mark.asyncio
@@ -90,6 +92,22 @@ async def test_free_a_share_provider_reports_both_sources_failed() -> None:
         await provider.fetch("600519", Timeframe.HOUR_1, limit=10)
     assert "Tencent=" in str(error.value)
     assert "Tonghuashun=" in str(error.value)
+    assert [item["http_status"] for item in provider.last_attempts] == [503, 503]
+
+
+@pytest.mark.asyncio
+async def test_adapter_exposes_failed_provider_attempts() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(503, request=request)
+
+    provider = AShareFreeProvider(transport=httpx.MockTransport(handler))
+    adapter = ProviderBackedMarketDataAdapter(
+        source_manifest("tencent_stock_free", AssetClass.A_SHARE), provider
+    )
+    with pytest.raises(ProviderError):
+        await adapter.fetch_candles_with_receipt("600519", Timeframe.HOUR_1, limit=10)
+    assert [item["source"] for item in adapter.last_attempts] == ["tencent", "tonghuashun"]
+    assert [item["http_status"] for item in adapter.last_attempts] == [503, 503]
 
 
 @pytest.mark.asyncio
@@ -114,6 +132,8 @@ async def test_free_us_provider_uses_yahoo_and_declares_source(
     assert len(candles) == 1
     assert provider.source_identity["source_id"] == "yahoo_finance_free"
     assert provider.source_identity["selected_source"] == "yahoo"
+    assert provider.last_attempts[0]["source"] == "yahoo"
+    assert provider.last_attempts[0]["status"] == "success"
     assert provider.supported_timeframes() == [
         Timeframe.MIN_15,
         Timeframe.HOUR_1,
@@ -149,6 +169,7 @@ async def test_free_us_provider_falls_back_to_sina_daily(monkeypatch: pytest.Mon
     assert candles[0].close == 101
     assert provider.source_identity["selected_source"] == "sina"
     assert provider.source_identity["fallback_from"] == "yahoo"
+    assert [item["source"] for item in provider.last_attempts] == ["yahoo", "sina"]
 
 
 def test_free_source_manifests_are_registered_for_the_right_asset_classes() -> None:
