@@ -723,7 +723,11 @@ def derive_series(
             "partial_bucket_count": receipt.partial_bucket_count,
         }
     output = tuple(_from_mvp(row) for row in result.candles)
-    quality = QualityReport("ready" if output else "unavailable", gaps=len(result.partial_buckets))
+    # A current in-progress calendar week is intentionally deferred, not a
+    # broken transform.  In contrast, a dropped incomplete 4h bucket means
+    # the intraday derived cell is not complete enough for promotion.
+    gap_count = 0 if output_timeframe == "1w" else len(result.partial_buckets)
+    quality = QualityReport("ready" if output else "unavailable", gaps=gap_count)
     return DerivedSeries(output, transform, quality)
 
 

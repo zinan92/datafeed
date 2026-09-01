@@ -175,7 +175,8 @@ def _periods() -> Mapping[str, Any]:
         raise RuntimeError(
             "easy_tdx is not installed; use an isolated preflight environment"
         ) from exc
-    return {"15m": Period.MIN_15, "1h": Period.MIN_60, "1d": Period.DAILY, "1w": Period.WEEKLY}
+    # Weekly is deliberately derived from completed daily rows for the MVP.
+    return {"15m": Period.MIN_15, "1h": Period.MIN_60, "1d": Period.DAILY}
 
 
 def _client() -> EasyTdxClient:
@@ -215,7 +216,10 @@ def run_easy_tdx_preflight(
     idempotency: list[dict[str, Any]] = []
     for target in targets:
         base: dict[str, tuple[tuple[Bar, ...], Any]] = {}
-        for timeframe, period in active_periods.items():
+        for timeframe in ("15m", "1h", "1d"):
+            period = active_periods.get(timeframe)
+            if period is None:
+                continue
             if timeframe not in target.requested_timeframes:
                 continue
             started = time.monotonic()
@@ -283,7 +287,9 @@ def run_easy_tdx_preflight(
                 cell.as_dict(request=request, response=response, observed_at=_stamp(observed_at))
             )
 
-        for output_timeframe, input_timeframe in (("4h", "15m"),):
+        for output_timeframe, input_timeframe in (("4h", "15m"), ("1w", "1d")):
+            if output_timeframe not in target.requested_timeframes:
+                continue
             source = base.get(input_timeframe)
             if source is None or not source[0]:
                 cell = classify_status(

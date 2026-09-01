@@ -1,7 +1,7 @@
 {
   "schema_version": "provider-preflight-v1",
   "source_variant": "easy_tdx_mac",
-  "observed_at": "2026-09-01T04:36:31+00:00",
+  "observed_at": "2026-09-01T04:43:01+00:00",
   "target_count": 3,
   "targets": [
     {
@@ -130,11 +130,11 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 1623.6,
-        "response_sha256": "72072aa7fb2cc87c6ba5aa8f66e48d659972180780be785a9610feaf6c0d0a28",
+        "latency_ms": 2292.48,
+        "response_sha256": "68956c1a53a0b636c5b93177c008ce367ed7a9c66a159f0b4f9a6af4084745df",
         "row_count_raw": 800
       },
-      "observed_at": "2026-09-01T04:36:31+00:00",
+      "observed_at": "2026-09-01T04:43:01+00:00",
       "error": null
     },
     {
@@ -185,11 +185,11 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 450.1,
-        "response_sha256": "d4916e4e1ff4a1c49cb8d3d00b79b817f39be0ec5a3807ac4f1cda889d1a1418",
+        "latency_ms": 621.94,
+        "response_sha256": "6261808a9ecced506fd8edbc74e3f31fb23e8d36e8019ef0538a98f98078fb40",
         "row_count_raw": 800
       },
-      "observed_at": "2026-09-01T04:36:31+00:00",
+      "observed_at": "2026-09-01T04:43:01+00:00",
       "error": null
     },
     {
@@ -240,66 +240,11 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 444.45,
+        "latency_ms": 2313.96,
         "response_sha256": "3e87e9fc05c1915d341edbcb902bc75d68581af10246a1d313c5ecfeb0642477",
         "row_count_raw": 800
       },
-      "observed_at": "2026-09-01T04:36:31+00:00",
-      "error": null
-    },
-    {
-      "instrument_id": "a_share:600519",
-      "display_symbol": "600519",
-      "display_name": "贵州茅台",
-      "provider_symbol": "600519",
-      "asset_class": "a_share",
-      "source_id": "easy_tdx_mac",
-      "source_kind": "easy_tdx",
-      "calendar_id": "cn_a",
-      "timezone": "Asia/Shanghai",
-      "timeframe": "1w",
-      "status": "partial",
-      "status_reason": "entitlement_unverified",
-      "row_count": 798,
-      "latest_closed_timestamp": "2026-08-20T16:00:00+00:00",
-      "volume_semantics": "traded",
-      "volume_scope": "venue_reported",
-      "volume_completeness": "unknown",
-      "is_derived": false,
-      "transform": null,
-      "quality": {
-        "status": "ready",
-        "invalid_rows": 0,
-        "duplicates": 0,
-        "out_of_order": 0,
-        "gaps": 0,
-        "forming_rows": 2,
-        "missing_volume": 0
-      },
-      "entitlement": {
-        "status": "unverified",
-        "persistence_allowed": null,
-        "derived_allowed": null,
-        "non_display_allowed": null,
-        "valid_from": null,
-        "valid_to": null,
-        "evidence_ref": "operator_review_required"
-      },
-      "request": {
-        "provider": "easy_tdx_mac",
-        "provider_symbol": "600519",
-        "market": 1,
-        "period": "1w",
-        "count": 800,
-        "adjust": "none"
-      },
-      "response": {
-        "http_status": 200,
-        "latency_ms": 451.28,
-        "response_sha256": "03ee2075ae23208fbeda1b9511307c5a47f98b797a946755513e84c34b22121e",
-        "row_count_raw": 800
-      },
-      "observed_at": "2026-09-01T04:36:31+00:00",
+      "observed_at": "2026-09-01T04:43:01+00:00",
       "error": null
     },
     {
@@ -342,7 +287,61 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:36:31+00:00",
+      "observed_at": "2026-09-01T04:43:01+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "a_share:600519",
+      "display_symbol": "600519",
+      "display_name": "贵州茅台",
+      "provider_symbol": "600519",
+      "asset_class": "a_share",
+      "source_id": "easy_tdx_mac",
+      "source_kind": "easy_tdx",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "1w",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 169,
+      "latest_closed_timestamp": "2026-08-28T00:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "1d",
+        "output_timeframe": "1w",
+        "aggregation_rule_version": "completed_local_calendar_week_v1",
+        "input_start": "2023-05-17T16:00:00+00:00",
+        "input_end": "2026-08-30T16:00:00+00:00",
+        "input_hash": "52c96b8e99ea7ce81d874a6a6d6c191f74f729166a01976b77d187526fc2e460",
+        "output_hash": "2a4b8e9829b59156c8d7e9abcdc8a790259bc1bfb8f3edb040cfbb904c59ee7c",
+        "bucket_anchor": "local_week",
+        "partial_bucket_policy": "defer_until_closed",
+        "partial_bucket_count": 1
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:43:01+00:00",
       "error": null
     },
     {
@@ -393,11 +392,11 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 441.02,
+        "latency_ms": 900.49,
         "response_sha256": "017d56950200e17579998ebf91353c376f0a610dc79d0a43e13a14d1c8721992",
         "row_count_raw": 800
       },
-      "observed_at": "2026-09-01T04:36:31+00:00",
+      "observed_at": "2026-09-01T04:43:01+00:00",
       "error": null
     },
     {
@@ -448,11 +447,11 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 445.89,
-        "response_sha256": "a3573ebda69007fd91d3c2c5eeeca829dee499c6f11dd3324e6d4919f83d640f",
+        "latency_ms": 486.84,
+        "response_sha256": "74321f9254cd6fd24c3c8f1d19612b60d3ae6cb05e6d3aeaa798e314770aa2d0",
         "row_count_raw": 800
       },
-      "observed_at": "2026-09-01T04:36:31+00:00",
+      "observed_at": "2026-09-01T04:43:01+00:00",
       "error": null
     },
     {
@@ -503,66 +502,11 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 445.45,
+        "latency_ms": 520.68,
         "response_sha256": "ed75b1892302508fee3cd218524c0016e21045e4cd169a8557dcbb5a5e8e7be0",
         "row_count_raw": 800
       },
-      "observed_at": "2026-09-01T04:36:31+00:00",
-      "error": null
-    },
-    {
-      "instrument_id": "a_share:300750",
-      "display_symbol": "300750",
-      "display_name": "宁德时代",
-      "provider_symbol": "300750",
-      "asset_class": "a_share",
-      "source_id": "easy_tdx_mac",
-      "source_kind": "easy_tdx",
-      "calendar_id": "cn_a",
-      "timezone": "Asia/Shanghai",
-      "timeframe": "1w",
-      "status": "partial",
-      "status_reason": "entitlement_unverified",
-      "row_count": 419,
-      "latest_closed_timestamp": "2026-08-20T16:00:00+00:00",
-      "volume_semantics": "traded",
-      "volume_scope": "venue_reported",
-      "volume_completeness": "unknown",
-      "is_derived": false,
-      "transform": null,
-      "quality": {
-        "status": "ready",
-        "invalid_rows": 0,
-        "duplicates": 0,
-        "out_of_order": 0,
-        "gaps": 0,
-        "forming_rows": 2,
-        "missing_volume": 0
-      },
-      "entitlement": {
-        "status": "unverified",
-        "persistence_allowed": null,
-        "derived_allowed": null,
-        "non_display_allowed": null,
-        "valid_from": null,
-        "valid_to": null,
-        "evidence_ref": "operator_review_required"
-      },
-      "request": {
-        "provider": "easy_tdx_mac",
-        "provider_symbol": "300750",
-        "market": 0,
-        "period": "1w",
-        "count": 800,
-        "adjust": "none"
-      },
-      "response": {
-        "http_status": 200,
-        "latency_ms": 225.29,
-        "response_sha256": "3d09cc29742f985c4f34708b80ecdb4757f718f061e7af940af53e366ac00f86",
-        "row_count_raw": 421
-      },
-      "observed_at": "2026-09-01T04:36:31+00:00",
+      "observed_at": "2026-09-01T04:43:01+00:00",
       "error": null
     },
     {
@@ -605,7 +549,61 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:36:31+00:00",
+      "observed_at": "2026-09-01T04:43:01+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "a_share:300750",
+      "display_symbol": "300750",
+      "display_name": "宁德时代",
+      "provider_symbol": "300750",
+      "asset_class": "a_share",
+      "source_id": "easy_tdx_mac",
+      "source_kind": "easy_tdx",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "1w",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 169,
+      "latest_closed_timestamp": "2026-08-28T00:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "1d",
+        "output_timeframe": "1w",
+        "aggregation_rule_version": "completed_local_calendar_week_v1",
+        "input_start": "2023-05-17T16:00:00+00:00",
+        "input_end": "2026-08-30T16:00:00+00:00",
+        "input_hash": "f1bca762255dc9864237ada56ffbd744a4bacecc7d2583a8c0ba3d80a7ccbdf9",
+        "output_hash": "92855ff05327556d3d6a86bdd3e72c3599f4a956a9c7c079e31f57cfdefe46c9",
+        "bucket_anchor": "local_week",
+        "partial_bucket_policy": "defer_until_closed",
+        "partial_bucket_count": 1
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:43:01+00:00",
       "error": null
     },
     {
@@ -656,11 +654,11 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 745.09,
-        "response_sha256": "3f51b247c90d75e97da1feb71563d4502ba331b840016caaecc14e81f243ffd8",
+        "latency_ms": 514.09,
+        "response_sha256": "b1bddd8b521939d76a9345457525c9b6791e791772f8a2aba2660af6f9ae0ce9",
         "row_count_raw": 800
       },
-      "observed_at": "2026-09-01T04:36:31+00:00",
+      "observed_at": "2026-09-01T04:43:01+00:00",
       "error": null
     },
     {
@@ -711,11 +709,11 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 452.42,
-        "response_sha256": "1413d0ee77ee554ca297b72ef17b05e57a6845f55faa4215565ac7eaa124756c",
+        "latency_ms": 510.74,
+        "response_sha256": "29036cf9f8ca8232adc20927df9fc06175982eaf971975a3dc7b60748cb01835",
         "row_count_raw": 800
       },
-      "observed_at": "2026-09-01T04:36:31+00:00",
+      "observed_at": "2026-09-01T04:43:01+00:00",
       "error": null
     },
     {
@@ -766,66 +764,11 @@
       },
       "response": {
         "http_status": 200,
-        "latency_ms": 441.21,
+        "latency_ms": 501.16,
         "response_sha256": "a3bfa6d74490c4a05830d6a25ba54525f1ebb0a6d407311840c2d8cfd4c119aa",
         "row_count_raw": 800
       },
-      "observed_at": "2026-09-01T04:36:31+00:00",
-      "error": null
-    },
-    {
-      "instrument_id": "a_share:688981",
-      "display_symbol": "688981",
-      "display_name": "中芯国际",
-      "provider_symbol": "688981",
-      "asset_class": "a_share",
-      "source_id": "easy_tdx_mac",
-      "source_kind": "easy_tdx",
-      "calendar_id": "cn_a",
-      "timezone": "Asia/Shanghai",
-      "timeframe": "1w",
-      "status": "partial",
-      "status_reason": "entitlement_unverified",
-      "row_count": 312,
-      "latest_closed_timestamp": "2026-08-20T16:00:00+00:00",
-      "volume_semantics": "traded",
-      "volume_scope": "venue_reported",
-      "volume_completeness": "unknown",
-      "is_derived": false,
-      "transform": null,
-      "quality": {
-        "status": "ready",
-        "invalid_rows": 0,
-        "duplicates": 0,
-        "out_of_order": 0,
-        "gaps": 0,
-        "forming_rows": 2,
-        "missing_volume": 0
-      },
-      "entitlement": {
-        "status": "unverified",
-        "persistence_allowed": null,
-        "derived_allowed": null,
-        "non_display_allowed": null,
-        "valid_from": null,
-        "valid_to": null,
-        "evidence_ref": "operator_review_required"
-      },
-      "request": {
-        "provider": "easy_tdx_mac",
-        "provider_symbol": "688981",
-        "market": 1,
-        "period": "1w",
-        "count": 800,
-        "adjust": "none"
-      },
-      "response": {
-        "http_status": 200,
-        "latency_ms": 217.28,
-        "response_sha256": "6bf723540c004996e1a5c624fe8860db328b4ec19b0aed669b8cc4a70b2be9f5",
-        "row_count_raw": 314
-      },
-      "observed_at": "2026-09-01T04:36:31+00:00",
+      "observed_at": "2026-09-01T04:43:01+00:00",
       "error": null
     },
     {
@@ -868,7 +811,61 @@
       },
       "request": {},
       "response": {},
-      "observed_at": "2026-09-01T04:36:31+00:00",
+      "observed_at": "2026-09-01T04:43:01+00:00",
+      "error": null
+    },
+    {
+      "instrument_id": "a_share:688981",
+      "display_symbol": "688981",
+      "display_name": "中芯国际",
+      "provider_symbol": "688981",
+      "asset_class": "a_share",
+      "source_id": "easy_tdx_mac",
+      "source_kind": "easy_tdx",
+      "calendar_id": "cn_a",
+      "timezone": "Asia/Shanghai",
+      "timeframe": "1w",
+      "status": "partial",
+      "status_reason": "entitlement_unverified",
+      "row_count": 169,
+      "latest_closed_timestamp": "2026-08-28T00:00:00+00:00",
+      "volume_semantics": "traded",
+      "volume_scope": "venue_reported",
+      "volume_completeness": "unknown",
+      "is_derived": true,
+      "transform": {
+        "input_timeframe": "1d",
+        "output_timeframe": "1w",
+        "aggregation_rule_version": "completed_local_calendar_week_v1",
+        "input_start": "2023-05-09T16:00:00+00:00",
+        "input_end": "2026-08-30T16:00:00+00:00",
+        "input_hash": "874e4db8eb42ce972218d284ddb6ab7132006e32c536f7a63c637968a13c58cf",
+        "output_hash": "13c1651d68289eef754f1729b364176e7c9377ce7461cacc1b0eed19e0f7f638",
+        "bucket_anchor": "local_week",
+        "partial_bucket_policy": "defer_until_closed",
+        "partial_bucket_count": 1
+      },
+      "quality": {
+        "status": "ready",
+        "invalid_rows": 0,
+        "duplicates": 0,
+        "out_of_order": 0,
+        "gaps": 0,
+        "forming_rows": 0,
+        "missing_volume": 0
+      },
+      "entitlement": {
+        "status": "unverified",
+        "persistence_allowed": null,
+        "derived_allowed": null,
+        "non_display_allowed": null,
+        "valid_from": null,
+        "valid_to": null,
+        "evidence_ref": "operator_review_required"
+      },
+      "request": {},
+      "response": {},
+      "observed_at": "2026-09-01T04:43:01+00:00",
       "error": null
     }
   ],
@@ -904,9 +901,9 @@
       "source_id": "easy_tdx_mac",
       "instrument_id": "a_share:600519",
       "timeframe": "1w",
-      "first_inserted": 798,
+      "first_inserted": 169,
       "second_inserted": 0,
-      "row_count_after_rerun": 798,
+      "row_count_after_rerun": 169,
       "duplicate_keys": 0
     },
     {
@@ -940,9 +937,9 @@
       "source_id": "easy_tdx_mac",
       "instrument_id": "a_share:300750",
       "timeframe": "1w",
-      "first_inserted": 419,
+      "first_inserted": 169,
       "second_inserted": 0,
-      "row_count_after_rerun": 419,
+      "row_count_after_rerun": 169,
       "duplicate_keys": 0
     },
     {
@@ -976,9 +973,9 @@
       "source_id": "easy_tdx_mac",
       "instrument_id": "a_share:688981",
       "timeframe": "1w",
-      "first_inserted": 312,
+      "first_inserted": 169,
       "second_inserted": 0,
-      "row_count_after_rerun": 312,
+      "row_count_after_rerun": 169,
       "duplicate_keys": 0
     }
   ],

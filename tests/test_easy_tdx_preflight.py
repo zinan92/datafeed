@@ -101,8 +101,11 @@ def test_easy_tdx_preflight_records_native_and_derived_rows() -> None:
     ]
 
     class FakeClient:
+        calls: list[str] = []
+
         def get_stock_kline(self, market: int, code: str, *, period, count: int, adjust: int):
             del market, code, count, adjust
+            self.calls.append(period)
             return FakeFrame(intraday if period in {"15m", "1h"} else daily)
 
     target = _target(
@@ -127,6 +130,10 @@ def test_easy_tdx_preflight_records_native_and_derived_rows() -> None:
     assert (
         next(cell for cell in receipt["cells"] if cell["timeframe"] == "4h")["is_derived"] is True
     )
+    assert (
+        next(cell for cell in receipt["cells"] if cell["timeframe"] == "1w")["is_derived"] is True
+    )
+    assert "1w" not in FakeClient.calls
     assert receipt["decision_by_asset_class"]["a_share"]["status"] == "ready"
     assert receipt["decision_by_asset_class"]["a_share"]["canonical_promotion_allowed"] is True
     assert all(item["duplicate_keys"] == 0 for item in receipt["idempotency"])
