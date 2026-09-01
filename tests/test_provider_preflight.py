@@ -120,6 +120,7 @@ def test_entitlement_unknown_is_partial_but_explicit_false_is_blocked() -> None:
         "15m",
         bars,
         policy=PolicyReceipt(
+            status="active",
             persistence_allowed=True,
             derived_allowed=True,
             non_display_allowed=True,
@@ -141,6 +142,7 @@ def test_derived_permission_only_blocks_derived_cell() -> None:
     )
     bars = (Bar("2026-08-31T13:30:00+00:00", 1, 2, 0.5, 1.5, 10, None),)
     policy = PolicyReceipt(
+        status="active",
         persistence_allowed=True,
         derived_allowed=False,
         non_display_allowed=True,

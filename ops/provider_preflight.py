@@ -582,6 +582,17 @@ def classify_status(
             is_derived,
             transform,
         )
+    if active_policy.status not in {"active", "verified"}:
+        return ClassifiedCell(
+            target,
+            timeframe,
+            "partial",
+            "entitlement_unverified",
+            normalized,
+            report,
+            is_derived,
+            transform,
+        )
     if (
         active_policy.persistence_allowed is not True
         or active_policy.derived_allowed is not True
