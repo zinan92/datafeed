@@ -64,6 +64,15 @@ def _dedupe(values: list[str]) -> list[str]:
     return list(dict.fromkeys(values))
 
 
+def _source_quality_flags(source_identity: Mapping[str, Any] | None) -> list[str]:
+    if not isinstance(source_identity, Mapping):
+        return []
+    raw = source_identity.get("quality_flags")
+    if not isinstance(raw, (list, tuple)):
+        return []
+    return [str(flag) for flag in raw if str(flag)]
+
+
 def _build_response(
     ticker: str,
     asset_class: AssetClass,
@@ -175,7 +184,9 @@ def _error(
     source_identity: Mapping[str, Any] | None = None,
     provider_symbol: str | None = None,
 ) -> HTTPException:
-    quality_flags = list(meta.quality_flags)
+    quality_flags = _dedupe(
+        [*meta.quality_flags, *_source_quality_flags(source_identity)]
+    )
     if report:
         quality_flags = _dedupe([*quality_flags, *report.quality_flags])
     issues = _dedupe([*(report.access_issues if report else []), *(access_issues or [])])
@@ -519,7 +530,12 @@ async def _fetch_upstream_candles(
                     candle_count=0,
                     latest_timestamp=None,
                     latency_ms=(monotonic() - started_at) * 1000,
-                    quality_flags=list(selected_meta.quality_flags),
+                    quality_flags=_dedupe(
+                        [
+                            *selected_meta.quality_flags,
+                            *_source_quality_flags(last_identity),
+                        ]
+                    ),
                     error=str(error),
                 )
             continue
@@ -549,7 +565,13 @@ async def _fetch_upstream_candles(
                 candle_count=len(candles),
                 latest_timestamp=report.latest_timestamp,
                 latency_ms=(monotonic() - started_at) * 1000,
-                quality_flags=_dedupe([*selected_meta.quality_flags, *report.quality_flags]),
+                quality_flags=_dedupe(
+                    [
+                        *selected_meta.quality_flags,
+                        *report.quality_flags,
+                        *_source_quality_flags(last_identity),
+                    ]
+                ),
                 error=report.reject_reason,
             )
         if report.reject_reason:
@@ -576,6 +598,7 @@ async def _fetch_upstream_candles(
             selected_meta,
             served_from="upstream",
             policy=policy,
+            extra_quality_flags=_source_quality_flags(last_identity),
             selected_source=selected_source,
             attempted_sources=attempted_sources,
             access_issues=failures if selected_source != policy.source else [],

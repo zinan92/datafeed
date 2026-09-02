@@ -248,6 +248,68 @@ async def test_native_4h_metadata_reaches_api_without_reaggregation(monkeypatch,
     assert response.source_identity["provider_symbol"] == "BTCUSDT"
 
 
+async def test_source_quality_loss_reaches_envelope_and_operator_receipt(
+    monkeypatch, store: KlineStore
+):
+    now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
+    upstream = FakeNativeCryptoAdapter([_candle(now.isoformat(), 101.0)])
+    upstream.source_identity.update(
+        {
+            "quality_flags": ["invalid_row_excluded"],
+            "excluded_row_count": 1,
+            "excluded_rows": [
+                {"timestamp": "2021-09-01", "reason": "non_finite_ohlcv"}
+            ],
+        }
+    )
+    monkeypatch.setattr("kline.api.get_store", lambda: store)
+    monkeypatch.setattr("kline.api.get_adapter_for_source", lambda *_args: upstream)
+
+    response = await _get_candles(
+        asset_class=AssetClass.CRYPTO,
+        ticker="BTC",
+        timeframe=Timeframe.HOUR_4,
+        limit=1,
+        source="binance_spot_public",
+        cache_policy=CachePolicy.ALLOW,
+        quality=QualityPolicy.STANDARD,
+    )
+
+    assert "invalid_row_excluded" in response.quality_flags
+    assert "invalid_row_excluded" in response.candles[0].quality_flags
+    assert response.source_identity["excluded_row_count"] == 1
+    observations = store.latest_source_observations()
+    assert "invalid_row_excluded" in observations[0]["quality_flags"]
+
+
+async def test_all_excluded_error_keeps_quality_loss_in_error_receipt(
+    monkeypatch, store: KlineStore
+):
+    upstream = FakeAdapter(error=ProviderError("Yahoo all rows failed quality validation"))
+    upstream.source_identity = {
+        "provider_symbol": "QCOM",
+        "quality_flags": ["invalid_row_excluded"],
+        "excluded_row_count": 1,
+    }
+    monkeypatch.setattr("kline.api.get_store", lambda: store)
+    monkeypatch.setattr("kline.api.get_adapter_for_source", lambda *_args: upstream)
+
+    with pytest.raises(HTTPException) as exc:
+        await _get_candles(
+            asset_class=AssetClass.COMMODITY,
+            ticker="XAUUSDT",
+            timeframe=Timeframe.MIN_1,
+            source="binance_usdm_futures",
+            cache_policy=CachePolicy.ALLOW,
+        )
+
+    assert exc.value.status_code == 502
+    assert "invalid_row_excluded" in exc.value.detail["quality_flags"]
+    assert exc.value.detail["source_identity"]["excluded_row_count"] == 1
+    observations = store.latest_source_observations()
+    assert "invalid_row_excluded" in observations[0]["quality_flags"]
+
+
 async def test_api_rejects_4h_for_non_context_yahoo_symbols(store: KlineStore):
     with pytest.raises(HTTPException) as exc:
         await _get_candles(

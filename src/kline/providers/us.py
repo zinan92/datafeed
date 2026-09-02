@@ -88,17 +88,43 @@ def _invalid_indices(frame: Any) -> list[Any]:
         return []
     invalid: list[Any] = []
     for idx, row in frame.iterrows():
-        try:
-            values = [float(row[column]) for column in ("Open", "High", "Low", "Close")]
-            volume = float(row.get("Volume", 0))
-            if not all(math.isfinite(value) for value in (*values, volume)):
-                invalid.append(idx)
-                continue
-            if values[1] < max(values[0], values[3]) or values[2] > min(values[0], values[3]):
-                invalid.append(idx)
-        except (TypeError, ValueError, KeyError):
+        reason = _row_quality_issue(row)
+        # Preserve the existing repair trigger: negative volume was rejected
+        # during candle construction but did not invoke yfinance repair.
+        if reason is not None and reason != "negative_volume":
             invalid.append(idx)
     return invalid
+
+
+def _row_values(row: Any) -> tuple[float, float, float, float, float]:
+    return (
+        float(row["Open"]),
+        float(row["High"]),
+        float(row["Low"]),
+        float(row["Close"]),
+        float(row.get("Volume", 0)),
+    )
+
+
+def _row_quality_issue(row: Any) -> str | None:
+    """Return the stable exclusion reason for one malformed Yahoo row."""
+
+    try:
+        open_value, high_value, low_value, close_value, volume = _row_values(row)
+    except (TypeError, ValueError, KeyError):
+        return "malformed_ohlcv"
+    if not all(
+        math.isfinite(value)
+        for value in (open_value, high_value, low_value, close_value, volume)
+    ):
+        return "non_finite_ohlcv"
+    if high_value < max(open_value, close_value) or low_value > min(
+        open_value, close_value
+    ):
+        return "ohlc_invariant"
+    if volume < 0:
+        return "negative_volume"
+    return None
 
 
 class USStockProvider:
@@ -342,6 +368,7 @@ class USStockProvider:
             request_params["repair_attempted"] = False
 
         candles = []
+        excluded_rows: list[dict[str, str]] = []
         for idx, row in df.iterrows():
             if timeframe == Timeframe.DAY:
                 ts_str = idx.strftime("%Y-%m-%d")
@@ -349,24 +376,11 @@ class USStockProvider:
                 ts_str = idx.isoformat()
             else:
                 ts_str = idx.strftime("%Y-%m-%dT%H:%M:%S+00:00")
-            open_value = float(row["Open"])
-            high_value = float(row["High"])
-            low_value = float(row["Low"])
-            close_value = float(row["Close"])
-            volume = float(row.get("Volume", 0))
-            if not all(
-                math.isfinite(value)
-                for value in (open_value, high_value, low_value, close_value, volume)
-            ):
-                raise ProviderError(
-                    f"Yahoo OHLC contains a non-finite value for {ticker} at {ts_str}"
-                )
-            if high_value < max(open_value, close_value) or low_value > min(
-                open_value, close_value
-            ):
-                raise ProviderError(f"Yahoo OHLC invariant failed for {ticker} at {ts_str}")
-            if volume < 0:
-                raise ProviderError(f"Yahoo volume is negative for {ticker} at {ts_str}")
+            quality_issue = _row_quality_issue(row)
+            if quality_issue is not None:
+                excluded_rows.append({"timestamp": ts_str, "reason": quality_issue})
+                continue
+            open_value, high_value, low_value, close_value, volume = _row_values(row)
             candles.append(
                 Candle(
                     timestamp=ts_str,
@@ -389,8 +403,11 @@ class USStockProvider:
                 for timestamp in repaired_timestamps
                 if timestamp[:10] in returned_timestamps
             ]
-            if not candles:
-                raise ProviderError(f"No closed daily data returned for {ticker}")
+            excluded_rows = [
+                row
+                for row in excluded_rows
+                if date.fromisoformat(row["timestamp"][:10]) <= cutoff
+            ]
 
         if limit and len(candles) > limit:
             candles = candles[-limit:]
@@ -406,12 +423,27 @@ class USStockProvider:
             "repair_attempted": repair_attempted,
             "repaired_row_count": len(repaired_timestamps),
             "repaired_timestamps": repaired_timestamps,
+            "quality_flags": ["invalid_row_excluded"] if excluded_rows else [],
+            "exclusion_applied": bool(excluded_rows),
+            "excluded_row_count": len(excluded_rows),
+            "excluded_timestamps": [row["timestamp"] for row in excluded_rows],
+            "excluded_rows": excluded_rows,
         }
         self.last_raw_response["response_body"] = {
             "row_count": len(candles),
             "rows": [item.model_dump() for item in candles],
             "repaired_timestamps": repaired_timestamps,
+            "excluded_rows": excluded_rows,
         }
+        if not candles:
+            if excluded_rows:
+                self.last_raw_response["error"] = "all_rows_failed_quality_validation"
+                raise ProviderError(
+                    f"Yahoo all rows failed quality validation for {ticker}"
+                )
+            if timeframe == Timeframe.DAY:
+                raise ProviderError(f"No closed daily data returned for {ticker}")
+            raise ProviderError(f"No valid data returned for {ticker}")
         logger.info(f"Fetched {len(candles)} candles for {ticker} ({timeframe.value})")
         return candles
 
