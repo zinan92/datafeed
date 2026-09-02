@@ -51,7 +51,7 @@ MarketDataPort
         │
         ├─ Binance USD-M Futures adapter
         ├─ Binance Spot adapter
-        ├─ Yahoo adapter + free Sina daily primary/fallback
+        ├─ Yahoo adapter + free Yahoo all-timeframe profile
         ├─ TuShare adapter
         ├─ Free Tencent A-share adapter + Tonghuashun fallback
         ├─ Tencent A-share index adapter
@@ -140,15 +140,17 @@ keeps `fallback_policy=none`.
 The local MVP does not require a current TuShare subscription or a paid U.S.
 market-data plan. Its runtime free profile keeps canonical instrument IDs but
 routes A-share stocks through `tencent_stock_free` (Tonghuashun is a bounded
-fallback for 1h/daily) and U.S. stocks through `yahoo_finance_free` (Sina is
-the daily/weekly primary, Yahoo is the explicit coarse fallback). Yahoo/Tencent/Sina responses are recorded as
-`entitlement_unverified` and therefore remain `partial` until the operator
-documents the personal-use terms; HTTP 200 is never promoted to commercial or
-`verified` status. The Tencent path is requested as qfq; a Tonghuashun fallback
-also records `adjustment_basis` provenance as unverified rather than silently
-claiming that its raw line response is adjusted. Baidu and AKShare remain
-probe/fallback candidates because their current network paths are unstable in
-this environment.
+fallback for 1h/daily) and U.S. stocks through `yahoo_finance_free` for every
+supported timeframe. The U.S. profile does not call Sina. Yahoo/Tencent
+responses are recorded as `entitlement_unverified` and therefore remain
+`partial` until the operator documents the personal-use terms; HTTP 200 is
+never promoted to commercial or `verified` status. The Tencent path is
+requested as qfq; a Tonghuashun fallback also records `adjustment_basis`
+provenance as unverified rather than silently claiming that its raw line
+response is adjusted. Alpaca is not configured in this MVP; adding it later
+requires an operator-supplied key plus an explicit entitlement receipt. Baidu
+and AKShare remain probe/fallback candidates because their current network
+paths are unstable in this environment.
 
 The reliability worker uses the same profile:
 

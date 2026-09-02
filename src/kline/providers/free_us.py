@@ -1,11 +1,7 @@
-"""Free personal-use US stock provider: Sina coarse bars with Yahoo fallback."""
+"""Free personal-use US stock provider backed by Yahoo Finance."""
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from hashlib import sha256
-import json
-import re
 import time
 
 import httpx
@@ -18,9 +14,6 @@ from kline.providers.us import USStockProvider
 from kline.storage import CandleSeriesKey, MvpCandle
 
 
-_SINA_DAILY_URL = (
-    "https://stock.finance.sina.com.cn/usstock/api/jsonp.php/var/US_MinKService.getDailyK"
-)
 _YAHOO_TICKER_ALIASES = {"BRK.B": "BRK-B"}
 
 
@@ -30,7 +23,7 @@ def _yahoo_ticker(ticker: str) -> str:
 
 
 class USFreeProvider(USStockProvider):
-    """Use Sina for daily/weekly bars and Yahoo for intraday/fallback data."""
+    """Use Yahoo Finance for every US-stock timeframe in the free profile."""
 
     def __init__(
         self,
@@ -185,33 +178,35 @@ class USFreeProvider(USStockProvider):
             ]
         if timeframe == Timeframe.WEEK:
             # The inherited weekly transform calls back into this provider for
-            # daily bars; that inner call owns the Yahoo/Sina attempt receipt.
+            # daily bars; that inner call owns the Yahoo attempt receipt.
             return await super().fetch(ticker, timeframe, start=start, end=end, limit=limit)
         if timeframe == Timeframe.DAY:
-            return await self._fetch_daily_with_fallback(ticker, start=start, end=end, limit=limit)
+            return await self._fetch_yahoo_native(
+                ticker, Timeframe.DAY, start=start, end=end, limit=limit
+            )
+        return await self._fetch_yahoo_native(
+            ticker, timeframe, start=start, end=end, limit=limit
+        )
+
+    async def _fetch_yahoo_native(
+        self,
+        ticker: str,
+        timeframe: Timeframe,
+        *,
+        start: str | None,
+        end: str | None,
+        limit: int,
+    ) -> list[Candle]:
+        """Fetch one native timeframe from Yahoo and record its identity."""
+
+        requested_ticker = ticker.upper().strip()
+        yahoo_ticker = _yahoo_ticker(requested_ticker)
+        started_at = time.perf_counter()
+        await self._pacer.wait()
         try:
-            started_at = time.perf_counter()
-            await self._pacer.wait()
             candles = await super().fetch(
                 yahoo_ticker, timeframe, start=start, end=end, limit=limit
             )
-            self._record_attempt(
-                source="yahoo",
-                started_at=started_at,
-                status="success",
-                row_count=len(candles),
-            )
-            selected = self.source_identity.get("selected_source", "yahoo")
-            fallback_from = self.source_identity.get("fallback_from")
-            self.source_identity = {
-                **self.source_identity,
-                "source_id": "yahoo_finance_free",
-                "requested_symbol": requested_ticker,
-                "provider_symbol": yahoo_ticker,
-                "selected_source": selected,
-                "fallback_from": fallback_from,
-            }
-            return candles
         except ProviderError as yahoo_error:
             self._record_attempt(
                 source="yahoo",
@@ -220,134 +215,19 @@ class USFreeProvider(USStockProvider):
                 error=str(yahoo_error),
             )
             raise
-
-    async def _fetch_daily_with_fallback(
-        self, ticker: str, *, start: str | None, end: str | None, limit: int
-    ) -> list[Candle]:
-        """Prefer Sina for coarse bars; use Yahoo only when Sina fails."""
-
-        try:
-            started_at = time.perf_counter()
-            candles = await self._fetch_sina_daily(ticker, start=start, end=end, limit=limit)
-            self._record_attempt(
-                source="sina",
-                started_at=started_at,
-                status="success",
-                endpoint=_SINA_DAILY_URL,
-                http_status=(self.last_raw_response or {}).get("http_status"),
-                row_count=len(candles),
-            )
-            self.timeframe_transform = None
-            self.source_identity = {
-                "source_id": "yahoo_finance_free",
-                "provider_symbol": ticker.upper(),
-                "requested_symbol": ticker.upper(),
-                "selected_source": "sina",
-                "fallback_from": None,
-                "adjustment_basis": "raw_unadjusted",
-            }
-            return candles
-        except ProviderError as sina_error:
-            self._record_attempt(
-                source="sina",
-                started_at=started_at,
-                status="error",
-                endpoint=_SINA_DAILY_URL,
-                error=str(sina_error),
-            )
-            try:
-                started_at = time.perf_counter()
-                await self._pacer.wait()
-                candles = await super().fetch(
-                    _yahoo_ticker(ticker), Timeframe.DAY, start=start, end=end, limit=limit
-                )
-                self._record_attempt(
-                    source="yahoo",
-                    started_at=started_at,
-                    status="success",
-                    row_count=len(candles),
-                )
-                self.source_identity = {
-                    **self.source_identity,
-                    "source_id": "yahoo_finance_free",
-                    "requested_symbol": ticker.upper(),
-                    "provider_symbol": _yahoo_ticker(ticker),
-                    "selected_source": "yahoo",
-                    "fallback_from": "sina",
-                    "adjustment_basis": "raw_unadjusted",
-                }
-                return candles
-            except ProviderError as yahoo_error:
-                self._record_attempt(
-                    source="yahoo",
-                    started_at=started_at,
-                    status="error",
-                    error=str(yahoo_error),
-                )
-                raise ProviderError(
-                    f"free US sources failed for {ticker}: Sina={sina_error}; Yahoo={yahoo_error}"
-                ) from yahoo_error
-
-    async def _fetch_sina_daily(
-        self, ticker: str, *, start: str | None, end: str | None, limit: int
-    ) -> list[Candle]:
-        params = {"symbol": ticker.upper(), "num": max(120, min(limit, 5000))}
-        response: httpx.Response | None = None
-        try:
-            await self._pacer.wait()
-            async with httpx.AsyncClient(
-                timeout=self._timeout,
-                transport=self._transport,
-                headers={"Referer": "https://finance.sina.com.cn/"},
-            ) as client:
-                response = await client.get(_SINA_DAILY_URL, params=params)
-                response.raise_for_status()
-            match = re.search(r"\((\[.*\])\)", response.text, flags=re.DOTALL)
-            rows = json.loads(match.group(1)) if match else []
-            if not isinstance(rows, list):
-                rows = []
-            candles: list[Candle] = []
-            for row in rows:
-                if not isinstance(row, dict):
-                    continue
-                try:
-                    values = [float(row[name]) for name in ("o", "h", "l", "c")]
-                    volume = float(row["v"]) if row.get("v") not in (None, "") else None
-                    amount = float(row["a"]) if row.get("a") not in (None, "") else None
-                    if values[1] < max(values[0], values[3]) or values[2] > min(
-                        values[0], values[3]
-                    ):
-                        continue
-                    candles.append(
-                        Candle(
-                            timestamp=datetime.fromisoformat(str(row["d"]))
-                            .replace(tzinfo=timezone.utc)
-                            .isoformat(),
-                            open=values[0],
-                            high=values[1],
-                            low=values[2],
-                            close=values[3],
-                            volume=volume,
-                            amount=amount,
-                        )
-                    )
-                except (KeyError, TypeError, ValueError):
-                    continue
-            if start:
-                candles = [candle for candle in candles if candle.timestamp >= start]
-            if end:
-                candles = [candle for candle in candles if candle.timestamp < end]
-            if limit:
-                candles = candles[-limit:]
-            if not candles:
-                raise ProviderError("Sina returned no daily rows")
-            self.last_raw_response = {
-                "endpoint": str(response.url),
-                "http_status": response.status_code,
-                "response_sha256": sha256(response.content).hexdigest(),
-                "row_count": len(candles),
-                "fallback_from": "yahoo",
-            }
-            return candles
-        except (httpx.HTTPError, ValueError, ProviderError) as error:
-            raise ProviderError(f"Sina daily request failed for {ticker}: {error}") from error
+        self._record_attempt(
+            source="yahoo",
+            started_at=started_at,
+            status="success",
+            row_count=len(candles),
+        )
+        self.source_identity = {
+            **self.source_identity,
+            "source_id": "yahoo_finance_free",
+            "requested_symbol": requested_ticker,
+            "provider_symbol": yahoo_ticker,
+            "selected_source": "yahoo",
+            "fallback_from": None,
+            "adjustment_basis": "raw_unadjusted",
+        }
+        return candles
