@@ -437,14 +437,27 @@ def _cell(
 def _worker_payload(
     storage: StoragePort, *, now: datetime, interval_seconds: int
 ) -> dict[str, Any]:
-    runs = storage.latest_mvp_runs(limit=6) if hasattr(storage, "latest_mvp_runs") else []
+    runs = storage.latest_mvp_runs(limit=64) if hasattr(storage, "latest_mvp_runs") else []
     latest = (
         runs[0]
         if runs
         else (storage.latest_mvp_run() if hasattr(storage, "latest_mvp_run") else None)
     )
-    last_activity = (latest.get("completed_at") or latest.get("started_at")) if latest else None
-    parsed_activity = _parse_timestamp(last_activity)
+    latest_run_id = str(latest.get("run_id") or "") if latest else ""
+    cycle_start = (
+        next(
+            (
+                run.get("started_at")
+                for run in runs
+                if str(run.get("run_id") or "").endswith("-coarse-a_share-001")
+            ),
+            None,
+        )
+        if latest_run_id.startswith("mvp-stocks-")
+        else None
+    )
+    schedule_anchor = cycle_start or (latest.get("started_at") if latest else None)
+    parsed_activity = _parse_timestamp(schedule_anchor)
     next_due = None
     if parsed_activity is not None:
         due = parsed_activity + timedelta(seconds=interval_seconds)

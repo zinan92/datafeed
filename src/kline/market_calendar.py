@@ -633,11 +633,14 @@ def assess_quality(
     holidays: Iterable[date] = (),
     suspension_dates: Iterable[date] = (),
     stale_after: timedelta | None = None,
+    market_open_buffer_minutes: int = 0,
 ) -> QualityResult:
     """Classify closed/forming/holiday/suspension/gap/duplicate/stale input."""
 
     if timeframe not in _ALLOWED_TIMEFRAMES:
         raise CalendarError(f"unsupported quality timeframe: {timeframe}")
+    if market_open_buffer_minutes < 0:
+        raise CalendarError("market_open_buffer_minutes must be non-negative")
     spec = calendar_spec(calendar_id)
     cutoff_utc = _parse_cutoff(cutoff)
     issues = _sequence_issues(candles)
@@ -722,7 +725,25 @@ def assess_quality(
                 "stale", "latest closed candle exceeded freshness window", latest_end.isoformat()
             )
         )
-    blocking = {"malformed", "duplicate", "out_of_order", "mixed_source", "forming", "missing"}
+    blocking = {"malformed", "duplicate", "out_of_order", "mixed_source", "missing"}
+    local_cutoff = cutoff_utc.astimezone(spec.zone)
+    market_open_buffer_active = False
+    if (
+        market_open_buffer_minutes > 0
+        and spec.calendar_id == "cn_a"
+        and timeframe in {"15m", "1h"}
+        and is_trading_session(spec.calendar_id, local_cutoff.date())
+    ):
+        first_open = datetime.combine(
+            local_cutoff.date(), spec.sessions[0].open_time, tzinfo=spec.zone
+        )
+        market_open_buffer_active = (
+            first_open
+            <= local_cutoff
+            < first_open + timedelta(minutes=market_open_buffer_minutes)
+        )
+    if not market_open_buffer_active:
+        blocking.add("forming")
     status = (
         "fail"
         if any(issue.status in blocking for issue in issues)

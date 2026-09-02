@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -11,12 +12,33 @@ from ops.mvp_stock_seed import (
     _batches,
     _classify_attempt,
     remaining_stock_ids,
+    stock_cycle_wait_seconds,
     stock_instrument_ids,
     validate_seed_target,
 )
 
 
 MANIFEST_PATH = Path(__file__).parents[1] / "configs" / "mvp_manifest.json"
+
+
+def test_stock_cycle_wait_is_anchored_to_start_across_runtime_variation() -> None:
+    started = datetime(2026, 9, 2, 1, 30, tzinfo=timezone.utc)
+
+    assert stock_cycle_wait_seconds(
+        cycle_started=started,
+        now=started + timedelta(minutes=29),
+        interval_seconds=4 * 60 * 60,
+    ) == 3 * 60 * 60 + 31 * 60
+    assert stock_cycle_wait_seconds(
+        cycle_started=started,
+        now=started + timedelta(hours=3, minutes=58),
+        interval_seconds=4 * 60 * 60,
+    ) == 2 * 60
+    assert stock_cycle_wait_seconds(
+        cycle_started=started,
+        now=started + timedelta(hours=4, minutes=5),
+        interval_seconds=4 * 60 * 60,
+    ) == 0
 
 
 def test_stock_seed_selects_the_100_plus_100_manifest_universes() -> None:

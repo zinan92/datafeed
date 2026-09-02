@@ -56,6 +56,7 @@ class IngestionPlan:
     timeframes: Sequence[str] | None = None
     request_interval_seconds: float = 0.0
     provider_timeout_seconds: float = 60.0
+    market_open_buffer_minutes: int = 0
 
 
 @dataclass(frozen=True)
@@ -618,6 +619,7 @@ class IngestionOrchestrator:
                         timeframe=timeframe,
                         calendar_id=instrument.calendar_id,
                         cutoff=now,
+                        market_open_buffer_minutes=plan.market_open_buffer_minutes,
                     )
                     quality_counts[quality.status] = quality_counts.get(quality.status, 0) + 1
                     quality_receipt = self._quality_receipt(plan.run_id, mvp_rows, quality)

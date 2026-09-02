@@ -234,6 +234,75 @@ def test_full_scope_preserves_manifest_cartesian_product_and_coverage_invariants
         )
 
 
+def test_worker_next_due_uses_the_stock_cycle_first_batch_start(tmp_path: Path) -> None:
+    manifest = load_manifest(MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "matrix-cycle-anchor.db"))
+    for run_id, started_at, completed_at in (
+        (
+            "mvp-stocks-20260902T013000Z-coarse-a_share-001",
+            "2026-09-02T01:30:00+00:00",
+            "2026-09-02T01:31:00+00:00",
+        ),
+        (
+            "mvp-stocks-20260902T015900Z-intraday-us_stock-010",
+            "2026-09-02T01:59:00+00:00",
+            "2026-09-02T02:00:00+00:00",
+        ),
+    ):
+        store.commit_mvp_run(
+            MvpRunWrite(
+                run_id=run_id,
+                manifest_version=manifest.version,
+                manifest_hash=manifest_digest(manifest),
+                started_at=started_at,
+                completed_at=completed_at,
+                window_start=None,
+                window_end=completed_at,
+                policy={"runner": "mvp_stock_seed"},
+            )
+        )
+
+    snapshot = build_mvp_health_matrix(
+        manifest,
+        store,
+        now=datetime(2026, 9, 2, 2, 5, tzinfo=timezone.utc),
+    )
+
+    assert snapshot["worker"]["next_due_at"] == "2026-09-02T05:30:00+00:00"
+
+
+def test_worker_next_due_keeps_non_stock_run_anchor(tmp_path: Path) -> None:
+    manifest = load_manifest(MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "matrix-non-stock-anchor.db"))
+    for run_id, started_at in (
+        (
+            "mvp-stocks-20260902T013000Z-coarse-a_share-001",
+            "2026-09-02T01:30:00+00:00",
+        ),
+        ("mvp-20260902T030000Z", "2026-09-02T03:00:00+00:00"),
+    ):
+        store.commit_mvp_run(
+            MvpRunWrite(
+                run_id=run_id,
+                manifest_version=manifest.version,
+                manifest_hash=manifest_digest(manifest),
+                started_at=started_at,
+                completed_at=started_at,
+                window_start=None,
+                window_end=started_at,
+                policy={"runner": "test"},
+            )
+        )
+
+    snapshot = build_mvp_health_matrix(
+        manifest,
+        store,
+        now=datetime(2026, 9, 2, 3, 5, tzinfo=timezone.utc),
+    )
+
+    assert snapshot["worker"]["next_due_at"] == "2026-09-02T07:00:00+00:00"
+
+
 def test_freshness_uses_session_and_continuous_calendar_slas() -> None:
     manifest = load_manifest(MANIFEST_PATH)
     aapl = next(item for item in manifest.instruments if item.display_symbol == "AAPL")

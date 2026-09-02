@@ -26,6 +26,59 @@ def test_ingestion_watermark_overlap_supports_one_hour() -> None:
     assert IngestionOrchestrator._interval("1h") == timedelta(hours=1)
 
 
+@pytest.mark.asyncio
+async def test_run_once_marks_cn_a_opening_forming_bars_partial_inside_buffer(
+    tmp_path: Path,
+) -> None:
+    manifest = apply_free_source_profile(load_manifest(MANIFEST_PATH))
+    store = KlineStore(str(tmp_path / "opening-buffer.db"))
+
+    class OpeningAdapter:
+        async def fetch_candles_with_receipt(
+            self,
+            _ticker: str,
+            _timeframe: Timeframe,
+            *,
+            start: str | None,
+            end: str,
+            limit: int,
+        ) -> FetchReceipt:
+            del start, end, limit
+            return FetchReceipt(
+                candles=[
+                    Candle(
+                        timestamp="2026-09-02T01:30:00+00:00",
+                        open=100,
+                        high=102,
+                        low=99,
+                        close=101,
+                        volume=10,
+                    )
+                ],
+                timeframe_transform=None,
+                source_identity={"selected_source": "opening-test"},
+                raw_response={"row_count": 1},
+            )
+
+    receipt = await IngestionOrchestrator(
+        store, adapter_resolver=lambda _instrument: OpeningAdapter()
+    ).run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="run-opening-buffer",
+            now=datetime(2026, 9, 2, 1, 35, tzinfo=timezone.utc),
+            instrument_ids=("CN.A.600519",),
+            timeframes=("15m", "1h"),
+            market_open_buffer_minutes=10,
+        )
+    )
+
+    assert [cell.status for cell in receipt.requested_cells] == ["partial", "partial"]
+    assert receipt.quality["partial"] == 2
+    assert receipt.quality["fail"] == 0
+    assert receipt.row_counts["promoted_candles"] == 0
+
+
 class FakeCryptoAdapter:
     async def fetch_candles_with_receipt(
         self,
