@@ -13,6 +13,7 @@ from ops.mvp_stock_seed import SAFE_OBSERVER_DB
 from ops.watchlist_seed import (
     MARKET_DATA_DB,
     WATCHLIST_LOCK,
+    _watchlist_batch_report,
     execute_watchlist_batches,
     validate_watchlist_target,
 )
@@ -71,6 +72,41 @@ def test_watchlist_target_is_exact_and_rejects_screening_database() -> None:
         validate_watchlist_target(SAFE_OBSERVER_DB, WATCHLIST_LOCK)
     with pytest.raises(ValueError, match="dedicated Watchlist lock"):
         validate_watchlist_target(MARKET_DATA_DB, SAFE_OBSERVER_DB.with_name("mvp-worker.lock"))
+
+
+def test_watchlist_report_counts_unclassified_provider_errors() -> None:
+    class Receipt:
+        run_id = "watchlist-test-001"
+        status = "success"
+        requested_cells = (object(),)
+        row_counts = {"promoted_candles": 1}
+        quality = {"pass": 1}
+        source_attempts = (
+            {
+                "provider_symbol": "159510",
+                "timeframe": "1d",
+                "provider_attempts": (
+                    {
+                        "source": "tencent",
+                        "status": "error",
+                        "http_status": None,
+                        "error": "",
+                        "latency_ms": 10,
+                    },
+                    {
+                        "source": "tencent",
+                        "status": "success",
+                        "http_status": 200,
+                        "latency_ms": 20,
+                    },
+                ),
+            },
+        )
+
+    report = _watchlist_batch_report(Receipt(), batch_index=1, batch_size=1)
+
+    assert report["error_counts"] == {"other_error": 1}
+    assert report["error_samples"][0]["symbol"] == "159510"
 
 
 @pytest.mark.asyncio

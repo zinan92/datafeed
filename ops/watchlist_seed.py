@@ -8,10 +8,10 @@ from collections import Counter
 from datetime import datetime, timezone
 import json
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 from kline.config import Settings
-from kline.ingestion import IngestionOrchestrator, IngestionPlan
+from kline.ingestion import IngestionOrchestrator, IngestionPlan, IngestionRunReceipt
 from kline.mvp_worker import _SingleRunLock
 from kline.ports import MarketDataPort
 from kline.registry import init
@@ -20,7 +20,7 @@ from kline.watchlist_manifest import (
     WatchlistManifest,
     load_watchlist_manifest,
 )
-from ops.mvp_stock_seed import _batch_report, _batches
+from ops.mvp_stock_seed import _batch_report, _batches, _classify_attempt
 
 
 MARKET_DATA_DB = Path("/Users/wendy/park-data/market/kline.db")
@@ -54,6 +54,49 @@ def _persisted_ids(store: KlineStore, manifest: WatchlistManifest) -> set[str]:
         and row.get("timeframe") == "1d"
         and row.get("instrument_id") in approved
     }
+
+
+def _watchlist_batch_report(
+    receipt: IngestionRunReceipt,
+    *,
+    batch_index: int,
+    batch_size: int,
+) -> dict[str, Any]:
+    report = _batch_report(
+        receipt,
+        phase="daily",
+        universe="watchlist",
+        batch_index=batch_index,
+        batch_size=batch_size,
+    )
+    counts = Counter(report["error_counts"])
+    samples = list(report["error_samples"])
+    for attempt in receipt.source_attempts:
+        provider_attempts = [
+            dict(item)
+            for item in attempt.get("provider_attempts", ())
+            if isinstance(item, Mapping)
+        ]
+        for provider_attempt in provider_attempts:
+            if (
+                _classify_attempt(provider_attempt) is None
+                and str(provider_attempt.get("status") or "").casefold() == "error"
+            ):
+                counts["other_error"] += 1
+                if len(samples) < 5:
+                    samples.append(
+                        {
+                            "symbol": attempt.get("provider_symbol"),
+                            "timeframe": attempt.get("timeframe"),
+                            "source": provider_attempt.get("source"),
+                            "status": "error",
+                            "http_status": provider_attempt.get("http_status"),
+                            "error": str(provider_attempt.get("error") or "")[:240],
+                        }
+                    )
+    report["error_counts"] = dict(counts)
+    report["error_samples"] = samples
+    return report
 
 
 async def execute_watchlist_batches(
@@ -108,10 +151,8 @@ async def execute_watchlist_batches(
                 {cell.instrument_id: cell for cell in receipt.requested_cells}
             )
             reports.append(
-                _batch_report(
+                _watchlist_batch_report(
                     receipt,
-                    phase="daily",
-                    universe="watchlist",
                     batch_index=batch_index,
                     batch_size=len(batch),
                 )

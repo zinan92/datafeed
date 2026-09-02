@@ -296,3 +296,23 @@ consumers can use without direct exchange or private SQLite access.
   upstream, non-synthetic, and clipped to the caller's requested cutoff.
 - No cache fallback, previous-close substitution, or implicit source change was
   introduced. Focused and full test suites pass (147 tests).
+
+## 2026-09-02 - Persist the 42-member Watchlist Universe independently
+
+- Issue #120 v2 corrected the original Screening-specific assumptions. The Watchlist now has
+  its own 42-member manifest, `WATCH.*` instrument namespace, no freeze/reserve policy, and a
+  dedicated daily runner. `051505` remains explicitly excluded because its identity is unknown.
+- A-share equities retain the existing `tencent_stock_free` source unchanged. Four A-share ETFs
+  use the new `tencent_etf_free` source with explicit `5 -> sh` and `15/16 -> sz` routing.
+  `tencent_kline` remains index-only.
+- `000660.KS` was re-probed after #118 and returned real Yahoo daily candles, so it is configured
+  as the 42nd member rather than mislabeled as entitlement-blocked.
+- The runner only accepts `/Users/wendy/park-data/market/kline.db` and its dedicated
+  `watchlist-worker.lock`, fixes the timeframe to `1d`, and never calls the Screening free-source
+  overlay. A single lock covers the complete 42-member cycle.
+- The final real run persisted 42/42 instruments, 19,808 candles, 42 source observations, 42
+  quality receipts, and 42 watermarks. A-share/ETF evidence recorded 21 attempts for 20 cells;
+  one empty transport error retried successfully. 429/403/5xx/timeout counts were all zero and
+  A-side P95 was 5,369.5 ms. See `docs/verification/watchlist-ingestion-2026-09-02.md`.
+- This does not cut the 8100 Query Service over to the Market Data Database. Consumer migration
+  remains a separately reviewed spec because `klines` and `mvp_candles` have different schemas.

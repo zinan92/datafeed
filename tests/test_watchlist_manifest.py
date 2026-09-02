@@ -31,5 +31,5 @@ def test_watchlist_manifest_reuses_required_field_validation(tmp_path: Path) -> 
     invalid = tmp_path / "watchlist.json"
     invalid.write_text('{"version":"watchlist_universe_v1","instruments":[{}]}')
 
-    with pytest.raises(ManifestError, match="instrument\[0\].universe"):
+    with pytest.raises(ManifestError, match=r"instrument\[0\].universe"):
         load_watchlist_manifest(invalid)
