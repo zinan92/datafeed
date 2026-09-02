@@ -9,7 +9,7 @@ import hashlib
 import inspect
 import json
 import time as time_module
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any, Callable, Mapping, Protocol, Sequence
 
 from kline.market_calendar import QualityResult, assess_quality
 from kline.models import AssetClass, Candle, Timeframe, TimeframeTransform
@@ -34,6 +34,13 @@ class IngestionError(RuntimeError):
     """The run could not produce a trustworthy storage receipt."""
 
 
+class ValidatedIngestionManifest(Protocol):
+    version: str
+    instruments: Sequence[Any]
+
+    def validated_digest(self) -> str: ...
+
+
 # Coarse bars are the minimum useful fallback. Fetch them before potentially
 # slow/flaky intraday endpoints so a degraded run still produces daily/weekly
 # data for the dashboard.
@@ -42,7 +49,7 @@ INGESTION_TIMEFRAMES = ("1d", "1w", "15m", "1h", "4h")
 
 @dataclass(frozen=True)
 class IngestionPlan:
-    manifest: MvpManifest
+    manifest: MvpManifest | ValidatedIngestionManifest
     run_id: str
     now: datetime | None = None
     history_start: str | None = None
@@ -405,7 +412,17 @@ class IngestionOrchestrator:
         now = started if plan.now is not None else self._clock()
         end = self._now_iso(now)
         manifest = plan.manifest
-        manifest_hash = manifest_digest(manifest)
+        if isinstance(manifest, MvpManifest):
+            manifest_hash = manifest_digest(manifest)
+        else:
+            digest = getattr(manifest, "validated_digest", None)
+            if not callable(digest):
+                raise IngestionError("ingestion manifest must expose a validated digest")
+            manifest_hash = str(digest())
+        if len(manifest_hash) != 64 or any(
+            character not in "0123456789abcdef" for character in manifest_hash
+        ):
+            raise IngestionError("ingestion manifest digest must be a lowercase SHA-256 digest")
         timeframes = tuple(plan.timeframes or INGESTION_TIMEFRAMES)
         if not timeframes or any(timeframe not in ALLOWED_TIMEFRAMES for timeframe in timeframes):
             raise IngestionError(f"ingestion timeframes must be drawn from {ALLOWED_TIMEFRAMES}")

@@ -315,6 +315,27 @@ provider 会排除坏行而继续返回同一响应中的正常原始行。`sour
 系统不会修正、插值或补造坏行；若请求窗口内所有行都不合格，provider 仍显式失败。
 | `reject_reason` / `access_issues` | strict quality blocked 时的直接原因，如 `upstream_error`、`empty_data`、`stale`、`gap`、`out_of_order` |
 
+### Watchlist Universe 日线持久化
+
+`configs/watchlist_manifest.json` 是独立于 100+100 Screening Universe 的 Wendy 手选清单。
+它使用 `WATCH.*` instrument namespace，只声明 `1d`，不继承 Screening 的固定数量、freeze、
+reserve pool 或 free-source profile。A 股个股走 `tencent_stock_free`，A 股 ETF 走独立的
+`tencent_etf_free`（5 开头映射上海，15/16 开头映射深圳），美股/韩股走 Yahoo。
+
+Watchlist runner 只接受 canonical Market Data Database 与专属 lock；它不会打开 issue-71
+observer DB，也不会调用 `apply_free_source_profile`：
+
+```bash
+PYTHONPATH=src python3 -m ops.watchlist_seed \
+  --manifest configs/watchlist_manifest.json \
+  --db /Users/wendy/park-data/market/kline.db \
+  --lock /Users/wendy/park-data/market/watchlist-worker.lock \
+  --request-interval 2
+```
+
+每轮 receipt 将“本轮抓取状态”与“库内已有覆盖”分开，记录 429/403/5xx/timeout/other error、
+provider attempts 和 P95。历史 candle 不会把本轮失败伪装成成功；完整轮次由同一个专属锁保护。
+
 > `cache_policy=allow` 命中 cache 时不会自动回源刷新，但 `served_from` + `age_seconds` + `fresh` 让陈旧数据可见。实时路径应使用 `cache_policy=bypass` 或 `profile=realtime`。
 
 ```bash
