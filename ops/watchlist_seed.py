@@ -76,14 +76,15 @@ async def execute_watchlist_batches(
     manifest_hash = manifest.validated_digest()
     orchestrator = IngestionOrchestrator(store, adapter_resolver=adapter_resolver)
     reports: list[dict[str, Any]] = []
+    current_cells: dict[str, Any] = {}
     instrument_ids = tuple(item.instrument_id for item in manifest.instruments)
-    for batch_index, batch in enumerate(_batches(instrument_ids, batch_size), start=1):
-        run_now = now or datetime.now(timezone.utc)
-        run_id = (
-            f"watchlist-{run_now.astimezone(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
-            f"-{batch_index:03d}"
-        )
-        with _SingleRunLock(Path(lock_path)):
+    with _SingleRunLock(Path(lock_path)):
+        for batch_index, batch in enumerate(_batches(instrument_ids, batch_size), start=1):
+            run_now = now or datetime.now(timezone.utc)
+            run_id = (
+                f"watchlist-{run_now.astimezone(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+                f"-{batch_index:03d}"
+            )
             receipt = await orchestrator.run_once(
                 IngestionPlan(
                     manifest=manifest,
@@ -103,15 +104,18 @@ async def execute_watchlist_batches(
                     },
                 )
             )
-        reports.append(
-            _batch_report(
-                receipt,
-                phase="daily",
-                universe="watchlist",
-                batch_index=batch_index,
-                batch_size=len(batch),
+            current_cells.update(
+                {cell.instrument_id: cell for cell in receipt.requested_cells}
             )
-        )
+            reports.append(
+                _batch_report(
+                    receipt,
+                    phase="daily",
+                    universe="watchlist",
+                    batch_index=batch_index,
+                    batch_size=len(batch),
+                )
+            )
 
     error_counts: Counter[str] = Counter()
     row_counts: Counter[str] = Counter()
@@ -132,29 +136,36 @@ async def execute_watchlist_batches(
     remaining = [
         item.instrument_id for item in manifest.instruments if item.instrument_id not in persisted
     ]
-    observations = {
-        str(item["instrument_id"]): item
-        for item in store.latest_mvp_source_observations()
-        if item.get("manifest_version") == manifest.version and item.get("timeframe") == "1d"
-    }
+    current_failed = [
+        item.instrument_id
+        for item in manifest.instruments
+        if current_cells.get(item.instrument_id) is None
+        or current_cells[item.instrument_id].status != "ready"
+    ]
     statuses = {
         item.instrument_id: {
-            "status": "persisted" if item.instrument_id in persisted else "failed",
-            "reason": None
-            if item.instrument_id in persisted
-            else (observations.get(item.instrument_id) or {}).get("error")
-            or "no_persisted_daily_candle",
+            "status": current_cells[item.instrument_id].status
+            if item.instrument_id in current_cells
+            else "missing_receipt",
+            "reason": (
+                current_cells[item.instrument_id].error or current_cells[item.instrument_id].status
+            )
+            if item.instrument_id in current_cells
+            and current_cells[item.instrument_id].status != "ready"
+            else None,
+            "available_in_store": item.instrument_id in persisted,
         }
         for item in manifest.instruments
     }
     return {
         "observed_at": (now or datetime.now(timezone.utc)).isoformat(),
-        "status": "success" if not remaining else "partial",
+        "status": "success" if not current_failed else "partial",
         "manifest_version": manifest.version,
         "manifest_hash": manifest_hash,
         "instrument_count": len(manifest.instruments),
         "persisted_instrument_count": len(persisted),
         "remaining_after": remaining,
+        "current_failed": current_failed,
         "timeframes": ["1d"],
         "batch_count": len(reports),
         "batch_status_counts": dict(status_counts),
