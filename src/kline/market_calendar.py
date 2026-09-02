@@ -742,6 +742,9 @@ def assess_quality(
             <= local_cutoff
             < first_open + timedelta(minutes=market_open_buffer_minutes)
         )
+    # The opening buffer softens only the receipt classification. Ingestion
+    # still promotes candles/watermarks exclusively for ``pass``, so a
+    # ``partial`` forming result remains fail-closed for persistence.
     if not market_open_buffer_active:
         blocking.add("forming")
     status = (

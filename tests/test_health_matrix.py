@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from dataclasses import replace
 import json
 from pathlib import Path
@@ -301,6 +301,41 @@ def test_worker_next_due_keeps_non_stock_run_anchor(tmp_path: Path) -> None:
     )
 
     assert snapshot["worker"]["next_due_at"] == "2026-09-02T07:00:00+00:00"
+
+
+def test_worker_next_due_finds_stock_cycle_anchor_beyond_timeline_limit(
+    tmp_path: Path,
+) -> None:
+    manifest = load_manifest(MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "matrix-long-cycle-anchor.db"))
+    started = datetime(2026, 9, 2, 1, 30, tzinfo=timezone.utc)
+    for index in range(70):
+        stamp = started.replace(minute=30) + timedelta(minutes=index)
+        run_id = (
+            "mvp-stocks-20260902T013000Z-coarse-a_share-001"
+            if index == 0
+            else f"mvp-stocks-20260902T{stamp:%H%M%S}Z-intraday-us_stock-{index:03d}"
+        )
+        store.commit_mvp_run(
+            MvpRunWrite(
+                run_id=run_id,
+                manifest_version=manifest.version,
+                manifest_hash=manifest_digest(manifest),
+                started_at=stamp.isoformat(),
+                completed_at=stamp.isoformat(),
+                window_start=None,
+                window_end=stamp.isoformat(),
+                policy={"runner": "mvp_stock_seed"},
+            )
+        )
+
+    snapshot = build_mvp_health_matrix(
+        manifest,
+        store,
+        now=datetime(2026, 9, 2, 3, tzinfo=timezone.utc),
+    )
+
+    assert snapshot["worker"]["next_due_at"] == "2026-09-02T05:30:00+00:00"
 
 
 def test_freshness_uses_session_and_continuous_calendar_slas() -> None:

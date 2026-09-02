@@ -77,6 +77,8 @@ async def test_run_once_marks_cn_a_opening_forming_bars_partial_inside_buffer(
     assert receipt.quality["partial"] == 2
     assert receipt.quality["fail"] == 0
     assert receipt.row_counts["promoted_candles"] == 0
+    assert receipt.row_counts["watermarks"] == 0
+    assert store.mvp_storage_health()["candles"] == 0
 
 
 class FakeCryptoAdapter:
