@@ -17,6 +17,7 @@ from kline.providers.commodity import CommodityProvider
 from kline.providers.crypto import CryptoProvider
 from kline.providers.fred import FredCsvProvider
 from kline.providers.free_ashare import AShareFreeProvider
+from kline.providers.free_ashare_etf import TencentEtfFreeProvider
 from kline.providers.free_us import USFreeProvider
 from kline.providers.hyperliquid import HyperliquidPerpetualProvider
 from kline.providers.sina import SinaIndexProvider
@@ -188,6 +189,14 @@ def init(settings: Settings | None = None) -> None:
         ProviderBackedMarketDataAdapter(
             source_manifest("tencent_stock_free", AssetClass.A_SHARE),
             AShareFreeProvider(timeout=min(s.request_timeout, _FREE_PROVIDER_TIMEOUT_SECONDS)),
+        )
+    )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("tencent_etf_free", AssetClass.ETF),
+            TencentEtfFreeProvider(
+                timeout=min(s.request_timeout, _FREE_PROVIDER_TIMEOUT_SECONDS)
+            ),
         )
     )
 

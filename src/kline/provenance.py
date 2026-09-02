@@ -128,6 +128,7 @@ _SOURCE_ALIASES = {
     "binance_futures_research": "binance_usdm_futures_research",
     "hyperliquid_perpetual_public": "hyperliquid_perpetual_public",
     "tencent_stock_free": "tencent_stock_free",
+    "tencent_etf_free": "tencent_etf_free",
     "yahoo_finance_free": "yahoo_finance_free",
     "hyperliquid_perp": "hyperliquid_perpetual_public",
     "yahoo": "yahoo",
@@ -160,6 +161,7 @@ _SOURCE_ASSET_CLASSES = {
     "yahoo_finance_futures": AssetClass.COMMODITY,
     "tushare_pro": AssetClass.A_SHARE,
     "tencent_stock_free": AssetClass.A_SHARE,
+    "tencent_etf_free": AssetClass.ETF,
     "tencent_kline": AssetClass.INDEX,
     "sina_index": AssetClass.INDEX,
     "treasury_official_csv": AssetClass.MACRO,
@@ -221,6 +223,15 @@ _TENCENT_STOCK_FREE_META = ProviderMeta(
     execution_venue=False,
     realtime_supported=False,
     market_type="equity",
+)
+_TENCENT_ETF_FREE_META = ProviderMeta(
+    name="tencent_finance",
+    source_mode="tencent_etf_free",
+    quality_flags=("public_api", "market_hours", "research_only", "entitlement_unverified"),
+    continuous=False,
+    execution_venue=False,
+    realtime_supported=False,
+    market_type="etf",
 )
 _YAHOO_FREE_META = ProviderMeta(
     name="yahoo_finance",
@@ -491,6 +502,19 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         asset_class=AssetClass.A_SHARE,
         meta=_TENCENT_STOCK_FREE_META,
         default_for_asset_class=False,
+    ),
+    "tencent_etf_free": SourceManifest(
+        source_id="tencent_etf_free",
+        asset_class=AssetClass.ETF,
+        meta=_TENCENT_ETF_FREE_META,
+        default_for_asset_class=False,
+        symbol_timeframes={
+            "588180": (Timeframe.DAY,),
+            "588780": (Timeframe.DAY,),
+            "159510": (Timeframe.DAY,),
+            "159516": (Timeframe.DAY,),
+        },
+        enforce_symbol_allowlist=True,
     ),
     "tencent_kline": SourceManifest(
         source_id="tencent_kline",
