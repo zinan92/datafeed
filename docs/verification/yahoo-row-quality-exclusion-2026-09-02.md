@@ -30,11 +30,12 @@ QCOM 与 000660.KS 都返回了 Yahoo 当前正常的原始 K 线，同时在 `s
 - 若窗口内所有行都被排除，provider 返回 `ProviderError`，raw receipt 的 error 为
   `all_rows_failed_quality_validation`，不会返回 empty-but-200。
 - 排除明细随 `source_identity` 进入现有 FetchReceipt / ingestion source observation policy，
-  因而 operator 可按 instrument 统计覆盖损失；本 issue 不改健康面板 UI。
+  `invalid_row_excluded` 也进入 API 顶层、返回 candle 与持久化 source observation 的
+  `quality_flags`，因而 operator 可按 instrument 统计覆盖损失；本 issue 不改健康面板 UI。
 
 ## 自动化验证
 
 - `tests/test_timeframe_contract.py`: QCOM non-finite、000660.KS/DHR invariant、负成交量、
   全部坏行、重复请求稳定性与不造数。
-- provider + port + ingestion + live API 专项：49 passed。
-- 完整套件与最终 lint 结果在 PR Validation 中记录。
+- provider + port + ingestion + live API 专项：51 passed。
+- 完整套件：299 passed；最终 Ruff：passed。
