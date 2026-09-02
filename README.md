@@ -307,6 +307,11 @@ Yahoo 偶尔会返回一个有成交量、但 OHLC 为 `NaN` 的最新交易日�
 调用 yfinance 的 upstream repair 路径，并在 `source_identity` 中记录
 `repair_attempted`、`repaired_row_count` 和 `repaired_timestamps`。请求会多取少量上下文，
 但公开 candles 仍严格裁剪到请求的 `end`，不会泄漏未来数据、读取旧 cache 或生成合成价格。
+
+如果 repair 后仍只有个别历史行不满足有限数值、OHLC invariant 或非负成交量约束，Yahoo
+provider 会排除坏行而继续返回同一响应中的正常原始行。`source_identity` 和 raw receipt 会以
+`invalid_row_excluded`、`excluded_row_count`、`excluded_timestamps`、`excluded_rows` 明确记录
+损失及原因；不会修正、插值或补造坏行。若请求窗口内所有行都不合格，provider 仍显式失败。
 | `reject_reason` / `access_issues` | strict quality blocked 时的直接原因，如 `upstream_error`、`empty_data`、`stale`、`gap`、`out_of_order` |
 
 > `cache_policy=allow` 命中 cache 时不会自动回源刷新，但 `served_from` + `age_seconds` + `fresh` 让陈旧数据可见。实时路径应使用 `cache_policy=bypass` 或 `profile=realtime`。

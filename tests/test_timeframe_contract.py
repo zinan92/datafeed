@@ -9,6 +9,7 @@ import httpx
 
 from kline.api import RequestPolicy, _build_response, _normalize_timeframe_transform
 from kline.models import AssetClass, CachePolicy, Candle, FallbackPolicy, QualityPolicy, Timeframe
+from kline.providers.base import ProviderError
 from kline.providers.us import USStockProvider, _aggregate_completed_weeks
 from kline.providers.crypto import CryptoProvider
 from kline.provenance import provider_meta, source_manifest
@@ -231,6 +232,162 @@ async def test_yahoo_enables_upstream_repair_and_records_repaired_rows(monkeypat
     assert provider.source_identity["repaired_row_count"] == 1
     assert provider.source_identity["repaired_timestamps"] == ["2026-08-28"]
     assert provider.last_raw_response["response_body"]["repaired_timestamps"] == ["2026-08-28"]
+
+
+@pytest.mark.asyncio
+async def test_yahoo_excludes_one_invalid_row_and_reports_the_quality_loss(monkeypatch):
+    index = pd.DatetimeIndex(["2021-08-31", "2021-09-01", "2021-09-02"], tz="UTC")
+    frame = pd.DataFrame(
+        {
+            "Open": [100.0, float("nan"), 102.0],
+            "High": [102.0, float("nan"), 104.0],
+            "Low": [99.0, float("nan"), 101.0],
+            "Close": [101.0, float("nan"), 103.0],
+            "Volume": [100.0, 120.0, 140.0],
+        },
+        index=index,
+    )
+
+    class FakeTicker:
+        def history(self, **_kwargs):
+            return frame.copy()
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: FakeTicker())
+    provider = USStockProvider()
+
+    candles = await provider.fetch("QCOM", Timeframe.DAY, limit=10)
+
+    assert [candle.timestamp for candle in candles] == ["2021-08-31", "2021-09-02"]
+    assert all(candle.open in {100.0, 102.0} for candle in candles)
+    assert provider.source_identity["quality_flags"] == ["invalid_row_excluded"]
+    assert provider.source_identity["excluded_row_count"] == 1
+    assert provider.source_identity["excluded_rows"] == [
+        {
+            "timestamp": "2021-09-01",
+            "reason": "non_finite_ohlcv",
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_yahoo_fails_loudly_when_every_row_is_excluded(monkeypatch):
+    index = pd.DatetimeIndex(["2023-02-02"], tz="UTC")
+    frame = pd.DataFrame(
+        {
+            "Open": [100.0],
+            "High": [99.0],
+            "Low": [98.0],
+            "Close": [101.0],
+            "Volume": [100.0],
+        },
+        index=index,
+    )
+
+    class FakeTicker:
+        def history(self, **_kwargs):
+            return frame.copy()
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: FakeTicker())
+    provider = USStockProvider()
+
+    with pytest.raises(ProviderError, match="all rows failed quality validation"):
+        await provider.fetch("000660.KS", Timeframe.DAY, limit=10)
+
+    assert provider.source_identity["quality_flags"] == ["invalid_row_excluded"]
+    assert provider.source_identity["excluded_rows"] == [
+        {
+            "timestamp": "2023-02-02",
+            "reason": "ohlc_invariant",
+        }
+    ]
+    assert provider.last_raw_response is not None
+    assert provider.last_raw_response["error"] == "all_rows_failed_quality_validation"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("ticker", "bad_date"),
+    [
+        ("000660.KS", "2023-02-02"),
+        ("DHR", "2026-09-01"),
+    ],
+)
+async def test_yahoo_real_invariant_regressions_keep_good_rows_deterministically(
+    monkeypatch, ticker, bad_date
+):
+    index = pd.DatetimeIndex(["2021-01-04", "2022-01-04", bad_date], tz="UTC")
+    frame = pd.DataFrame(
+        {
+            "Open": [90.0, 110.0, 100.0],
+            "High": [92.0, 112.0, 99.0],
+            "Low": [89.0, 109.0, 98.0],
+            "Close": [91.0, 111.0, 101.0],
+            "Volume": [100.0, 120.0, 140.0],
+        },
+        index=index,
+    )
+
+    class FakeTicker:
+        def history(self, **_kwargs):
+            return frame.copy()
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: FakeTicker())
+    provider = USStockProvider()
+
+    first = await provider.fetch(
+        ticker,
+        Timeframe.DAY,
+        start="2021-01-04",
+        end="2026-09-03",
+        limit=10,
+    )
+    first_exclusions = list(provider.source_identity["excluded_rows"])
+    second = await provider.fetch(
+        ticker,
+        Timeframe.DAY,
+        start="2021-01-04",
+        end="2026-09-03",
+        limit=10,
+    )
+
+    assert [candle.timestamp for candle in first] == ["2021-01-04", "2022-01-04"]
+    assert [candle.model_dump() for candle in second] == [
+        candle.model_dump() for candle in first
+    ]
+    assert provider.source_identity["excluded_rows"] == first_exclusions == [
+        {"timestamp": bad_date, "reason": "ohlc_invariant"}
+    ]
+
+
+@pytest.mark.asyncio
+async def test_yahoo_excludes_negative_volume_without_fabricating_a_replacement(monkeypatch):
+    index = pd.DatetimeIndex(["2026-08-31", "2026-09-01"], tz="UTC")
+    frame = pd.DataFrame(
+        {
+            "Open": [100.0, 101.0],
+            "High": [102.0, 103.0],
+            "Low": [99.0, 100.0],
+            "Close": [101.0, 102.0],
+            "Volume": [-1.0, 120.0],
+        },
+        index=index,
+    )
+
+    class FakeTicker:
+        def history(self, **_kwargs):
+            return frame.copy()
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: FakeTicker())
+    provider = USStockProvider()
+
+    candles = await provider.fetch("AAPL", Timeframe.DAY, limit=10)
+
+    assert [candle.timestamp for candle in candles] == ["2026-09-01"]
+    assert candles[0].volume == 120.0
+    assert provider.source_identity["repair_attempted"] is False
+    assert provider.source_identity["excluded_rows"] == [
+        {"timestamp": "2026-08-31", "reason": "negative_volume"}
+    ]
 
 
 @pytest.mark.asyncio
