@@ -18,30 +18,20 @@ from kline.health_matrix import (
     build_mvp_health_matrix,
 )
 from kline.mvp_manifest import load_manifest
-from kline.registry import get_store
 from kline.store import KlineReadOnlyStore, KlineStore
+from kline.time_utils import parse_utc_timestamp
 from kline.watchlist_manifest import load_watchlist_manifest
 
 
 COMBINED_SCOPE = "screening_watchlist"
+SCREENING_DB_ENV = "KLINE_DB_PATH"
 MARKET_DATA_DB_ENV = "KLINE_MARKET_DB_PATH"
+_screening_store_cache: dict[str, KlineReadOnlyStore] = {}
 _market_store_cache: dict[str, KlineReadOnlyStore] = {}
 
 
-def _parse_timestamp(value: Any) -> datetime | None:
-    if not value:
-        return None
-    try:
-        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
-
-
 def _latest_timestamp(values: list[Any], *, default: str | None = None) -> str | None:
-    parsed = [(stamp, _parse_timestamp(stamp)) for stamp in values if stamp]
+    parsed = [(stamp, parse_utc_timestamp(stamp)) for stamp in values if stamp]
     parsed = [(stamp, value) for stamp, value in parsed if value is not None]
     if not parsed:
         return default
@@ -81,18 +71,18 @@ def _merge_worker(snapshots: Mapping[str, dict[str, Any]]) -> dict[str, Any]:
     runs = [worker for worker in workers.values() if worker.get("last_run_id")]
     latest_run = max(
         runs,
-        key=lambda worker: _parse_timestamp(worker.get("last_attempt_at"))
+        key=lambda worker: parse_utc_timestamp(worker.get("last_attempt_at"))
         or datetime.min.replace(tzinfo=timezone.utc),
         default={},
     )
     due_values = [worker.get("next_due_at") for worker in workers.values() if worker.get("next_due_at")]
-    due_values = [value for value in due_values if _parse_timestamp(value) is not None]
+    due_values = [value for value in due_values if parse_utc_timestamp(value) is not None]
     return {
         "status": "last_run" if runs else "idle",
         "last_attempt_at": _latest_timestamp(attempts),
         "last_success_at": _latest_timestamp(successes),
         "last_run_id": latest_run.get("last_run_id"),
-        "next_due_at": min(due_values, key=lambda value: _parse_timestamp(value))
+        "next_due_at": min(due_values, key=lambda value: parse_utc_timestamp(value))
         if due_values
         else None,
         "interval_seconds": None,
@@ -132,14 +122,27 @@ def _combined_manifest_hash(snapshots: Mapping[str, dict[str, Any]]) -> str:
     ).hexdigest()
 
 
-def _market_store(path: str | Path | None = None) -> KlineReadOnlyStore:
-    value = str(path or os.environ.get(MARKET_DATA_DB_ENV) or "").strip()
+def _read_only_store(
+    path: str | Path | None,
+    *,
+    env_name: str,
+    cache: dict[str, KlineReadOnlyStore],
+) -> KlineReadOnlyStore:
+    value = str(path or os.environ.get(env_name) or "").strip()
     if not value:
-        raise RuntimeError(f"{MARKET_DATA_DB_ENV} must be configured for the combined health view")
+        raise RuntimeError(f"{env_name} must be configured for the combined health view")
     resolved = str(Path(value).expanduser().resolve())
-    if resolved not in _market_store_cache:
-        _market_store_cache[resolved] = KlineReadOnlyStore(resolved)
-    return _market_store_cache[resolved]
+    if resolved not in cache:
+        cache[resolved] = KlineReadOnlyStore(resolved)
+    return cache[resolved]
+
+
+def _screening_store(path: str | Path | None = None) -> KlineReadOnlyStore:
+    return _read_only_store(path, env_name=SCREENING_DB_ENV, cache=_screening_store_cache)
+
+
+def _market_store(path: str | Path | None = None) -> KlineReadOnlyStore:
+    return _read_only_store(path, env_name=MARKET_DATA_DB_ENV, cache=_market_store_cache)
 
 
 def build_combined_health_matrix(
@@ -163,7 +166,7 @@ def build_combined_health_matrix(
     snapshots = {
         "screening": build_mvp_health_matrix(
             screening_manifest,
-            screening_store or get_store(),
+            screening_store or _screening_store(),
             now=now,
             interval_seconds=4 * 60 * 60,
             scope=MATRIX_SCOPE_FULL,
@@ -206,7 +209,7 @@ def build_combined_health_matrix(
         for run in snapshot.get("runs", [])
     ]
     runs.sort(
-        key=lambda run: _parse_timestamp(run.get("started_at"))
+        key=lambda run: parse_utc_timestamp(run.get("started_at"))
         or datetime.min.replace(tzinfo=timezone.utc),
         reverse=True,
     )

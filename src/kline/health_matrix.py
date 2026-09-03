@@ -10,6 +10,7 @@ from kline.market_calendar import calendar_spec, is_trading_session
 from kline.models import AssetClass
 from kline.mvp_manifest import MvpManifest, ManifestInstrument, manifest_digest
 from kline.storage import StoragePort
+from kline.time_utils import parse_utc_timestamp
 
 
 MATRIX_TIMEFRAMES = ("15m", "1h", "4h", "1d", "1w")
@@ -38,18 +39,6 @@ def _iso(value: datetime) -> str:
     if value.tzinfo is None:
         value = value.replace(tzinfo=timezone.utc)
     return value.astimezone(timezone.utc).replace(microsecond=0).isoformat()
-
-
-def _parse_timestamp(value: str | None) -> datetime | None:
-    if not value:
-        return None
-    try:
-        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
 
 
 def _status_counts(cells: Sequence[Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -111,7 +100,7 @@ def _freshness_stale(
 ) -> bool:
     """Apply calendar-aware freshness without treating a closed session as stale."""
 
-    latest = _parse_timestamp(latest_timestamp)
+    latest = parse_utc_timestamp(latest_timestamp)
     if latest is None:
         return False
     expected = _expected_latest_closed_start(instrument, timeframe, now)
@@ -466,7 +455,7 @@ def _worker_payload(
         else (storage.latest_mvp_run() if hasattr(storage, "latest_mvp_run") else None)
     )
     last_activity = (latest.get("completed_at") or latest.get("started_at")) if latest else None
-    parsed_activity = _parse_timestamp(last_activity)
+    parsed_activity = parse_utc_timestamp(last_activity)
     next_due = None
     if parsed_activity is not None:
         due = parsed_activity + timedelta(seconds=interval_seconds)
@@ -693,7 +682,7 @@ def build_mvp_health_matrix(
     recent_runs = [
         run
         for run in persisted_runs
-        if (started := _parse_timestamp(run.get("started_at"))) is None or started >= run_cutoff
+        if (started := parse_utc_timestamp(run.get("started_at"))) is None or started >= run_cutoff
     ]
     storage_health = storage.mvp_storage_health() if hasattr(storage, "mvp_storage_health") else {}
     backup = storage.latest_mvp_backup() if hasattr(storage, "latest_mvp_backup") else None

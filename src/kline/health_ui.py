@@ -167,6 +167,45 @@ async def health_ui() -> str:
     if (!timeframes.every(tf => data.coverage[tf] && Number.isFinite(Number(data.coverage[tf].applicable)) && Number.isFinite(Number(data.coverage[tf].not_applicable)))) return false;
     return data.cells.every(cell => timeframes.includes(cell.timeframe) && ['applicable','not_applicable'].includes(cell.applicability) && Object.prototype.hasOwnProperty.call(statusLabels, cell.status));
   };
+  function coverageFromCells(cells) {
+    const statuses = ['ready','partial','stale','failed','blocked','unavailable'];
+    return Object.fromEntries(timeframes.map(tf => {
+      const counts = {applicable:0,not_applicable:0,technical_ready:0,ready:0,partial:0,stale:0,failed:0,blocked:0,unavailable:0};
+      cells.filter(cell => cell.timeframe === tf).forEach(cell => {
+        if (cell.applicability === 'not_applicable') counts.not_applicable += 1;
+        else {
+          counts.applicable += 1;
+          if (statuses.includes(cell.status)) counts[cell.status] += 1;
+          if (cell.technical_status === 'ready' || cell.status === 'ready') counts.technical_ready += 1;
+        }
+      });
+      counts.ratio = counts.applicable ? counts.ready / counts.applicable : null;
+      return [tf, counts];
+    }));
+  }
+  function statusFromCells(cells) {
+    const statuses = new Set(cells.filter(cell => cell.applicability === 'applicable').map(cell => cell.status));
+    if (statuses.has('failed') || statuses.has('blocked')) return 'failed';
+    if (['partial','stale','unavailable'].some(status => statuses.has(status))) return 'partial';
+    return 'ready';
+  }
+  function scopeSnapshot(snapshot) {
+    const dataset = document.getElementById('dataset-filter').value;
+    if (dataset === 'all' || !snapshot.manifest_versions) return snapshot;
+    const cells = snapshot.cells.filter(cell => cell.dataset === dataset);
+    const worker = (snapshot.workers || {})[dataset] || snapshot.worker;
+    const databaseKey = dataset === 'watchlist' ? 'market_data' : 'screening';
+    const allDatabases = (snapshot.infrastructure || {}).databases || {};
+    const databases = allDatabases[databaseKey] ? {[databaseKey]:allDatabases[databaseKey]} : {};
+    return {
+      ...snapshot,
+      status:statusFromCells(cells), cells, coverage:coverageFromCells(cells), worker,
+      runs:(snapshot.runs || []).filter(run => run.dataset === dataset),
+      manifest_version:snapshot.manifest_versions[dataset] || snapshot.manifest_version,
+      manifest_versions:null,
+      infrastructure:{...snapshot.infrastructure,worker,databases}
+    };
+  }
   const showBanner = (text, severity = 'error') => {
     const banner = document.getElementById('banner');
     document.getElementById('banner-text').textContent = text;
@@ -270,21 +309,22 @@ async def health_ui() -> str:
 
   function render(snapshot) {
     latestSnapshot = snapshot;
-    renderCoverage(snapshot); renderMatrix(snapshot); renderRuns(snapshot); renderInfrastructure(snapshot);
-    const applicable = snapshot.cells.filter(cell => cell.applicability === 'applicable');
+    const scoped = scopeSnapshot(snapshot);
+    renderCoverage(scoped); renderMatrix(scoped); renderRuns(scoped); renderInfrastructure(scoped);
+    const applicable = scoped.cells.filter(cell => cell.applicability === 'applicable');
     const blocked = applicable.filter(cell => cell.status === 'blocked').length;
     const failed = applicable.filter(cell => cell.status === 'failed').length;
     const unavailable = applicable.filter(cell => cell.status === 'unavailable').length;
     const technicalReady = applicable.filter(cell => cell.technical_status === 'ready' || cell.status === 'ready').length;
     const mixedTechnicalState = technicalReady > 0 && (blocked || failed || unavailable);
-    const overallText = mixedTechnicalState && snapshot.status === 'failed' && blocked && !failed
+    const overallText = mixedTechnicalState && scoped.status === 'failed' && blocked && !failed
       ? '总体状态：部分可用（含授权阻塞）'
-      : snapshot.status === 'failed' && blocked && !failed
+      : scoped.status === 'failed' && blocked && !failed
         ? '总体状态：授权阻塞'
-        : `总体状态：${statusText(snapshot.status)}`;
+        : `总体状态：${statusText(scoped.status)}`;
     document.getElementById('overall').textContent = overallText;
-    document.getElementById('snapshot-meta').textContent = `数据时间 ${fmtTime(snapshot.as_of)} · 自动读取间隔 30 秒 · 请求上限 10 秒`;
-    if (snapshot.status === 'failed') {
+    document.getElementById('snapshot-meta').textContent = `数据时间 ${fmtTime(scoped.as_of)} · 自动读取间隔 30 秒 · 请求上限 10 秒`;
+    if (scoped.status === 'failed') {
       if (blocked && !failed && technicalReady) {
         const details = [`已有 ${technicalReady} 个单元格有技术数据`, `${blocked} 个单元格因授权未核实`];
         if (unavailable) details.push(`${unavailable} 个单元格暂无数据`);
@@ -294,7 +334,7 @@ async def health_ui() -> str:
       }
       else if (blocked) showBanner(`当前有 ${failed} 个采集失败单元格和 ${blocked} 个授权阻塞单元格，请分别查看详情`, 'error');
       else showBanner(`当前有 ${failed} 个采集失败单元格，请查看矩阵详情`, 'error');
-    } else if (snapshot.status === 'partial') {
+    } else if (scoped.status === 'partial') {
       showBanner('数据源存在过期、部分或不可用单元格，请查看覆盖概览', 'warn');
     } else {
       hideBanner();
@@ -356,7 +396,7 @@ async def health_ui() -> str:
     document.getElementById('dataset-filter-wrap').hidden = true;
   }
   ['search','dataset-filter','market-filter','timeframe-filter','filter'].forEach(id => {
-    document.getElementById(id).addEventListener(id === 'search' ? 'input' : 'change', () => { if (latestSnapshot) renderMatrix(latestSnapshot); });
+    document.getElementById(id).addEventListener(id === 'search' ? 'input' : 'change', () => { if (latestSnapshot) render(latestSnapshot); });
   });
   document.getElementById('close-drawer').addEventListener('click', closeDetail);
   document.getElementById('drawer-backdrop').addEventListener('click', event => { if (event.target.id === 'drawer-backdrop') closeDetail(); });

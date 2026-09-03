@@ -1458,5 +1458,28 @@ class KlineReadOnlyStore(KlineStore):
             echo=False,
             connect_args={"uri": True},
         )
+        event.listen(self._engine, "connect", self._enable_query_only)
         self._mvp_commit_failpoint = None
         self._session_factory = sessionmaker(bind=self._engine)
+
+    @staticmethod
+    def _enable_query_only(dbapi_conn, _connection_record) -> None:
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA query_only=ON")
+        cursor.close()
+
+    @staticmethod
+    def _write_blocked(operation: str) -> None:
+        raise StorageError(f"read-only store forbids {operation}")
+
+    def save(self, *_args: Any, **_kwargs: Any) -> int:
+        self._write_blocked("save")
+
+    def save_raw_response(self, **_kwargs: Any) -> int:
+        self._write_blocked("save_raw_response")
+
+    def save_source_observation(self, **_kwargs: Any) -> int:
+        self._write_blocked("save_source_observation")
+
+    def commit_mvp_run(self, _write: MvpRunWrite) -> MvpRunReceipt:
+        self._write_blocked("commit_mvp_run")

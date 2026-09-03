@@ -509,7 +509,7 @@ kline/
 | `KLINE_TUSHARE_TOKEN` | TuShare Pro token（非 Phase 1 A-share equity 可选） | 否 | — |
 | `KLINE_DB_PATH` | SQLite 数据库路径 | 否 | `data/kline.db` |
 | `KLINE_MARKET_DB_PATH` | Combined Health 使用的 Market Data Database 路径 | 仅合并面板 | — |
-| `KLINE_READ_ONLY` | 使用 SQLite `mode=ro`，禁止建表、迁移、WAL 与数据写入 | 否 | `false` |
+| `KLINE_READ_ONLY` | 使用 SQLite `mode=ro` + `query_only`，禁止建表、迁移和数据写入；SQLite 仍可能维护只读锁所需的 `-shm`/空 `-wal` sidecar | 否 | `false` |
 | `KLINE_PORT` | 服务端口 | 否 | `8100` |
 | `KLINE_REQUEST_TIMEOUT` | 上游请求超时 (秒) | 否 | `30` |
 
@@ -592,6 +592,12 @@ endpoints:
   - path: /api/health
     method: GET
     description: "Health check"
+  - path: /api/mvp/health/matrix
+    method: GET
+    description: "Internal operator-only Screening health matrix"
+  - path: /api/health/combined-matrix
+    method: GET
+    description: "Internal operator-only Screening + Watchlist matrix; requires KLINE_MARKET_DB_PATH and KLINE_READ_ONLY=true"
 install_command: "pip install -e ."
 start_command: "python -m kline"
 health_check: "GET /api/health"
