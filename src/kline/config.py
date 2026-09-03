@@ -8,6 +8,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Database
     db_path: str = "data/kline.db"
+    read_only: bool = False
 
     # Server
     port: int = 8100

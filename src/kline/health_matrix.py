@@ -4,18 +4,20 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 import math
-from typing import Any, Mapping, Sequence
+from typing import Any, Collection, Mapping, Sequence
 
 from kline.market_calendar import calendar_spec, is_trading_session
 from kline.models import AssetClass
 from kline.mvp_manifest import MvpManifest, ManifestInstrument, manifest_digest
 from kline.storage import StoragePort
+from kline.time_utils import parse_utc_timestamp
 
 
 MATRIX_TIMEFRAMES = ("15m", "1h", "4h", "1d", "1w")
 MATRIX_STATUSES = ("ready", "partial", "stale", "failed", "blocked", "unavailable")
 MATRIX_SCOPE_DEMO = "demo_3x3"
 MATRIX_SCOPE_FULL = "full_216"
+MATRIX_SCOPE_WATCHLIST = "watchlist_58"
 POLL_INTERVAL_SECONDS = 30
 REQUEST_TIMEOUT_SECONDS = 10
 SNAPSHOT_MAX_AGE_SECONDS = 900
@@ -37,18 +39,6 @@ def _iso(value: datetime) -> str:
     if value.tzinfo is None:
         value = value.replace(tzinfo=timezone.utc)
     return value.astimezone(timezone.utc).replace(microsecond=0).isoformat()
-
-
-def _parse_timestamp(value: str | None) -> datetime | None:
-    if not value:
-        return None
-    try:
-        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
 
 
 def _status_counts(cells: Sequence[Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -87,6 +77,20 @@ def _key(row: Mapping[str, Any]) -> tuple[str, str, str, str, str]:
     )
 
 
+def _manifest_digest(manifest: Any) -> str:
+    """Return a validated digest for either the Screening or Watchlist manifest."""
+
+    if isinstance(manifest, MvpManifest):
+        return manifest_digest(manifest)
+    digest = getattr(manifest, "validated_digest", None)
+    if not callable(digest):
+        raise ValueError("health matrix manifest must expose a validated digest")
+    value = str(digest())
+    if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
+        raise ValueError("health matrix manifest digest must be a lowercase SHA-256 digest")
+    return value
+
+
 def _freshness_stale(
     instrument: ManifestInstrument,
     timeframe: str,
@@ -96,7 +100,7 @@ def _freshness_stale(
 ) -> bool:
     """Apply calendar-aware freshness without treating a closed session as stale."""
 
-    latest = _parse_timestamp(latest_timestamp)
+    latest = parse_utc_timestamp(latest_timestamp)
     if latest is None:
         return False
     expected = _expected_latest_closed_start(instrument, timeframe, now)
@@ -290,11 +294,12 @@ def _entitlement_block_reason(
     receipt: Mapping[str, Any] | None,
     *,
     derived: bool,
+    free_source_ids: Collection[str] = FREE_SOURCE_IDS,
 ) -> str | None:
     if instrument.source_status == "blocked_for_entitlement":
         return "entitlement_blocked"
     if receipt is None:
-        return None if instrument.source_id in FREE_SOURCE_IDS else "entitlement_unverified"
+        return None if instrument.source_id in free_source_ids else "entitlement_unverified"
     status = str(receipt.get("status") or "unverified").casefold()
     if status in {"blocked", "missing", "unverified"}:
         return f"entitlement_{status}"
@@ -333,7 +338,7 @@ def _cell(
         or instrument.source_status == "blocked_for_entitlement"
     ) and timeframe not in instrument.not_applicable_timeframes
     if not applicable:
-        return {
+        payload = {
             "instrument_id": instrument.instrument_id,
             "display_symbol": instrument.display_symbol,
             "display_name": instrument.display_name,
@@ -360,6 +365,9 @@ def _cell(
             "watermark": None,
             "error": None,
         }
+        if instrument.universe == "watchlist":
+            payload.update({"universe": instrument.universe, "metadata": dict(instrument.metadata)})
+        return payload
 
     latest_timestamp = latest.get("latest_timestamp") if latest else None
     last_attempt = observation.get("observed_at") if observation else None
@@ -401,7 +409,7 @@ def _cell(
         and watermark is not None
         else status
     )
-    return {
+    payload = {
         "instrument_id": instrument.instrument_id,
         "display_symbol": instrument.display_symbol,
         "display_name": instrument.display_name,
@@ -432,6 +440,9 @@ def _cell(
         "watermark": dict(watermark) if watermark else None,
         "error": error,
     }
+    if instrument.universe == "watchlist":
+        payload.update({"universe": instrument.universe, "metadata": dict(instrument.metadata)})
+    return payload
 
 
 def _worker_payload(
@@ -444,7 +455,7 @@ def _worker_payload(
         else (storage.latest_mvp_run() if hasattr(storage, "latest_mvp_run") else None)
     )
     last_activity = (latest.get("completed_at") or latest.get("started_at")) if latest else None
-    parsed_activity = _parse_timestamp(last_activity)
+    parsed_activity = parse_utc_timestamp(last_activity)
     next_due = None
     if parsed_activity is not None:
         due = parsed_activity + timedelta(seconds=interval_seconds)
@@ -463,13 +474,14 @@ def _worker_payload(
 
 
 def build_mvp_health_matrix(
-    manifest: MvpManifest,
+    manifest: Any,
     storage: StoragePort,
     *,
     now: datetime | None = None,
     interval_seconds: int = 4 * 60 * 60,
     scope: str = MATRIX_SCOPE_FULL,
     instrument_ids: Sequence[str] | None = None,
+    free_source_ids: Collection[str] = FREE_SOURCE_IDS,
 ) -> dict[str, Any]:
     """Build the source-aware matrix from persisted facts only.
 
@@ -490,6 +502,9 @@ def build_mvp_health_matrix(
     elif scope == MATRIX_SCOPE_FULL:
         selected_ids = tuple(instrument.instrument_id for instrument in manifest.instruments)
         scope_name = MATRIX_SCOPE_FULL
+    elif scope == MATRIX_SCOPE_WATCHLIST:
+        selected_ids = tuple(instrument.instrument_id for instrument in manifest.instruments)
+        scope_name = MATRIX_SCOPE_WATCHLIST
     else:
         raise ValueError(f"unsupported matrix scope: {scope}")
     missing_ids = [instrument_id for instrument_id in selected_ids if instrument_id not in by_id]
@@ -592,6 +607,7 @@ def build_mvp_health_matrix(
                 timeframe,
                 entitlement,
                 derived=bool(transform) or timeframe in {"4h", "1w"},
+                free_source_ids=free_source_ids,
             )
             if entitlement_reason or timeframe in instrument.blocked_timeframes:
                 status, reason = "blocked", entitlement_reason or "timeframe_blocked"
@@ -637,7 +653,7 @@ def build_mvp_health_matrix(
             if (
                 status == "ready"
                 and entitlement is None
-                and instrument.source_id in FREE_SOURCE_IDS
+                and instrument.source_id in free_source_ids
             ):
                 status, reason = "partial", "entitlement_unverified"
             cells.append(
@@ -666,7 +682,7 @@ def build_mvp_health_matrix(
     recent_runs = [
         run
         for run in persisted_runs
-        if (started := _parse_timestamp(run.get("started_at"))) is None or started >= run_cutoff
+        if (started := parse_utc_timestamp(run.get("started_at"))) is None or started >= run_cutoff
     ]
     storage_health = storage.mvp_storage_health() if hasattr(storage, "mvp_storage_health") else {}
     backup = storage.latest_mvp_backup() if hasattr(storage, "latest_mvp_backup") else None
@@ -684,7 +700,7 @@ def build_mvp_health_matrix(
         "status": overall,
         "as_of": _iso(observed_at),
         "manifest_version": manifest.version,
-        "manifest_hash": manifest_digest(manifest),
+        "manifest_hash": _manifest_digest(manifest),
         "scope": {
             "name": scope_name,
             "instrument_count": len(selected_instruments),

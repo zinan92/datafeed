@@ -21,6 +21,7 @@ from kline.models import (
     TimeframeTransform,
     InstrumentDefinition,
 )
+from kline.combined_health import build_combined_health_matrix
 from kline.free_source_profile import apply_free_source_profile
 from kline.health_matrix import (
     MATRIX_SCOPE_DEMO,
@@ -43,6 +44,7 @@ from kline.registry import get_adapter_for_source, get_store, provider_status, r
 
 router = APIRouter()
 _mvp_matrix_last_success_at: str | None = None
+_combined_matrix_last_success_at: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1150,5 +1152,25 @@ async def mvp_health_matrix(scope: str = MATRIX_SCOPE_FULL) -> dict:
                 "error": "dashboard_unavailable",
                 "detail": type(error).__name__,
                 "last_success_at": _mvp_matrix_last_success_at,
+            },
+        ) from error
+
+
+@router.get("/health/combined-matrix")
+async def combined_health_matrix() -> dict:
+    """Return a read-only snapshot over Screening and Watchlist stores."""
+
+    global _combined_matrix_last_success_at
+    try:
+        payload = build_combined_health_matrix()
+        _combined_matrix_last_success_at = payload["refresh"]["last_success_at"]
+        return payload
+    except Exception as error:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "combined_dashboard_unavailable",
+                "detail": type(error).__name__,
+                "last_success_at": _combined_matrix_last_success_at,
             },
         ) from error

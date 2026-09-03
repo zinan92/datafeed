@@ -405,7 +405,13 @@ python -m kline
 | `WS` | `/api/ws/candles/{asset_class}/{ticker}` | 实时 candle update；当前支持 Binance USD-M Futures |
 | `GET` | `/api/tickers` | 列出本地已缓存的 ticker |
 | `GET` | `/api/health` | 健康检查 + provider availability |
+| `GET` | `/api/mvp/health/matrix` | Screening manifest 的只读资产 × 时间级别健康矩阵 |
+| `GET` | `/api/health/combined-matrix` | 同时读取 Screening 与 Watchlist 两个数据库的只读合并矩阵 |
 | `GET` | `/api/sessions/{asset_class}/{ticker}` | 获取 adapter-owned market sessions |
+
+Operator 面板：`/health-ui` 保留 Screening 观察；`/health-ui?view=combined` 显示
+Screening + Watchlist，并可按数据集筛选。合并视图需要同时配置
+`KLINE_DB_PATH` 与 `KLINE_MARKET_DB_PATH`，且应启用 `KLINE_READ_ONLY=true`。
 
 ### 参数
 
@@ -478,6 +484,7 @@ kline/
 │   ├── ports.py            # MarketDataPort + SourceManifest
 │   ├── quality.py          # stale/gap/out-of-order 检测
 │   ├── store.py            # SQLite 存储 (upsert + query)
+│   ├── combined_health.py  # Screening + Watchlist 双库只读健康视图
 │   ├── registry.py         # Adapter 注册与初始化
 │   ├── config.py           # 环境变量配置
 │   └── providers/
@@ -501,6 +508,8 @@ kline/
 |------|------|------|--------|
 | `KLINE_TUSHARE_TOKEN` | TuShare Pro token（非 Phase 1 A-share equity 可选） | 否 | — |
 | `KLINE_DB_PATH` | SQLite 数据库路径 | 否 | `data/kline.db` |
+| `KLINE_MARKET_DB_PATH` | Combined Health 使用的 Market Data Database 路径 | 仅合并面板 | — |
+| `KLINE_READ_ONLY` | 使用 SQLite `mode=ro` + `query_only`，禁止建表、迁移和数据写入；SQLite 仍可能维护只读锁所需的 `-shm`/空 `-wal` sidecar | 否 | `false` |
 | `KLINE_PORT` | 服务端口 | 否 | `8100` |
 | `KLINE_REQUEST_TIMEOUT` | 上游请求超时 (秒) | 否 | `30` |
 
@@ -583,6 +592,12 @@ endpoints:
   - path: /api/health
     method: GET
     description: "Health check"
+  - path: /api/mvp/health/matrix
+    method: GET
+    description: "Internal operator-only Screening health matrix"
+  - path: /api/health/combined-matrix
+    method: GET
+    description: "Internal operator-only Screening + Watchlist matrix; requires KLINE_MARKET_DB_PATH and KLINE_READ_ONLY=true"
 install_command: "pip install -e ."
 start_command: "python -m kline"
 health_check: "GET /api/health"
