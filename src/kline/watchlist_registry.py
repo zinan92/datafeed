@@ -415,10 +415,22 @@ def compile_watchlist_manifest(snapshot: RegistrySnapshot | Mapping[str, Any]) -
                 "metadata": _asset_metadata(asset),
             }
         )
+        binding["metadata"].update(
+            {
+                "registry_commit": snapshot.upstream_commit,
+                "registry_source_sha256": snapshot.source_sha256,
+            }
+        )
         bindings.append(binding)
 
     companies = [target for target in snapshot.targets if target.target_type == "company" and target.listed]
     company_rows = [_company_identity(target) for target in companies]
+    for row in company_rows:
+        row["metadata"].update(
+            {
+                "registry_source_sha256": snapshot.source_sha256,
+            }
+        )
     instruments = bindings + company_rows
     instruments.sort(key=lambda item: (item["instrument_id"].casefold(), item["display_symbol"].casefold()))
     if len(company_rows) != 91:

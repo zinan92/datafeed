@@ -288,7 +288,7 @@ def test_market_first_api_preserves_envelope_and_marks_both_backends(
     legacy_error_identity = legacy_error.json()["detail"]["source_identity"]
     assert legacy_error_identity["served_from"] == "legacy_cache"
     assert legacy_error_identity["query_served_from"] == "legacy_cache"
-    assert legacy_error_identity["market_data_miss_reason"] == "identity_not_found"
+    assert legacy_error_identity["market_data_miss_reason"] == "insufficient_market_history"
 
 
 def test_market_first_missing_database_fails_closed_without_path(

@@ -101,12 +101,12 @@ def test_combined_health_matrix_merges_screening_and_watchlist_stores(tmp_path) 
 
     assert snapshot["scope"] == {
         "name": "screening_watchlist",
-        "instrument_count": 274,
-        "universes": {"a_share": 100, "us_stock": 100, "cross_market": 16, "watchlist": 58},
+        "instrument_count": 323,
+        "universes": {"a_share": 100, "us_stock": 100, "cross_market": 16, "watchlist": 107},
     }
-    assert len(snapshot["cells"]) == 274 * 5
+    assert len(snapshot["cells"]) == 323 * 5
     watchlist_cells = [cell for cell in snapshot["cells"] if cell["instrument_id"].startswith("WATCH.")]
-    assert len(watchlist_cells) == 58 * 5
+    assert len(watchlist_cells) == 107 * 5
     assert {cell["universe"] for cell in watchlist_cells} == {"watchlist"}
     assert {cell["dataset"] for cell in watchlist_cells} == {"watchlist"}
     spx = next(cell for cell in watchlist_cells if cell["instrument_id"] == "WATCH.CROSS.SPX" and cell["timeframe"] == "1d")
@@ -124,7 +124,7 @@ def test_combined_health_matrix_merges_screening_and_watchlist_stores(tmp_path) 
         "watchlist": "watchlist_universe_v1",
     }
     for timeframe, counts in snapshot["coverage"].items():
-        assert counts["applicable"] + counts["not_applicable"] == 274
+        assert counts["applicable"] + counts["not_applicable"] == 323
 
 
 def test_ready_unverified_is_overall_data_healthy_without_claiming_entitlement(
@@ -205,4 +205,4 @@ def test_combined_health_api_reads_market_database_without_replacing_screening(
     payload = response.json()
     assert payload["scope"]["name"] == "screening_watchlist"
     assert payload["manifest_versions"]["watchlist"] == "watchlist_universe_v1"
-    assert len(payload["cells"]) == 274 * 5
+    assert len(payload["cells"]) == 323 * 5
