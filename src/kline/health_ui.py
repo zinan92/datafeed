@@ -120,7 +120,7 @@ async def health_ui() -> str:
   <div id="banner" class="banner" role="status"><i class="dot"></i><span id="banner-text"></span></div>
   <div class="toolbar"><span id="snapshot-meta">正在连接健康矩阵…</span>
     <label><span>搜索：</span><input id="search" aria-label="搜索" type="search" placeholder="代码或名称" autocomplete="off"></label>
-    <label><span>数据集：</span><select id="dataset-filter" aria-label="数据集"><option value="all">全部数据</option><option value="screening">Screening</option><option value="watchlist">Watchlist</option></select></label>
+    <label id="dataset-filter-wrap"><span>数据集：</span><select id="dataset-filter" aria-label="数据集"><option value="all">全部数据</option><option value="screening">Screening</option><option value="watchlist">Watchlist</option></select></label>
     <label><span>市场：</span><select id="market-filter" aria-label="市场"><option value="all">全部市场</option><option value="a_share">A 股</option><option value="us_stock">美股</option><option value="cross_market">跨市场</option></select></label>
     <label><span>时间级别：</span><select id="timeframe-filter" aria-label="时间级别"><option value="all">全部级别</option><option value="15m">15 分钟</option><option value="1h">1 小时</option><option value="4h">4 小时</option><option value="1d">日线</option><option value="1w">周线</option></select></label>
     <label><span>状态：</span><select id="filter" aria-label="状态"><option value="all">全部状态</option><option value="ready">正常</option><option value="partial">部分</option><option value="stale">过期</option><option value="failed">失败</option><option value="blocked">阻塞</option><option value="unavailable">不可用</option><option value="not_applicable">不适用</option></select></label></div>
@@ -348,7 +348,13 @@ async def health_ui() -> str:
     } finally { clearTimeout(timeout); loading = false; }
   }
 
-  if (['all','screening','watchlist'].includes(initialDataset)) document.getElementById('dataset-filter').value = initialDataset;
+  const datasetFilter = document.getElementById('dataset-filter');
+  if (VIEW === 'combined' && ['all','screening','watchlist'].includes(initialDataset)) {
+    datasetFilter.value = initialDataset;
+  } else if (VIEW !== 'combined') {
+    datasetFilter.value = 'all';
+    document.getElementById('dataset-filter-wrap').hidden = true;
+  }
   ['search','dataset-filter','market-filter','timeframe-filter','filter'].forEach(id => {
     document.getElementById(id).addEventListener(id === 'search' ? 'input' : 'change', () => { if (latestSnapshot) renderMatrix(latestSnapshot); });
   });

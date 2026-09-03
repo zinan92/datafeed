@@ -34,6 +34,8 @@
         <string>/Users/wendy/park-data/market/kline.db</string>
         <key>KLINE_LOAD_ENTRYPOINT_ADAPTERS</key>
         <string>false</string>
+        <key>KLINE_READ_ONLY</key>
+        <string>true</string>
         <key>PYTHONUNBUFFERED</key>
         <string>1</string>
     </dict>

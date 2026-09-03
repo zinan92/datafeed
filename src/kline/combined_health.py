@@ -7,7 +7,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from kline.free_source_profile import apply_free_source_profile
 from kline.health_matrix import (
@@ -19,13 +19,13 @@ from kline.health_matrix import (
 )
 from kline.mvp_manifest import load_manifest
 from kline.registry import get_store
-from kline.store import KlineStore
+from kline.store import KlineReadOnlyStore, KlineStore
 from kline.watchlist_manifest import load_watchlist_manifest
 
 
 COMBINED_SCOPE = "screening_watchlist"
 MARKET_DATA_DB_ENV = "KLINE_MARKET_DB_PATH"
-_market_store_cache: dict[str, KlineStore] = {}
+_market_store_cache: dict[str, KlineReadOnlyStore] = {}
 
 
 def _parse_timestamp(value: Any) -> datetime | None:
@@ -48,7 +48,9 @@ def _latest_timestamp(values: list[Any], *, default: str | None = None) -> str |
     return max(parsed, key=lambda item: item[1])[0]
 
 
-def _merge_coverage(snapshots: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+def _merge_coverage(
+    snapshots: Mapping[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
     result: dict[str, dict[str, Any]] = {}
     for timeframe in MATRIX_TIMEFRAMES:
         counts = {
@@ -57,7 +59,7 @@ def _merge_coverage(snapshots: list[dict[str, Any]]) -> dict[str, dict[str, Any]
             "technical_ready": 0,
             **{status: 0 for status in MATRIX_STATUSES},
         }
-        for snapshot in snapshots:
+        for snapshot in snapshots.values():
             source = snapshot.get("coverage", {}).get(timeframe, {})
             for key in counts:
                 counts[key] += int(source.get(key, 0) or 0)
@@ -70,10 +72,9 @@ def _merge_coverage(snapshots: list[dict[str, Any]]) -> dict[str, dict[str, Any]
     return result
 
 
-def _merge_worker(snapshots: list[dict[str, Any]]) -> dict[str, Any]:
+def _merge_worker(snapshots: Mapping[str, dict[str, Any]]) -> dict[str, Any]:
     workers = {
-        name: dict(snapshot.get("worker", {}))
-        for name, snapshot in zip(("screening", "watchlist"), snapshots)
+        name: dict(snapshot.get("worker", {})) for name, snapshot in snapshots.items()
     }
     attempts = [worker.get("last_attempt_at") for worker in workers.values()]
     successes = [worker.get("last_success_at") for worker in workers.values()]
@@ -99,9 +100,11 @@ def _merge_worker(snapshots: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _merge_infrastructure(snapshots: list[dict[str, Any]], worker: dict[str, Any]) -> dict[str, Any]:
-    screening = snapshots[0].get("infrastructure", {})
-    watchlist = snapshots[1].get("infrastructure", {})
+def _merge_infrastructure(
+    snapshots: Mapping[str, dict[str, Any]], worker: dict[str, Any]
+) -> dict[str, Any]:
+    screening = snapshots["screening"].get("infrastructure", {})
+    watchlist = snapshots["watchlist"].get("infrastructure", {})
     databases = {
         "screening": dict(screening.get("database", {})),
         "market_data": dict(watchlist.get("database", {})),
@@ -120,23 +123,22 @@ def _merge_infrastructure(snapshots: list[dict[str, Any]], worker: dict[str, Any
     }
 
 
-def _combined_manifest_hash(snapshots: list[dict[str, Any]]) -> str:
+def _combined_manifest_hash(snapshots: Mapping[str, dict[str, Any]]) -> str:
     payload = {
-        "screening": snapshots[0].get("manifest_hash"),
-        "watchlist": snapshots[1].get("manifest_hash"),
+        name: snapshot.get("manifest_hash") for name, snapshot in snapshots.items()
     }
     return hashlib.sha256(
         json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
 
 
-def _market_store(path: str | Path | None = None) -> KlineStore:
+def _market_store(path: str | Path | None = None) -> KlineReadOnlyStore:
     value = str(path or os.environ.get(MARKET_DATA_DB_ENV) or "").strip()
     if not value:
         raise RuntimeError(f"{MARKET_DATA_DB_ENV} must be configured for the combined health view")
     resolved = str(Path(value).expanduser().resolve())
     if resolved not in _market_store_cache:
-        _market_store_cache[resolved] = KlineStore(resolved)
+        _market_store_cache[resolved] = KlineReadOnlyStore(resolved)
     return _market_store_cache[resolved]
 
 
@@ -158,15 +160,15 @@ def build_combined_health_matrix(
         for item in watchlist_manifest.instruments
         if item.source_status == "configured"
     }
-    snapshots = [
-        build_mvp_health_matrix(
+    snapshots = {
+        "screening": build_mvp_health_matrix(
             screening_manifest,
             screening_store or get_store(),
             now=now,
             interval_seconds=4 * 60 * 60,
             scope=MATRIX_SCOPE_FULL,
         ),
-        build_mvp_health_matrix(
+        "watchlist": build_mvp_health_matrix(
             watchlist_manifest,
             market_store or _market_store(),
             now=now,
@@ -174,10 +176,10 @@ def build_combined_health_matrix(
             scope=MATRIX_SCOPE_WATCHLIST,
             free_source_ids=watchlist_free_source_ids,
         ),
-    ]
+    }
     cells = [
         {**cell, "dataset": dataset}
-        for dataset, snapshot in zip(("screening", "watchlist"), snapshots)
+        for dataset, snapshot in snapshots.items()
         for cell in snapshot["cells"]
     ]
     statuses = {
@@ -185,7 +187,7 @@ def build_combined_health_matrix(
     }
     infrastructure_statuses = [
         snapshot.get("infrastructure", {}).get("database", {}).get("status")
-        for snapshot in snapshots
+        for snapshot in snapshots.values()
     ]
     if "failed" in infrastructure_statuses or statuses.intersection({"failed", "blocked"}):
         status = "failed"
@@ -194,13 +196,13 @@ def build_combined_health_matrix(
     else:
         status = "ready"
     universes: dict[str, int] = {}
-    for snapshot in snapshots:
+    for snapshot in snapshots.values():
         for universe, count in snapshot.get("scope", {}).get("universes", {}).items():
             universes[universe] = universes.get(universe, 0) + int(count)
     worker = _merge_worker(snapshots)
     runs = [
         {**run, "dataset": dataset}
-        for dataset, snapshot in zip(("screening", "watchlist"), snapshots)
+        for dataset, snapshot in snapshots.items()
         for run in snapshot.get("runs", [])
     ]
     runs.sort(
@@ -215,12 +217,14 @@ def build_combined_health_matrix(
         "manifest_version": "screening_watchlist_v1",
         "manifest_hash": _combined_manifest_hash(snapshots),
         "manifest_versions": {
-            "screening": snapshots[0]["manifest_version"],
-            "watchlist": snapshots[1]["manifest_version"],
+            "screening": snapshots["screening"]["manifest_version"],
+            "watchlist": snapshots["watchlist"]["manifest_version"],
         },
         "scope": {
             "name": COMBINED_SCOPE,
-            "instrument_count": sum(item["scope"]["instrument_count"] for item in snapshots),
+            "instrument_count": sum(
+                item["scope"]["instrument_count"] for item in snapshots.values()
+            ),
             "universes": universes,
         },
         "refresh": {

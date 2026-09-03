@@ -22,6 +22,7 @@ def test_combined_health_dashboard_launchd_isolated_from_screening_worker() -> N
     assert environment["KLINE_BUILD_SHA"] == "__KLINE_BUILD_SHA__"
     assert environment["KLINE_DB_PATH"].endswith("datafeed-runtime-issue-71/data/kline.db")
     assert environment["KLINE_MARKET_DB_PATH"] == "/Users/wendy/park-data/market/kline.db"
+    assert environment["KLINE_READ_ONLY"] == "true"
     assert payload["RunAtLoad"] is True
     assert payload["KeepAlive"] is True
     assert payload["StandardOutPath"].endswith("/health-dashboard.stdout.log")

@@ -32,7 +32,7 @@ from kline.provenance import (
     fred_source_manifest,
     PHASE1_SOURCE_REGISTRY_VERSION,
 )
-from kline.store import KlineStore
+from kline.store import KlineReadOnlyStore, KlineStore
 
 _store: KlineStore | None = None
 _settings: Settings | None = None
@@ -47,9 +47,11 @@ def init(settings: Settings | None = None) -> None:
     global _store, _providers, _live_providers, _adapters, _settings
     s = settings or get_settings()
     _settings = s
-    ensure_data_dir(s)
-
-    _store = KlineStore(s.db_path)
+    if s.read_only:
+        _store = KlineReadOnlyStore(s.db_path)
+    else:
+        ensure_data_dir(s)
+        _store = KlineStore(s.db_path)
     _providers = {}
     _live_providers = {}
     _adapters = {}

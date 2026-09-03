@@ -5,7 +5,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import hashlib
 import json
+from pathlib import Path
 from typing import Any, Sequence
+from urllib.parse import quote
 
 from sqlalchemy import create_engine, event, func, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
@@ -1441,3 +1443,20 @@ class KlineStore:
             "candle_rows": candle_rows,
             "source_count": source_rows,
         }
+
+
+class KlineReadOnlyStore(KlineStore):
+    """Open an existing SQLite database without schema, WAL, or migration writes."""
+
+    def __init__(self, db_path: str) -> None:
+        path = Path(db_path).expanduser().resolve()
+        if not path.is_file():
+            raise StorageError(f"read-only database does not exist: {path}")
+        encoded = quote(str(path), safe="/")
+        self._engine = create_engine(
+            f"sqlite:///file:{encoded}?mode=ro&uri=true",
+            echo=False,
+            connect_args={"uri": True},
+        )
+        self._mvp_commit_failpoint = None
+        self._session_factory = sessionmaker(bind=self._engine)
