@@ -20,6 +20,7 @@ from kline.providers.free_ashare import AShareFreeProvider
 from kline.providers.free_ashare_etf import TencentEtfFreeProvider
 from kline.providers.free_us import USFreeProvider
 from kline.providers.hyperliquid import HyperliquidPerpetualProvider
+from kline.providers.hk import HKStockProvider
 from kline.providers.sina import SinaIndexProvider
 from kline.providers.treasury import TreasuryCsvProvider
 from kline.providers.us import USStockProvider
@@ -68,6 +69,12 @@ def init(settings: Settings | None = None) -> None:
         ProviderBackedMarketDataAdapter(
             source_manifest("yahoo_finance", AssetClass.US_STOCK),
             _providers[AssetClass.US_STOCK],
+        )
+    )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("yahoo_finance_hk", AssetClass.HK_STOCK),
+            HKStockProvider(),
         )
     )
     register_adapter(

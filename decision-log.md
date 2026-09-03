@@ -438,3 +438,13 @@ consumers can use without direct exchange or private SQLite access.
   snapshot provenance, so membership upgrades do not fork candle identity or duplicate history.
 - HK instruments use a truthful `hk_stock` declaration and exact Yahoo symbols (`0100.HK`, `2513.HK`,
   `0700.HK`, `9988.HK`). No provider adapter or live HK request was added in this ticket.
+
+## 2026-09-04 - Add truthful Hong Kong Yahoo daily routing
+
+- #140 registers `hk_stock` as a distinct public asset class and maps the four pinned registry codes
+  to exact Yahoo symbols: `00100→0100.HK`, `02513→2513.HK`, `00700→0700.HK`, `09988→9988.HK`.
+- HK daily cutoff uses `Asia/Hong_Kong`; provider receipts expose `market=HK` and `listing_venue=HKEX`.
+  Existing US, KR, CN, cross-market and Screening source registrations are unchanged.
+- Real Yahoo preflight returned three closed daily candles for all four symbols on 2026-09-04; each
+  required one yfinance repair pass for the current row, and none was synthesized. The active 58-item
+  Watchlist and scheduled runtime remain unchanged until #141/#142.

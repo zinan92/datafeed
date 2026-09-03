@@ -406,6 +406,12 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
         asset_class=AssetClass.HK_STOCK,
         meta=_PROVIDER_META[AssetClass.HK_STOCK],
         default_for_asset_class=True,
+        ticker_aliases={
+            "00100": "0100.HK",
+            "02513": "2513.HK",
+            "00700": "0700.HK",
+            "09988": "9988.HK",
+        },
         canonical_instrument_ids={
             "0100.HK": "00100",
             "2513.HK": "02513",

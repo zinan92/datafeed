@@ -459,6 +459,8 @@ class USStockProvider:
 
 
 def _source_timezone(ticker: str) -> str:
+    if ticker.upper().endswith(".HK"):
+        return "Asia/Hong_Kong"
     if ticker.upper().endswith(".KS"):
         return "Asia/Seoul"
     return {
