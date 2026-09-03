@@ -329,21 +329,18 @@ def capture_paired_snapshots(
     cutoff: str,
     timeout: float = 60.0,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
-    """Replay each cell against both services at the same instant."""
+    """Replay each cell against both services in lockstep.
+
+    Sequential calls avoid doubling Yahoo/Tencent concurrency while still
+    keeping the two observations adjacent in time.
+    """
 
     requests = consumer_requests()
     baseline_rows: list[dict[str, Any]] = []
     candidate_rows: list[dict[str, Any]] = []
-    with ThreadPoolExecutor(max_workers=2, thread_name_prefix="cutover-pair") as pool:
-        for item in requests:
-            baseline_future = pool.submit(
-                _capture_one, baseline_url, item, cutoff, timeout
-            )
-            candidate_future = pool.submit(
-                _capture_one, candidate_url, item, cutoff, timeout
-            )
-            baseline_rows.append(baseline_future.result())
-            candidate_rows.append(candidate_future.result())
+    for item in requests:
+        baseline_rows.append(_capture_one(baseline_url, item, cutoff, timeout))
+        candidate_rows.append(_capture_one(candidate_url, item, cutoff, timeout))
 
     common = {
         "schema_version": "consumer-cutover-snapshot-v1",
