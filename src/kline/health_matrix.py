@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 import math
-from typing import Any, Mapping, Sequence
+from typing import Any, Collection, Mapping, Sequence
 
 from kline.market_calendar import calendar_spec, is_trading_session
 from kline.models import AssetClass
@@ -16,6 +16,7 @@ MATRIX_TIMEFRAMES = ("15m", "1h", "4h", "1d", "1w")
 MATRIX_STATUSES = ("ready", "partial", "stale", "failed", "blocked", "unavailable")
 MATRIX_SCOPE_DEMO = "demo_3x3"
 MATRIX_SCOPE_FULL = "full_216"
+MATRIX_SCOPE_WATCHLIST = "watchlist_58"
 POLL_INTERVAL_SECONDS = 30
 REQUEST_TIMEOUT_SECONDS = 10
 SNAPSHOT_MAX_AGE_SECONDS = 900
@@ -85,6 +86,20 @@ def _key(row: Mapping[str, Any]) -> tuple[str, str, str, str, str]:
         str(row.get("adjustment_basis") or "raw_unadjusted"),
         str(row.get("manifest_version") or ""),
     )
+
+
+def _manifest_digest(manifest: Any) -> str:
+    """Return a validated digest for either the Screening or Watchlist manifest."""
+
+    if isinstance(manifest, MvpManifest):
+        return manifest_digest(manifest)
+    digest = getattr(manifest, "validated_digest", None)
+    if not callable(digest):
+        raise ValueError("health matrix manifest must expose a validated digest")
+    value = str(digest())
+    if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
+        raise ValueError("health matrix manifest digest must be a lowercase SHA-256 digest")
+    return value
 
 
 def _freshness_stale(
@@ -290,11 +305,12 @@ def _entitlement_block_reason(
     receipt: Mapping[str, Any] | None,
     *,
     derived: bool,
+    free_source_ids: Collection[str] = FREE_SOURCE_IDS,
 ) -> str | None:
     if instrument.source_status == "blocked_for_entitlement":
         return "entitlement_blocked"
     if receipt is None:
-        return None if instrument.source_id in FREE_SOURCE_IDS else "entitlement_unverified"
+        return None if instrument.source_id in free_source_ids else "entitlement_unverified"
     status = str(receipt.get("status") or "unverified").casefold()
     if status in {"blocked", "missing", "unverified"}:
         return f"entitlement_{status}"
@@ -337,6 +353,8 @@ def _cell(
             "instrument_id": instrument.instrument_id,
             "display_symbol": instrument.display_symbol,
             "display_name": instrument.display_name,
+            "universe": instrument.universe,
+            "metadata": dict(instrument.metadata),
             "provider_symbol": None,
             "asset_class": instrument.asset_class,
             "source_id": None,
@@ -405,6 +423,8 @@ def _cell(
         "instrument_id": instrument.instrument_id,
         "display_symbol": instrument.display_symbol,
         "display_name": instrument.display_name,
+        "universe": instrument.universe,
+        "metadata": dict(instrument.metadata),
         "provider_symbol": instrument.provider_symbol,
         "asset_class": instrument.asset_class,
         "source_id": instrument.source_id,
@@ -463,13 +483,14 @@ def _worker_payload(
 
 
 def build_mvp_health_matrix(
-    manifest: MvpManifest,
+    manifest: Any,
     storage: StoragePort,
     *,
     now: datetime | None = None,
     interval_seconds: int = 4 * 60 * 60,
     scope: str = MATRIX_SCOPE_FULL,
     instrument_ids: Sequence[str] | None = None,
+    free_source_ids: Collection[str] = FREE_SOURCE_IDS,
 ) -> dict[str, Any]:
     """Build the source-aware matrix from persisted facts only.
 
@@ -490,6 +511,9 @@ def build_mvp_health_matrix(
     elif scope == MATRIX_SCOPE_FULL:
         selected_ids = tuple(instrument.instrument_id for instrument in manifest.instruments)
         scope_name = MATRIX_SCOPE_FULL
+    elif scope == MATRIX_SCOPE_WATCHLIST:
+        selected_ids = tuple(instrument.instrument_id for instrument in manifest.instruments)
+        scope_name = MATRIX_SCOPE_WATCHLIST
     else:
         raise ValueError(f"unsupported matrix scope: {scope}")
     missing_ids = [instrument_id for instrument_id in selected_ids if instrument_id not in by_id]
@@ -592,6 +616,7 @@ def build_mvp_health_matrix(
                 timeframe,
                 entitlement,
                 derived=bool(transform) or timeframe in {"4h", "1w"},
+                free_source_ids=free_source_ids,
             )
             if entitlement_reason or timeframe in instrument.blocked_timeframes:
                 status, reason = "blocked", entitlement_reason or "timeframe_blocked"
@@ -637,7 +662,7 @@ def build_mvp_health_matrix(
             if (
                 status == "ready"
                 and entitlement is None
-                and instrument.source_id in FREE_SOURCE_IDS
+                and instrument.source_id in free_source_ids
             ):
                 status, reason = "partial", "entitlement_unverified"
             cells.append(
@@ -684,7 +709,7 @@ def build_mvp_health_matrix(
         "status": overall,
         "as_of": _iso(observed_at),
         "manifest_version": manifest.version,
-        "manifest_hash": manifest_digest(manifest),
+        "manifest_hash": _manifest_digest(manifest),
         "scope": {
             "name": scope_name,
             "instrument_count": len(selected_instruments),

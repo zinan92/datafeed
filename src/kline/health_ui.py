@@ -34,6 +34,9 @@ async def health_ui() -> str:
     p { margin:0; color:var(--muted) }
     .header-meta { min-width:230px; text-align:right; color:var(--muted); font-size:12px }
     .header-meta strong { display:block; color:var(--text); font-size:14px; margin-bottom:4px }
+    .view-switch { display:flex; gap:8px; margin-top:12px }
+    .view-switch a { border:1px solid var(--line); border-radius:7px; padding:6px 9px; color:var(--muted); text-decoration:none; font-size:12px }
+    .view-switch a:hover { border-color:var(--accent); color:var(--text) }
     .banner { position:sticky; top:10px; z-index:5; display:none; margin:0 0 18px;
       padding:12px 14px; border:1px solid #71404a; border-radius:10px; background:#321b25; color:#ffdce1; }
     .banner.warn { border-color:#80652d; background:#332c18; color:#ffe5a5; }
@@ -110,6 +113,7 @@ async def health_ui() -> str:
 <main>
   <header>
     <div><div class="eyebrow">市场数据管线 / 运行监控</div><h1>资产 × 时间级别健康矩阵</h1>
+      <nav class="view-switch" aria-label="数据视图"><a href="/health-ui">Screening 观察</a><a href="/health-ui?view=combined">Watchlist + Screening</a></nav>
       <p>只读查看最近一次持久化运行、数据质量和覆盖情况。页面每 30 秒自动读取。</p></div>
     <div class="header-meta"><strong id="overall">等待首次读取</strong><span id="last-success">尚未取得成功快照</span></div>
   </header>
@@ -136,7 +140,8 @@ async def health_ui() -> str:
 
 <script>
 (() => {
-  const API = '/api/mvp/health/matrix';
+  const VIEW = new URLSearchParams(window.location.search).get('view') || 'screening';
+  const API = VIEW === 'combined' ? '/api/health/combined-matrix' : '/api/mvp/health/matrix';
   const POLL_MS = 30000;
   const TIMEOUT_MS = 10000;
   const MAX_SNAPSHOT_MS = 900000;
@@ -181,10 +186,20 @@ async def health_ui() -> str:
       const details = [blocked ? `阻塞 ${blocked}` : '', failed ? `失败 ${failed}` : '', problem ? `其他需关注 ${problem}` : ''].filter(Boolean).join(' · ') || '没有异常单元格';
       return `<article class="card coverage-card"><div class="label">${timeframeLabels[tf]}</div><div class="ratio"><strong>${ratio}%</strong><span>${dataReady}/${applicable} 有数据</span></div><div class="counts">${details} · 正常 ${ready} · 不适用 ${Number(item.not_applicable || 0)} 个</div><div class="progress"><i style="width:${ratio}%"></i></div></article>`;
     }).join('');
-    document.getElementById('coverage-meta').textContent = `共 ${fmtCount(snapshot.cells.length)} 个单元格 · 清单 ${esc(snapshot.manifest_version)}`;
+    const manifestMeta = snapshot.manifest_versions
+      ? `Screening ${esc(snapshot.manifest_versions.screening)} + Watchlist ${esc(snapshot.manifest_versions.watchlist)}`
+      : `清单 ${esc(snapshot.manifest_version)}`;
+    document.getElementById('coverage-meta').textContent = `共 ${fmtCount(snapshot.cells.length)} 个单元格 · ${manifestMeta}`;
   }
 
-  const universeFor = cell => cell.asset_class === 'a_share' ? 'a_share' : cell.asset_class === 'us_stock' ? 'us_stock' : 'cross_market';
+  const universeFor = cell => {
+    if (cell.universe === 'watchlist') {
+      if (String(cell.instrument_id || '').startsWith('WATCH.CROSS.')) return 'cross_market';
+      if (String(cell.instrument_id || '').startsWith('WATCH.CN.')) return 'a_share';
+      if (String(cell.instrument_id || '').startsWith('WATCH.US.') || String(cell.instrument_id || '').startsWith('WATCH.KR.')) return 'us_stock';
+    }
+    return cell.asset_class === 'a_share' ? 'a_share' : cell.asset_class === 'us_stock' ? 'us_stock' : 'cross_market';
+  };
 
   function renderMatrix(snapshot) {
     const query = document.getElementById('search').value.trim().toLowerCase();
@@ -235,11 +250,15 @@ async def health_ui() -> str:
     const infra = snapshot.infrastructure || {};
     const worker = infra.worker || snapshot.worker || {};
     const database = infra.database || {};
+    const databases = infra.databases || {};
     const backup = infra.nas_backup || {};
     const label = value => value === 'ready' || value === 'ok' || value === 'last_run' ? '正常' : statusText(value || 'unavailable');
+    const databaseItems = Object.keys(databases).length
+      ? Object.entries(databases).map(([name, item]) => [name === 'market_data' ? 'Market Data 数据库' : 'Screening 数据库', label(item.status), '只读 SQLite（路径已隐藏）'])
+      : [['本地数据库', label(database.status), database.filesystem === 'local' ? '本地 SQLite（路径已隐藏）' : '路径已隐藏']];
     document.getElementById('infrastructure').innerHTML = [
       ['采集任务', label(worker.status), worker.last_success_at ? `上次成功 ${fmtTime(worker.last_success_at)}` : '尚无成功运行'],
-      ['本地数据库', label(database.status), database.filesystem === 'local' ? '本地 SQLite（路径已隐藏）' : '路径已隐藏'],
+      ...databaseItems,
       ['SSD 挂载保护', label((infra.ssd_mount_guard || {}).status), '仅展示保护状态'],
       ['NAS 备份', label(backup.status), backup.last_backup_at ? `上次备份 ${fmtTime(backup.last_backup_at)}` : '尚无备份证据']
     ].map(item => `<div class="infra-item"><span>${esc(item[0])}<br><small>${esc(item[2])}</small></span><strong>${esc(item[1])}</strong></div>`).join('');
@@ -285,7 +304,7 @@ async def health_ui() -> str:
       ['来源标识', cell.source_id], ['供应商代码', cell.provider_symbol], ['来源模式', cell.source_mode],
       ['最近收盘', cell.latest_closed_timestamp ? fmtTime(cell.latest_closed_timestamp) : null], ['存储行数', fmtCount(cell.row_count)],
       ['是否聚合', cell.is_derived == null ? null : (cell.is_derived ? '是' : '否')], ['最近尝试', fmtTime(cell.last_attempt_at)],
-      ['最近成功', fmtTime(cell.last_success_at)], ['质量', cell.quality], ['水位', cell.watermark], ['转换凭证', cell.transform], ['策略信息', cell.policy], ['错误', cell.error]
+      ['最近成功', fmtTime(cell.last_success_at)], ['资产元数据', cell.metadata], ['质量', cell.quality], ['水位', cell.watermark], ['转换凭证', cell.transform], ['策略信息', cell.policy], ['错误', cell.error]
     ];
     document.getElementById('drawer-title').textContent = `${cell.display_symbol || '资产'} · ${timeframeLabels[cell.timeframe] || cell.timeframe}`;
     document.getElementById('detail-list').innerHTML = rows.map(([key,value]) => `<dt>${esc(key)}</dt><dd>${value && typeof value === 'object' ? `<code>${esc(JSON.stringify(value,null,2))}</code>` : esc(value)}</dd>`).join('');

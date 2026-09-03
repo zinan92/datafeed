@@ -12,6 +12,9 @@ def test_health_ui_is_browser_visible():
     assert "最近一次运行" in response.text
     assert "market-filter" in response.text
     assert "timeframe-filter" in response.text
+    assert "/api/health/combined-matrix" in response.text
+    assert "view=combined" in response.text
+    assert "Watchlist" in response.text
     assert "data-group-toggle" in response.text
     assert "MAX_SNAPSHOT_MS = 900000" in response.text
     assert "AbortController" in response.text
