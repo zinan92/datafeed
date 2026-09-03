@@ -128,11 +128,11 @@ async def test_watchlist_runner_persists_all_daily_members_without_screening_pro
     )
 
     assert report["status"] == "success"
-    assert report["instrument_count"] == 42
-    assert report["persisted_instrument_count"] == 42
+    assert report["instrument_count"] == 58
+    assert report["persisted_instrument_count"] == 58
     assert report["remaining_after"] == []
     assert report["timeframes"] == ["1d"]
-    assert report["batch_count"] == 5
+    assert report["batch_count"] == 6
     persisted = store.mvp_latest_closed_bars()
     assert {row["instrument_id"] for row in persisted} == {
         item.instrument_id for item in manifest.instruments
@@ -170,7 +170,7 @@ async def test_watchlist_current_failure_is_not_hidden_by_historical_coverage(
 
     assert second["status"] == "partial"
     assert second["current_failed"] == ["WATCH.KR.000660"]
-    assert second["persisted_instrument_count"] == 42
+    assert second["persisted_instrument_count"] == 58
     assert second["instrument_statuses"]["WATCH.KR.000660"] == {
         "status": "provider_error",
         "reason": "fixture failure for 000660.KS",

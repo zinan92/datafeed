@@ -345,3 +345,21 @@ consumers can use without direct exchange or private SQLite access.
   The three 2026-09-03 rows are closed bars observed after the A-share 15:00 close.
 - The Watchlist schedule is independent of Screening's issue-71 worker and resident 8100; neither
   was restarted or reconfigured during this delivery.
+
+## 2026-09-03 - Persist the 16 cross-market Watchlist members
+
+- #126 extends the independent Watchlist manifest from 42 to 58 daily members. The 16 additions
+  are SPX/NDX (explicit SPY/QQQ proxies), DXY (UUP proxy), SCHD, VIX, BTC, ETH, HYPE, the three
+  Shanghai indices, Nikkei 225, KOSPI, WTI, Gold, and Silver.
+- Cross-market entries keep their own `WATCH.*` identities and source/provider provenance. VIX is
+  mapped to real Yahoo `^VIX`; the Shanghai entries retain `tencent_kline` and its three-symbol
+  allowlist; no Treasury symbols are added.
+- Ingestion now passes `provider_symbol` to adapters rather than `display_symbol`. This preserves
+  display identity while allowing explicit proxy/provider mappings to fetch the correct upstream
+  symbol. A regression test covers SPX → SPY, and the full suite remains green.
+- The real 58-member run persisted all 58 instruments. The final receipt recorded zero rate-limit,
+  403, 5xx, and timeout errors; two older Tencent responses were held by the watermark-regression
+  guard rather than overwriting newer data. See
+  `docs/verification/watchlist-cross-market-ingestion-2026-09-03.md`.
+- This work does not update #115, the Screening manifest/worker, resident 8100, or the existing
+  health observer. Dashboard visibility remains a separate dual-store task.

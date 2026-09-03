@@ -24,12 +24,44 @@ WATCHLIST_SYMBOLS = frozenset(
         "AAPL", "WDC", "TSM", "MRVL", "INTC", "HOOD", "NVDA", "ASML", "AMZN",
         "SNDK", "GLW", "QCOM", "AMD", "MU", "TSLA", "PLTR", "AMAT", "LRCX",
         "LLY", "TEM", "VRTX", "000660.KS",
+        "SPX", "NDX", "DXY", "SCHD", "VIX", "BTC", "ETH", "HYPE",
+        "SH000001", "SH000688", "SH000015", "^N225", "^KS11",
+        "CL=F", "GC=F", "SI=F",
     }
 )
-_SECURITY_TYPES = frozenset({"common_stock", "adr", "foreign_common", "etf"})
+_SECURITY_TYPES = frozenset(
+    {
+        "common_stock",
+        "adr",
+        "foreign_common",
+        "etf",
+        "index",
+        "crypto_perpetual",
+        "continuous_future",
+    }
+)
 _VOLUME_SEMANTICS = frozenset({"traded", "quote_derived", "not_applicable"})
 _SOURCE_STATUS = frozenset({"configured", "blocked_for_entitlement"})
 _DAILY_NOT_APPLICABLE = frozenset(set(ALLOWED_TIMEFRAMES) - {"1d"})
+
+_CROSS_MARKET_EXPECTATIONS: dict[str, tuple[str, str, str, str]] = {
+    "SPX": ("etf", "etf", "yahoo_finance_etf", "SPY"),
+    "NDX": ("etf", "etf", "yahoo_finance_etf", "QQQ"),
+    "DXY": ("etf", "etf", "yahoo_finance_etf", "UUP"),
+    "SCHD": ("etf", "etf", "yahoo_finance_etf", "SCHD"),
+    "VIX": ("index", "index", "yahoo_finance_index", "^VIX"),
+    "BTC": ("crypto", "crypto_perpetual", "hyperliquid_perpetual_public", "BTC"),
+    "ETH": ("crypto", "crypto_perpetual", "hyperliquid_perpetual_public", "ETH"),
+    "HYPE": ("crypto", "crypto_perpetual", "hyperliquid_perpetual_public", "HYPE"),
+    "sh000001": ("index", "index", "tencent_kline", "sh000001"),
+    "sh000688": ("index", "index", "tencent_kline", "sh000688"),
+    "sh000015": ("index", "index", "tencent_kline", "sh000015"),
+    "^N225": ("index", "index", "yahoo_finance_index", "^N225"),
+    "^KS11": ("index", "index", "yahoo_finance_index", "^KS11"),
+    "CL=F": ("commodity", "continuous_future", "yahoo_finance_futures", "CL=F"),
+    "GC=F": ("commodity", "continuous_future", "yahoo_finance_futures", "GC=F"),
+    "SI=F": ("commodity", "continuous_future", "yahoo_finance_futures", "SI=F"),
+}
 
 
 @dataclass(frozen=True)
@@ -80,7 +112,42 @@ def _validate_instrument(item: ManifestInstrument, *, index: int) -> None:
         raise ManifestError(f"instrument[{index}] must be daily-only")
     if required | not_applicable | blocked != set(ALLOWED_TIMEFRAMES):
         raise ManifestError(f"instrument[{index}] must classify every MVP timeframe")
-    if item.asset_class == AssetClass.A_SHARE.value:
+    expected: tuple[str | tuple[str, ...], str] | None = None
+    if item.display_symbol in _CROSS_MARKET_EXPECTATIONS:
+        expected_asset_class, expected_type, expected_source, expected_symbol = (
+            _CROSS_MARKET_EXPECTATIONS[item.display_symbol]
+        )
+        if item.asset_class != expected_asset_class:
+            raise ManifestError(
+                f"instrument[{index}] cross-market asset_class must be {expected_asset_class}"
+            )
+        if (
+            item.security_type,
+            item.source_id,
+            item.provider_symbol,
+        ) != (expected_type, expected_source, expected_symbol):
+            raise ManifestError(
+                f"instrument[{index}] cross-market source/provider identity is invalid"
+            )
+        if item.display_symbol in {"SPX", "NDX"}:
+            if item.metadata.get("identity_role") != "proxy":
+                raise ManifestError(
+                    f"instrument[{index}] {item.display_symbol} must declare proxy identity"
+                )
+            if not item.metadata.get("proxy_for"):
+                raise ManifestError(
+                    f"instrument[{index}] {item.display_symbol} must declare proxy_for"
+                )
+        elif item.display_symbol == "DXY":
+            if item.metadata.get("proxy_for") != "DXY" or "identity_role" in item.metadata:
+                raise ManifestError(
+                    f"instrument[{index}] DXY must declare proxy_for without identity_role"
+                )
+        elif "identity_role" in item.metadata or "proxy_for" in item.metadata:
+            raise ManifestError(
+                f"instrument[{index}] {item.display_symbol} cannot declare a proxy identity"
+            )
+    elif item.asset_class == AssetClass.A_SHARE.value:
         expected = ("common_stock", "tencent_stock_free")
     elif item.asset_class == AssetClass.ETF.value:
         expected = ("etf", "tencent_etf_free")
@@ -88,10 +155,11 @@ def _validate_instrument(item: ManifestInstrument, *, index: int) -> None:
         expected = (("common_stock", "adr", "foreign_common"), "yahoo_finance")
     else:
         raise ManifestError(f"instrument[{index}] has unsupported asset_class")
-    expected_type, expected_source = expected
-    allowed_types = {expected_type} if isinstance(expected_type, str) else set(expected_type)
-    if item.security_type not in allowed_types or item.source_id != expected_source:
-        raise ManifestError(f"instrument[{index}] source/security identity is invalid")
+    if expected is not None:
+        expected_type, expected_source = expected
+        allowed_types = {expected_type} if isinstance(expected_type, str) else set(expected_type)
+        if item.security_type not in allowed_types or item.source_id != expected_source:
+            raise ManifestError(f"instrument[{index}] source/security identity is invalid")
     try:
         registered = source_manifest(item.source_id, AssetClass(item.asset_class))
     except (KeyError, ValueError) as exc:
@@ -128,7 +196,7 @@ def validate_watchlist_manifest(
     if len(provider_keys) != len(set(provider_keys)):
         raise ManifestError("Watchlist provider identities must be unique")
     if set(symbols) != WATCHLIST_SYMBOLS or len(symbols) != len(WATCHLIST_SYMBOLS):
-        raise ManifestError("Watchlist membership must match the approved 42 symbols")
+        raise ManifestError("Watchlist membership must match the approved 58 symbols")
     excluded = raw.get("excluded_symbols")
     if not isinstance(excluded, list) or "051505" not in excluded:
         raise ManifestError("Watchlist must keep unresolved 051505 explicitly excluded")
