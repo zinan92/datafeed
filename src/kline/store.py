@@ -1138,6 +1138,28 @@ class KlineStore:
             "error": row.error,
         }
 
+    def latest_mvp_stock_cycle_start(self) -> str | None:
+        """Return the first-batch start for the newest stock worker cycle."""
+
+        with self._session_factory() as session:
+            latest = session.execute(
+                select(MvpRunRow)
+                .order_by(MvpRunRow.started_at.desc(), MvpRunRow.run_id.desc())
+                .limit(1)
+            ).scalar_one_or_none()
+            if latest is None or not latest.run_id.startswith("mvp-stocks-"):
+                return None
+            anchor = session.execute(
+                select(MvpRunRow)
+                .where(
+                    MvpRunRow.run_id.like("mvp-stocks-%-coarse-a_share-001"),
+                    MvpRunRow.started_at <= latest.started_at,
+                )
+                .order_by(MvpRunRow.started_at.desc(), MvpRunRow.run_id.desc())
+                .limit(1)
+            ).scalar_one_or_none()
+        return anchor.started_at if anchor is not None else None
+
     def latest_mvp_runs(self, *, limit: int = 6) -> list[dict[str, Any]]:
         """Return recent MVP run receipts for the health matrix timeline."""
 

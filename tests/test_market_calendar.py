@@ -224,6 +224,57 @@ def test_quality_distinguishes_duplicate_order_forming_gap_missing_holiday_suspe
     assert any(issue.status == "holiday" for issue in holiday.issues)
 
 
+def test_cn_a_market_open_buffer_only_softens_forming_15m_and_1h_bars() -> None:
+    zone = timezone(timedelta(hours=8))
+    cases = (
+        ("15m", datetime(2026, 9, 2, 9, 30, tzinfo=zone)),
+        ("1h", datetime(2026, 9, 2, 9, 30, tzinfo=zone)),
+    )
+    for timeframe, stamp in cases:
+        key = _key(
+            instrument_id="CN.A.300308",
+            display_symbol="300308",
+            timeframe=timeframe,
+        )
+        candle = _bar(key, stamp)
+        before = assess_quality(
+            [candle],
+            timeframe=timeframe,
+            calendar_id="cn_a",
+            cutoff=datetime(2026, 9, 2, 9, 29, tzinfo=zone),
+            market_open_buffer_minutes=10,
+        )
+        inside = assess_quality(
+            [candle],
+            timeframe=timeframe,
+            calendar_id="cn_a",
+            cutoff=datetime(2026, 9, 2, 9, 35, tzinfo=zone),
+            market_open_buffer_minutes=10,
+        )
+        after = assess_quality(
+            [candle],
+            timeframe=timeframe,
+            calendar_id="cn_a",
+            cutoff=datetime(2026, 9, 2, 9, 41, tzinfo=zone),
+            market_open_buffer_minutes=10,
+        )
+
+        assert before.status == "fail"
+        assert inside.status == "partial"
+        assert after.status == "fail"
+        assert all(any(issue.status == "forming" for issue in item.issues) for item in (before, inside, after))
+
+    crypto_key = _key(instrument_id="CRYPTO.BTC", display_symbol="BTC", timeframe="15m")
+    crypto = assess_quality(
+        [_bar(crypto_key, datetime(2026, 9, 2, 9, 30, tzinfo=timezone.utc))],
+        timeframe="15m",
+        calendar_id="crypto_24x7",
+        cutoff=datetime(2026, 9, 2, 9, 35, tzinfo=timezone.utc),
+        market_open_buffer_minutes=10,
+    )
+    assert crypto.status == "fail"
+
+
 def test_calendar_spec_rejects_unknown_calendar() -> None:
     with pytest.raises(CalendarError, match="unknown market calendar"):
         calendar_spec("not-a-calendar")

@@ -12,7 +12,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 import re
@@ -36,6 +36,7 @@ DEFAULT_REQUEST_INTERVAL_SECONDS = 0.25
 DEFAULT_MAX_RETRIES = 2
 DEFAULT_RETRY_BACKOFF_SECONDS = 1.0
 DEFAULT_PROVIDER_TIMEOUT_SECONDS = 45.0
+DEFAULT_A_SHARE_MARKET_OPEN_BUFFER_MINUTES = 10
 SAFE_OBSERVER_DB = Path("/Users/wendy/datafeed-runtime-issue-71/data/kline.db")
 _RATE_MARKERS = ("429", "rate limit", "too many", "throttl", "quota")
 _FORBIDDEN_MARKERS = ("403", "forbidden", "blocked")
@@ -49,6 +50,21 @@ def _iso(value: datetime) -> str:
     if value.tzinfo is None:
         value = value.replace(tzinfo=timezone.utc)
     return value.astimezone(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def stock_cycle_wait_seconds(
+    *, cycle_started: datetime, now: datetime, interval_seconds: int
+) -> float:
+    """Return the remaining delay to a start-anchored stock-worker deadline."""
+
+    if interval_seconds <= 0:
+        raise ValueError("interval_seconds must be positive")
+    if cycle_started.tzinfo is None:
+        cycle_started = cycle_started.replace(tzinfo=timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    due = cycle_started.astimezone(timezone.utc) + timedelta(seconds=interval_seconds)
+    return max(0.0, (due - now.astimezone(timezone.utc)).total_seconds())
 
 
 def stock_instrument_ids(manifest: MvpManifest) -> dict[str, tuple[str, ...]]:
@@ -253,6 +269,7 @@ async def run_stock_seed_once(
     max_retries: int = DEFAULT_MAX_RETRIES,
     retry_backoff_seconds: float = DEFAULT_RETRY_BACKOFF_SECONDS,
     provider_timeout_seconds: float = DEFAULT_PROVIDER_TIMEOUT_SECONDS,
+    a_share_market_open_buffer_minutes: int = DEFAULT_A_SHARE_MARKET_OPEN_BUFFER_MINUTES,
     phase: str = "all",
     include_seeded: bool = False,
     lock_path: str | Path | None = None,
@@ -269,6 +286,8 @@ async def run_stock_seed_once(
         raise ValueError("retry_backoff_seconds must be non-negative")
     if provider_timeout_seconds <= 0:
         raise ValueError("provider_timeout_seconds must be positive")
+    if not 0 <= a_share_market_open_buffer_minutes <= 60:
+        raise ValueError("a_share_market_open_buffer_minutes must be between 0 and 60")
     phase_map = {
         "coarse": (COARSE_TIMEFRAMES,),
         "intraday": (INTRADAY_TIMEFRAMES,),
@@ -319,6 +338,7 @@ async def run_stock_seed_once(
                             retry_backoff_seconds=retry_backoff_seconds,
                             provider_timeout_seconds=provider_timeout_seconds,
                             request_interval_seconds=request_interval_seconds,
+                            market_open_buffer_minutes=a_share_market_open_buffer_minutes,
                             policy={
                                 "runner": "mvp_stock_seed",
                                 "phase": phase_name,
@@ -328,6 +348,9 @@ async def run_stock_seed_once(
                                 "max_retries": max_retries,
                                 "retry_backoff_seconds": retry_backoff_seconds,
                                 "provider_timeout_seconds": provider_timeout_seconds,
+                                "a_share_market_open_buffer_minutes": (
+                                    a_share_market_open_buffer_minutes
+                                ),
                             },
                         )
                     )
@@ -372,6 +395,7 @@ async def run_stock_seed_once(
         "max_retries": max_retries,
         "retry_backoff_seconds": retry_backoff_seconds,
         "provider_timeout_seconds": provider_timeout_seconds,
+        "a_share_market_open_buffer_minutes": a_share_market_open_buffer_minutes,
         "phase": phase,
         "batch_count": len(reports),
         "batch_status_counts": dict(status_counts),
@@ -396,6 +420,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-retries", type=int, default=DEFAULT_MAX_RETRIES)
     parser.add_argument("--retry-backoff", type=float, default=DEFAULT_RETRY_BACKOFF_SECONDS)
     parser.add_argument("--provider-timeout", type=float, default=DEFAULT_PROVIDER_TIMEOUT_SECONDS)
+    parser.add_argument(
+        "--a-share-market-open-buffer-minutes",
+        type=int,
+        default=DEFAULT_A_SHARE_MARKET_OPEN_BUFFER_MINUTES,
+    )
     parser.add_argument("--phase", choices=("coarse", "intraday", "all"), default="all")
     parser.add_argument("--include-seeded", action="store_true")
     parser.add_argument("--receipt", default=None)
@@ -413,6 +442,7 @@ async def _run_forever(args: argparse.Namespace) -> None:
         except NotImplementedError:  # pragma: no cover - platform fallback
             signal.signal(signum, lambda *_: stop_event.set())
     while not stop_event.is_set():
+        cycle_started = datetime.now(timezone.utc)
         report = await run_stock_seed_once(
             db_path=args.db,
             manifest_path=args.manifest,
@@ -421,6 +451,7 @@ async def _run_forever(args: argparse.Namespace) -> None:
             max_retries=args.max_retries,
             retry_backoff_seconds=args.retry_backoff,
             provider_timeout_seconds=args.provider_timeout,
+            a_share_market_open_buffer_minutes=args.a_share_market_open_buffer_minutes,
             phase=args.phase,
             include_seeded=args.include_seeded,
             lock_path=args.lock,
@@ -440,8 +471,15 @@ async def _run_forever(args: argparse.Namespace) -> None:
             ),
             flush=True,
         )
+        wait_seconds = stock_cycle_wait_seconds(
+            cycle_started=cycle_started,
+            now=datetime.now(timezone.utc),
+            interval_seconds=args.interval,
+        )
+        if wait_seconds <= 0:
+            continue
         try:
-            await asyncio.wait_for(stop_event.wait(), timeout=args.interval)
+            await asyncio.wait_for(stop_event.wait(), timeout=wait_seconds)
         except TimeoutError:
             continue
 
@@ -462,6 +500,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             max_retries=args.max_retries,
             retry_backoff_seconds=args.retry_backoff,
             provider_timeout_seconds=args.provider_timeout,
+            a_share_market_open_buffer_minutes=args.a_share_market_open_buffer_minutes,
             phase=args.phase,
             include_seeded=args.include_seeded,
             lock_path=args.lock,

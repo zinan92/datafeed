@@ -443,8 +443,13 @@ def _worker_payload(
         if runs
         else (storage.latest_mvp_run() if hasattr(storage, "latest_mvp_run") else None)
     )
-    last_activity = (latest.get("completed_at") or latest.get("started_at")) if latest else None
-    parsed_activity = _parse_timestamp(last_activity)
+    cycle_start = (
+        storage.latest_mvp_stock_cycle_start()
+        if hasattr(storage, "latest_mvp_stock_cycle_start")
+        else None
+    )
+    schedule_anchor = cycle_start or (latest.get("started_at") if latest else None)
+    parsed_activity = _parse_timestamp(schedule_anchor)
     next_due = None
     if parsed_activity is not None:
         due = parsed_activity + timedelta(seconds=interval_seconds)
