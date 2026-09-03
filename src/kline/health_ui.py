@@ -122,7 +122,7 @@ async def health_ui() -> str:
   <div class="toolbar"><span id="snapshot-meta">正在连接健康矩阵…</span>
     <label><span>搜索：</span><input id="search" aria-label="搜索" type="search" placeholder="代码或名称" autocomplete="off"></label>
     <label id="dataset-filter-wrap"><span>数据集：</span><select id="dataset-filter" aria-label="数据集"><option value="all">全部数据</option><option value="screening">Screening</option><option value="watchlist">Watchlist</option></select></label>
-    <label><span>市场：</span><select id="market-filter" aria-label="市场"><option value="all">全部市场</option><option value="a_share">A 股</option><option value="us_stock">美股</option><option value="cross_market">跨市场</option></select></label>
+    <label><span>市场：</span><select id="market-filter" aria-label="市场"><option value="all">全部市场</option><option value="a_share">A 股</option><option value="us_stock">美股</option><option value="hk_stock">港股</option><option value="kr_stock">韩股</option><option value="cross_market">跨市场</option></select></label>
     <label><span>时间级别：</span><select id="timeframe-filter" aria-label="时间级别"><option value="all">全部级别</option><option value="15m">15 分钟</option><option value="1h">1 小时</option><option value="4h">4 小时</option><option value="1d">日线</option><option value="1w">周线</option></select></label>
     <label><span>状态：</span><select id="filter" aria-label="状态"><option value="all">全部状态</option><option value="ready">正常（已认证）</option><option value="ready_unverified">数据正常·授权未认证</option><option value="partial">部分（数据问题）</option><option value="stale">过期</option><option value="failed">失败</option><option value="blocked">阻塞</option><option value="unavailable">不可用</option><option value="not_applicable">不适用</option></select></label></div>
 
@@ -151,7 +151,7 @@ async def health_ui() -> str:
   const timeframeLabels = {'15m':'15 分钟','1h':'1 小时','4h':'4 小时','1d':'日线','1w':'周线'};
   const statusLabels = {ready:'正常',ready_unverified:'数据正常·授权未认证',partial:'部分',stale:'过期',failed:'失败',blocked:'阻塞',unavailable:'不可用',not_applicable:'不适用'};
   const reasonLabels = {entitlement_blocked:'授权未核实',entitlement_unverified:'授权未核实',entitlement_expired:'授权已过期',persistence_not_allowed:'不允许持久化',derived_not_allowed:'不允许派生',timeframe_not_permitted:'级别未授权',timeframe_permission_unverified:'级别授权未核实'};
-  const universeLabels = {a_share:'A 股',us_stock:'美股',cross_market:'跨市场'};
+  const universeLabels = {a_share:'A 股',us_stock:'美股',hk_stock:'港股',kr_stock:'韩股',cross_market:'跨市场'};
   const queryParams = new URLSearchParams(window.location.search);
   const initialDataset = queryParams.get('dataset') || 'all';
   let latestSnapshot = null;
@@ -240,7 +240,9 @@ async def health_ui() -> str:
     if (cell.universe === 'watchlist') {
       if (String(cell.instrument_id || '').startsWith('WATCH.CROSS.')) return 'cross_market';
       if (String(cell.instrument_id || '').startsWith('WATCH.CN.')) return 'a_share';
-      if (String(cell.instrument_id || '').startsWith('WATCH.US.') || String(cell.instrument_id || '').startsWith('WATCH.KR.')) return 'us_stock';
+      if (String(cell.instrument_id || '').startsWith('WATCH.US.')) return 'us_stock';
+      if (String(cell.instrument_id || '').startsWith('WATCH.HK.')) return 'hk_stock';
+      if (String(cell.instrument_id || '').startsWith('WATCH.KR.')) return 'kr_stock';
     }
     return cell.asset_class === 'a_share' ? 'a_share' : cell.asset_class === 'us_stock' ? 'us_stock' : 'cross_market';
   };

@@ -15,7 +15,7 @@ def test_watchlist_manifest_loads_exact_approved_daily_universe() -> None:
     manifest = load_watchlist_manifest(MANIFEST_PATH)
 
     assert manifest.version == "watchlist_universe_v1"
-    assert len(manifest.instruments) == 58
+    assert len(manifest.instruments) == 107
     assert all(item.instrument_id.startswith("WATCH.") for item in manifest.instruments)
     assert all(item.required_timeframes == ("1d",) for item in manifest.instruments)
     assert all(

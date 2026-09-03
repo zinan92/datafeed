@@ -460,3 +460,18 @@ consumers can use without direct exchange or private SQLite access.
 - The database now contains all 107 active registry identities; the 13 old local-only identities
   remain as retained historical rows and are excluded by current membership. The 07:15 scheduler and
   health/8100 deployment remain for #142.
+
+## 2026-09-04 - Activate 107-member Watchlist Health and Query runtime
+
+- #142 wired the compiled 107-item manifest into the read-only health surface and 8100. Candidate
+  build `ea11a73` reports 107 Watchlist instruments / 535 cells: 107 daily applicable and 428
+  not-applicable; all 107 daily cells are `ready_unverified` with pinned registry provenance.
+- The operational grouping now separates A-share, U.S., Hong Kong, Korean and cross-market members.
+  Real 8100 requests for HK `00100` and A-share `600900` both returned Market Data Database rows with
+  truthful identities. Newsletter remained 31/31 ready and Human Review remained 16 assets with its
+  pre-existing explicit unavailable/insufficient states.
+- A real candidate→rollback→candidate launchd drill passed for 8100 and 18172 using independent
+  plists, byte-identical pre-142 backups, `bootout → bootstrap`, and old/new health probes. #115,
+  18171, Human Review and consumer code were untouched.
+- The combined aggregate can still say failed because Screening retains its independent blocked
+  cells; the Watchlist-filtered view is healthy. Final canonical plist consolidation follows merge.

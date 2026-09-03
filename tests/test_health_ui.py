@@ -11,6 +11,8 @@ def test_health_ui_is_browser_visible():
     assert "fetch(`${API}?_=${Date.now()}`" in response.text
     assert "最近一次运行" in response.text
     assert "market-filter" in response.text
+    assert "hk_stock" in response.text
+    assert "kr_stock" in response.text
     assert "dataset-filter" in response.text
     assert "dataset-filter-wrap').hidden = true" in response.text
     assert "function scopeSnapshot" in response.text

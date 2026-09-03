@@ -160,7 +160,9 @@ def build_combined_health_matrix(
     screening_manifest = apply_free_source_profile(
         load_manifest(root / "configs" / "mvp_manifest.json")
     )
-    watchlist_manifest = load_watchlist_manifest(root / "configs" / "watchlist_manifest.json")
+    watchlist_manifest = load_watchlist_manifest(
+        root / "configs" / "watchlist_manifest.json"
+    )
     watchlist_free_source_ids = {
         item.source_id
         for item in watchlist_manifest.instruments
