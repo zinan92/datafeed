@@ -448,3 +448,15 @@ consumers can use without direct exchange or private SQLite access.
 - Real Yahoo preflight returned three closed daily candles for all four symbols on 2026-09-04; each
   required one yfinance repair pass for the current row, and none was synthesized. The active 58-item
   Watchlist and scheduled runtime remain unchanged until #141/#142.
+
+## 2026-09-04 - Persist the 107-member Watchlist daily universe
+
+- #141 ran the compiled pinned manifest against the canonical Market Data Database in 11 batches.
+  The final rerun recorded 107/107 current-ready, 107 observations, 107 quality receipts, 107
+  watermarks and 1,630 promoted candles; P95 attempt latency was 1,854.8 ms.
+- Final rate-limit, forbidden, server, timeout and unclassified error counters were all zero. Four
+  HK cells failed only in the first run because the calendar declaration had not yet been wired;
+  after the calendar fix they passed and the original failed receipt remains preserved.
+- The database now contains all 107 active registry identities; the 13 old local-only identities
+  remain as retained historical rows and are excluded by current membership. The 07:15 scheduler and
+  health/8100 deployment remain for #142.

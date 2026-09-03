@@ -22,7 +22,7 @@ def test_watchlist_launchd_contract_is_daily_isolated_and_fail_closed() -> None:
     arguments = payload["ProgramArguments"]
     assert arguments[:3] == ["/usr/local/bin/python3", "-m", "ops.watchlist_seed"]
     assert arguments[arguments.index("--manifest") + 1] == (
-        f"{RUNTIME}/configs/watchlist_manifest.json"
+        f"{RUNTIME}/configs/watchlist_registry_manifest.json"
     )
     assert arguments[arguments.index("--db") + 1] == DATABASE
     assert arguments[arguments.index("--lock") + 1] == LOCK
