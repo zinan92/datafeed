@@ -17,13 +17,68 @@ from kline.providers.free_ashare import AShareFreeProvider
 from kline.provenance import source_manifest
 from kline.storage import CandleSeriesKey
 from kline.store import KlineStore
+from kline.watchlist_manifest import load_watchlist_manifest
 
 
 MANIFEST_PATH = Path(__file__).parents[1] / "configs" / "mvp_manifest.json"
+WATCHLIST_MANIFEST_PATH = Path(__file__).parents[1] / "configs" / "watchlist_manifest.json"
 
 
 def test_ingestion_watermark_overlap_supports_one_hour() -> None:
     assert IngestionOrchestrator._interval("1h") == timedelta(hours=1)
+
+
+@pytest.mark.asyncio
+async def test_ingestion_fetches_provider_symbol_when_display_identity_is_different(
+    tmp_path: Path,
+) -> None:
+    manifest = load_watchlist_manifest(WATCHLIST_MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "provider-symbol.db"))
+    calls: list[str] = []
+
+    class RecordingAdapter:
+        async def fetch_candles_with_receipt(
+            self,
+            ticker: str,
+            timeframe: Timeframe,
+            **_kwargs,
+        ) -> FetchReceipt:
+            calls.append(ticker)
+            assert timeframe == Timeframe.DAY
+            return FetchReceipt(
+                candles=[
+                    Candle(
+                        timestamp="2026-09-02",
+                        open=100,
+                        high=102,
+                        low=99,
+                        close=101,
+                        volume=1000,
+                    )
+                ],
+                timeframe_transform=TimeframeTransform(
+                    raw_timeframe=Timeframe.DAY,
+                    timeframe_origin="native",
+                    aggregation={"kind": "none", "rule": "native_passthrough"},
+                ),
+                source_identity={"provider_symbol": ticker},
+                raw_response={"http_status": 200, "row_count": 1},
+            )
+
+    receipt = await IngestionOrchestrator(
+        store, adapter_resolver=lambda _instrument: RecordingAdapter()
+    ).run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="run-provider-symbol",
+            now=datetime(2026, 9, 3, 12, tzinfo=timezone.utc),
+            instrument_ids=("WATCH.CROSS.SPX",),
+            timeframes=("1d",),
+        )
+    )
+
+    assert receipt.status == "success"
+    assert calls == ["SPY"]
 
 
 class FakeCryptoAdapter:

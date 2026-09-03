@@ -613,7 +613,7 @@ class IngestionOrchestrator:
                     fetch_started_at = time_module.perf_counter()
                     fetch_receipt = await self._fetch_with_retries(
                         adapter,
-                        instrument.display_symbol,
+                        instrument.provider_symbol,
                         Timeframe(timeframe),
                         start=request_start,
                         end=end,
