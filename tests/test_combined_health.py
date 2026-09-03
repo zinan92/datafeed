@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
 from kline.app import create_app
 from kline.combined_health import build_combined_health_matrix
+from kline.health_matrix import MATRIX_SCOPE_WATCHLIST, build_mvp_health_matrix
 from kline.storage import (
     CandleSeriesKey,
     MvpCandle,
@@ -15,13 +17,25 @@ from kline.storage import (
     WatermarkWrite,
 )
 from kline.store import KlineStore
+from kline.watchlist_manifest import load_watchlist_manifest
 
 
-def _seed_watchlist_spx(store: KlineStore) -> None:
+WATCHLIST_MANIFEST_PATH = Path(__file__).parents[1] / "configs" / "watchlist_manifest.json"
+
+
+def _seed_watchlist_proxy(
+    store: KlineStore,
+    *,
+    instrument_id: str = "WATCH.CROSS.SPX",
+    display_symbol: str = "SPX",
+    provider_symbol: str = "SPY",
+    quality_status: str = "pass",
+) -> None:
+    run_id = f"watchlist-{display_symbol.lower()}-test"
     key = CandleSeriesKey(
-        instrument_id="WATCH.CROSS.SPX",
-        display_symbol="SPX",
-        provider_symbol="SPY",
+        instrument_id=instrument_id,
+        display_symbol=display_symbol,
+        provider_symbol=provider_symbol,
         source_id="yahoo_finance_etf",
         asset_class="etf",
         timeframe="1d",
@@ -39,7 +53,7 @@ def _seed_watchlist_spx(store: KlineStore) -> None:
     )
     store.commit_mvp_run(
         MvpRunWrite(
-            run_id="watchlist-spx-test",
+            run_id=run_id,
             manifest_version=key.manifest_version,
             manifest_hash="a" * 64,
             started_at="2026-09-03T07:00:00+00:00",
@@ -50,7 +64,7 @@ def _seed_watchlist_spx(store: KlineStore) -> None:
             candles=(candle,),
             source_observations=(
                 SourceObservationWrite(
-                    run_id="watchlist-spx-test",
+                    run_id=run_id,
                     key=key,
                     success=True,
                     request_start=None,
@@ -62,14 +76,14 @@ def _seed_watchlist_spx(store: KlineStore) -> None:
                 ),
             ),
             quality_receipts=(
-                QualityReceiptWrite(run_id="watchlist-spx-test", key=key, status="pass"),
+                QualityReceiptWrite(run_id=run_id, key=key, status=quality_status),
             ),
             watermarks=(
                 WatermarkWrite(
                     key=key,
                     last_closed_timestamp=candle.timestamp,
                     cursor=None,
-                    run_id="watchlist-spx-test",
+                    run_id=run_id,
                 ),
             ),
         )
@@ -78,7 +92,7 @@ def _seed_watchlist_spx(store: KlineStore) -> None:
 
 def test_combined_health_matrix_merges_screening_and_watchlist_stores(tmp_path) -> None:
     market_store = KlineStore(str(tmp_path / "market.db"))
-    _seed_watchlist_spx(market_store)
+    _seed_watchlist_proxy(market_store)
     snapshot = build_combined_health_matrix(
         screening_store=KlineStore(str(tmp_path / "screening.db")),
         market_store=market_store,
@@ -101,7 +115,8 @@ def test_combined_health_matrix_merges_screening_and_watchlist_stores(tmp_path) 
     assert spx["metadata"]["identity_role"] == "proxy"
     assert spx["latest_closed_timestamp"] == "2026-09-02T00:00:00+00:00"
     assert spx["technical_status"] == "ready"
-    assert spx["status"] == "partial"
+    assert spx["status"] == "ready_unverified"
+    assert snapshot["coverage"]["1d"]["ready_unverified"] == 1
     assert spx["quality"]["status"] == "pass"
     assert spx["watermark"]["run_id"] == "watchlist-spx-test"
     assert snapshot["manifest_versions"] == {
@@ -110,6 +125,65 @@ def test_combined_health_matrix_merges_screening_and_watchlist_stores(tmp_path) 
     }
     for timeframe, counts in snapshot["coverage"].items():
         assert counts["applicable"] + counts["not_applicable"] == 274
+
+
+def test_ready_unverified_is_overall_data_healthy_without_claiming_entitlement(
+    tmp_path,
+) -> None:
+    store = KlineStore(str(tmp_path / "watchlist-ready-unverified.db"))
+    _seed_watchlist_proxy(store)
+    manifest = load_watchlist_manifest(WATCHLIST_MANIFEST_PATH)
+
+    snapshot = build_mvp_health_matrix(
+        manifest,
+        store,
+        now=datetime(2026, 9, 3, 12, tzinfo=timezone.utc),
+        scope=MATRIX_SCOPE_WATCHLIST,
+        instrument_ids=("WATCH.CROSS.SPX",),
+        free_source_ids={"yahoo_finance_etf"},
+    )
+
+    daily = next(cell for cell in snapshot["cells"] if cell["timeframe"] == "1d")
+    assert daily["status"] == "ready_unverified"
+    assert daily["status_reason"] == "entitlement_unverified"
+    assert daily["technical_status"] == "ready"
+    assert daily["entitlement"]["status"] == "unverified"
+    assert snapshot["status"] == "ready"
+    assert snapshot["coverage"]["1d"]["ready_unverified"] == 1
+    assert snapshot["coverage"]["1d"]["partial"] == 0
+    assert snapshot["coverage"]["1d"]["ready"] == 0
+
+
+def test_real_partial_still_degrades_a_mixed_unverified_snapshot(tmp_path) -> None:
+    store = KlineStore(str(tmp_path / "watchlist-mixed.db"))
+    _seed_watchlist_proxy(store)
+    _seed_watchlist_proxy(
+        store,
+        instrument_id="WATCH.CROSS.NDX",
+        display_symbol="NDX",
+        provider_symbol="QQQ",
+        quality_status="partial",
+    )
+    manifest = load_watchlist_manifest(WATCHLIST_MANIFEST_PATH)
+
+    snapshot = build_mvp_health_matrix(
+        manifest,
+        store,
+        now=datetime(2026, 9, 3, 12, tzinfo=timezone.utc),
+        scope=MATRIX_SCOPE_WATCHLIST,
+        instrument_ids=("WATCH.CROSS.SPX", "WATCH.CROSS.NDX"),
+        free_source_ids={"yahoo_finance_etf"},
+    )
+
+    daily = {
+        cell["display_symbol"]: cell
+        for cell in snapshot["cells"]
+        if cell["timeframe"] == "1d"
+    }
+    assert daily["SPX"]["status"] == "ready_unverified"
+    assert daily["NDX"]["status"] == "partial"
+    assert daily["NDX"]["status_reason"] == "quality_partial"
+    assert snapshot["status"] == "partial"
 
 
 def test_combined_health_api_reads_market_database_without_replacing_screening(

@@ -54,7 +54,10 @@ def _merge_coverage(
             for key in counts:
                 counts[key] += int(source.get(key, 0) or 0)
         counts["ratio"] = (
-            round(counts["ready"] / counts["applicable"], 4)
+            round(
+                (counts["ready"] + counts["ready_unverified"]) / counts["applicable"],
+                4,
+            )
             if counts["applicable"]
             else None
         )

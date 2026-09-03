@@ -23,5 +23,7 @@ def test_health_ui_is_browser_visible():
     assert "AbortController" in response.text
     assert "cache:'no-store'" in response.text
     assert "授权阻塞" in response.text
+    assert "ready_unverified" in response.text
+    assert "数据正常·授权未认证" in response.text
     assert "阻塞 ${blocked}" in response.text
     assert "重试" not in response.text

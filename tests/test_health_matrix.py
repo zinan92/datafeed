@@ -163,6 +163,7 @@ def test_matrix_promotes_ready_cell_from_real_receipts(tmp_path: Path) -> None:
     assert snapshot["coverage"]["1h"]["applicable"] == 1
     assert (
         snapshot["coverage"]["1h"]["ready"]
+        + snapshot["coverage"]["1h"]["ready_unverified"]
         + snapshot["coverage"]["1h"]["partial"]
         + snapshot["coverage"]["1h"]["stale"]
         + snapshot["coverage"]["1h"]["failed"]
@@ -228,7 +229,15 @@ def test_full_scope_preserves_manifest_cartesian_product_and_coverage_invariants
         assert (
             sum(
                 counts[state]
-                for state in ("ready", "partial", "stale", "failed", "blocked", "unavailable")
+                for state in (
+                    "ready",
+                    "ready_unverified",
+                    "partial",
+                    "stale",
+                    "failed",
+                    "blocked",
+                    "unavailable",
+                )
             )
             == counts["applicable"]
         )
@@ -323,7 +332,8 @@ def test_health_matrix_joins_receipts_to_a_qfq_free_profile_cell(tmp_path: Path)
         for item in snapshot["cells"]
         if item["display_symbol"] == "600519" and item["timeframe"] == "15m"
     )
-    assert cell["status"] == "partial"
+    assert cell["status"] == "ready_unverified"
+    assert cell["status_reason"] == "entitlement_unverified"
     assert cell["technical_status"] == "ready"
     assert cell["row_count"] == 1
     assert cell["policy"]["source_identity"]["selected_source"] == "tencent"

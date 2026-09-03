@@ -79,6 +79,7 @@ async def health_ui() -> str:
     .cell .state { font-weight:700; font-size:12px }
     .cell .age { color:var(--muted); font-size:11px; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
     .cell.ready { background:#103126; color:#bff4d9 }
+    .cell.ready_unverified { background:#10302d; color:#b9eee5; border-color:#2f6f67; border-style:dashed }
     .cell.partial { background:#332c18; color:#ffe5a5 }
     .cell.stale { background:#332718; color:#ffd0a0 }
     .cell.failed, .cell.blocked, .cell.unavailable { background:#351c25; color:#ffd0d6 }
@@ -123,7 +124,7 @@ async def health_ui() -> str:
     <label id="dataset-filter-wrap"><span>数据集：</span><select id="dataset-filter" aria-label="数据集"><option value="all">全部数据</option><option value="screening">Screening</option><option value="watchlist">Watchlist</option></select></label>
     <label><span>市场：</span><select id="market-filter" aria-label="市场"><option value="all">全部市场</option><option value="a_share">A 股</option><option value="us_stock">美股</option><option value="cross_market">跨市场</option></select></label>
     <label><span>时间级别：</span><select id="timeframe-filter" aria-label="时间级别"><option value="all">全部级别</option><option value="15m">15 分钟</option><option value="1h">1 小时</option><option value="4h">4 小时</option><option value="1d">日线</option><option value="1w">周线</option></select></label>
-    <label><span>状态：</span><select id="filter" aria-label="状态"><option value="all">全部状态</option><option value="ready">正常</option><option value="partial">部分</option><option value="stale">过期</option><option value="failed">失败</option><option value="blocked">阻塞</option><option value="unavailable">不可用</option><option value="not_applicable">不适用</option></select></label></div>
+    <label><span>状态：</span><select id="filter" aria-label="状态"><option value="all">全部状态</option><option value="ready">正常（已认证）</option><option value="ready_unverified">数据正常·授权未认证</option><option value="partial">部分（数据问题）</option><option value="stale">过期</option><option value="failed">失败</option><option value="blocked">阻塞</option><option value="unavailable">不可用</option><option value="not_applicable">不适用</option></select></label></div>
 
   <section><div class="section-head"><h2>覆盖概览</h2><small id="coverage-meta">—</small></div><div id="coverage" class="coverage-grid"></div></section>
 
@@ -148,7 +149,7 @@ async def health_ui() -> str:
   const MAX_SNAPSHOT_MS = 900000;
   const timeframes = ['15m','1h','4h','1d','1w'];
   const timeframeLabels = {'15m':'15 分钟','1h':'1 小时','4h':'4 小时','1d':'日线','1w':'周线'};
-  const statusLabels = {ready:'正常',partial:'部分',stale:'过期',failed:'失败',blocked:'阻塞',unavailable:'不可用',not_applicable:'不适用'};
+  const statusLabels = {ready:'正常',ready_unverified:'数据正常·授权未认证',partial:'部分',stale:'过期',failed:'失败',blocked:'阻塞',unavailable:'不可用',not_applicable:'不适用'};
   const reasonLabels = {entitlement_blocked:'授权未核实',entitlement_unverified:'授权未核实',entitlement_expired:'授权已过期',persistence_not_allowed:'不允许持久化',derived_not_allowed:'不允许派生',timeframe_not_permitted:'级别未授权',timeframe_permission_unverified:'级别授权未核实'};
   const universeLabels = {a_share:'A 股',us_stock:'美股',cross_market:'跨市场'};
   const queryParams = new URLSearchParams(window.location.search);
@@ -168,18 +169,18 @@ async def health_ui() -> str:
     return data.cells.every(cell => timeframes.includes(cell.timeframe) && ['applicable','not_applicable'].includes(cell.applicability) && Object.prototype.hasOwnProperty.call(statusLabels, cell.status));
   };
   function coverageFromCells(cells) {
-    const statuses = ['ready','partial','stale','failed','blocked','unavailable'];
+    const statuses = ['ready','ready_unverified','partial','stale','failed','blocked','unavailable'];
     return Object.fromEntries(timeframes.map(tf => {
-      const counts = {applicable:0,not_applicable:0,technical_ready:0,ready:0,partial:0,stale:0,failed:0,blocked:0,unavailable:0};
+      const counts = {applicable:0,not_applicable:0,technical_ready:0,ready:0,ready_unverified:0,partial:0,stale:0,failed:0,blocked:0,unavailable:0};
       cells.filter(cell => cell.timeframe === tf).forEach(cell => {
         if (cell.applicability === 'not_applicable') counts.not_applicable += 1;
         else {
           counts.applicable += 1;
           if (statuses.includes(cell.status)) counts[cell.status] += 1;
-          if (cell.technical_status === 'ready' || cell.status === 'ready') counts.technical_ready += 1;
+          if (cell.technical_status === 'ready' || ['ready','ready_unverified'].includes(cell.status)) counts.technical_ready += 1;
         }
       });
-      counts.ratio = counts.applicable ? counts.ready / counts.applicable : null;
+      counts.ratio = counts.applicable ? (counts.ready + counts.ready_unverified) / counts.applicable : null;
       return [tf, counts];
     }));
   }
@@ -220,13 +221,14 @@ async def health_ui() -> str:
       const item = snapshot.coverage[tf] || {};
       const applicable = Number(item.applicable || 0);
       const ready = Number(item.ready || 0);
+      const readyUnverified = Number(item.ready_unverified || 0);
       const dataReady = Number(item.technical_ready ?? ready);
       const ratio = applicable ? Math.round(dataReady / applicable * 100) : 0;
       const blocked = Number(item.blocked || 0);
       const failed = Number(item.failed || 0);
       const problem = ['stale','partial','unavailable'].reduce((sum, key) => sum + Number(item[key] || 0), 0);
-      const details = [blocked ? `阻塞 ${blocked}` : '', failed ? `失败 ${failed}` : '', problem ? `其他需关注 ${problem}` : ''].filter(Boolean).join(' · ') || '没有异常单元格';
-      return `<article class="card coverage-card"><div class="label">${timeframeLabels[tf]}</div><div class="ratio"><strong>${ratio}%</strong><span>${dataReady}/${applicable} 有数据</span></div><div class="counts">${details} · 正常 ${ready} · 不适用 ${Number(item.not_applicable || 0)} 个</div><div class="progress"><i style="width:${ratio}%"></i></div></article>`;
+      const details = [readyUnverified ? `数据正常·授权未认证 ${readyUnverified}` : '', blocked ? `阻塞 ${blocked}` : '', failed ? `失败 ${failed}` : '', problem ? `真实需关注 ${problem}` : ''].filter(Boolean).join(' · ') || '没有异常单元格';
+      return `<article class="card coverage-card"><div class="label">${timeframeLabels[tf]}</div><div class="ratio"><strong>${ratio}%</strong><span>${dataReady}/${applicable} 有数据</span></div><div class="counts">${details} · 已认证正常 ${ready} · 不适用 ${Number(item.not_applicable || 0)} 个</div><div class="progress"><i style="width:${ratio}%"></i></div></article>`;
     }).join('');
     const manifestMeta = snapshot.manifest_versions
       ? `Screening ${esc(snapshot.manifest_versions.screening)} + Watchlist ${esc(snapshot.manifest_versions.watchlist)}`
@@ -315,9 +317,12 @@ async def health_ui() -> str:
     const blocked = applicable.filter(cell => cell.status === 'blocked').length;
     const failed = applicable.filter(cell => cell.status === 'failed').length;
     const unavailable = applicable.filter(cell => cell.status === 'unavailable').length;
-    const technicalReady = applicable.filter(cell => cell.technical_status === 'ready' || cell.status === 'ready').length;
+    const readyUnverified = applicable.filter(cell => cell.status === 'ready_unverified').length;
+    const technicalReady = applicable.filter(cell => cell.technical_status === 'ready' || ['ready','ready_unverified'].includes(cell.status)).length;
     const mixedTechnicalState = technicalReady > 0 && (blocked || failed || unavailable);
-    const overallText = mixedTechnicalState && scoped.status === 'failed' && blocked && !failed
+    const overallText = scoped.status === 'ready' && readyUnverified
+      ? '总体状态：数据正常（授权未认证）'
+      : mixedTechnicalState && scoped.status === 'failed' && blocked && !failed
       ? '总体状态：部分可用（含授权阻塞）'
       : scoped.status === 'failed' && blocked && !failed
         ? '总体状态：授权阻塞'
