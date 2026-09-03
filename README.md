@@ -313,6 +313,11 @@ provider 会排除坏行而继续返回同一响应中的正常原始行。`sour
 `invalid_row_excluded`、`excluded_row_count`、`excluded_timestamps`、`excluded_rows` 明确记录
 损失及原因；`invalid_row_excluded` 同时进入 API 顶层质量标记和 operator source observation。
 系统不会修正、插值或补造坏行；若请求窗口内所有行都不合格，provider 仍显式失败。
+
+Yahoo 日线的 closed-bar 边界按 source 本地时间判断：当前交易日在本地 18:00 前仍被排除，
+18:00 后才允许使用上游已经发布的当日行。date-only `end` 继续保持交易日排他语义；带时区
+timestamp `end` 会先转换到 source timezone，避免北京时间早晨的 UTC 日期把上一美股收盘
+误减一天。`.KS` 使用 `Asia/Seoul`。若上游尚未发布合格行，系统不会补造或沿用假数据。
 | `reject_reason` / `access_issues` | strict quality blocked 时的直接原因，如 `upstream_error`、`empty_data`、`stale`、`gap`、`out_of_order` |
 
 ### Watchlist Universe 日线持久化
