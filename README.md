@@ -426,6 +426,10 @@ Screening + Watchlist，并可按数据集筛选。合并视图需要同时配�
 路径。`source_identity.served_from` 与 `query_served_from` 会标出真实查询后端，
 `/api/health.query_backend` 汇总命中、回退和原因。默认 `legacy` 模式保持原行为。
 
+Watchlist 的韩国上市公司目前保留 `us_stock` API asset class 以兼容既有请求；健康面板和
+registry provenance 通过 `WATCH.KR.*` identity 与 `registry_market=KR` 单独归类为韩股。
+未来若需要公开独立 `kr_stock` 路由，应另立迁移合同。
+
 ### 参数
 
 | 参数 | 类型 | 默认值 | 说明 |

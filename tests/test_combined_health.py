@@ -119,6 +119,22 @@ def test_combined_health_matrix_merges_screening_and_watchlist_stores(tmp_path) 
     assert snapshot["coverage"]["1d"]["ready_unverified"] == 1
     assert spx["quality"]["status"] == "pass"
     assert spx["watermark"]["run_id"] == "watchlist-spx-test"
+    hk_cells = [
+        cell
+        for cell in watchlist_cells
+        if cell["instrument_id"].startswith("WATCH.HK.")
+    ]
+    kr_cells = [
+        cell
+        for cell in watchlist_cells
+        if cell["instrument_id"].startswith("WATCH.KR.")
+    ]
+    assert len(hk_cells) == 4 * 5
+    assert len(kr_cells) == 1 * 5
+    assert {cell["metadata"]["registry_market"] for cell in hk_cells} == {"HK"}
+    assert {cell["metadata"]["registry_market"] for cell in kr_cells} == {"KR"}
+    assert all(len(cell["metadata"]["registry_commit"]) == 40 for cell in hk_cells + kr_cells)
+    assert all(len(cell["metadata"]["registry_source_sha256"]) == 64 for cell in hk_cells + kr_cells)
     assert snapshot["manifest_versions"] == {
         "screening": "mvp_universe_v1",
         "watchlist": "watchlist_universe_v1",
