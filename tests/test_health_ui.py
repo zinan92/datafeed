@@ -11,6 +11,7 @@ def test_health_ui_is_browser_visible():
     assert "fetch(`${API}?_=${Date.now()}`" in response.text
     assert "最近一次运行" in response.text
     assert "market-filter" in response.text
+    assert "dataset-filter" in response.text
     assert "timeframe-filter" in response.text
     assert "/api/health/combined-matrix" in response.text
     assert "view=combined" in response.text

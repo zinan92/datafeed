@@ -120,6 +120,7 @@ async def health_ui() -> str:
   <div id="banner" class="banner" role="status"><i class="dot"></i><span id="banner-text"></span></div>
   <div class="toolbar"><span id="snapshot-meta">正在连接健康矩阵…</span>
     <label><span>搜索：</span><input id="search" aria-label="搜索" type="search" placeholder="代码或名称" autocomplete="off"></label>
+    <label><span>数据集：</span><select id="dataset-filter" aria-label="数据集"><option value="all">全部数据</option><option value="screening">Screening</option><option value="watchlist">Watchlist</option></select></label>
     <label><span>市场：</span><select id="market-filter" aria-label="市场"><option value="all">全部市场</option><option value="a_share">A 股</option><option value="us_stock">美股</option><option value="cross_market">跨市场</option></select></label>
     <label><span>时间级别：</span><select id="timeframe-filter" aria-label="时间级别"><option value="all">全部级别</option><option value="15m">15 分钟</option><option value="1h">1 小时</option><option value="4h">4 小时</option><option value="1d">日线</option><option value="1w">周线</option></select></label>
     <label><span>状态：</span><select id="filter" aria-label="状态"><option value="all">全部状态</option><option value="ready">正常</option><option value="partial">部分</option><option value="stale">过期</option><option value="failed">失败</option><option value="blocked">阻塞</option><option value="unavailable">不可用</option><option value="not_applicable">不适用</option></select></label></div>
@@ -150,6 +151,8 @@ async def health_ui() -> str:
   const statusLabels = {ready:'正常',partial:'部分',stale:'过期',failed:'失败',blocked:'阻塞',unavailable:'不可用',not_applicable:'不适用'};
   const reasonLabels = {entitlement_blocked:'授权未核实',entitlement_unverified:'授权未核实',entitlement_expired:'授权已过期',persistence_not_allowed:'不允许持久化',derived_not_allowed:'不允许派生',timeframe_not_permitted:'级别未授权',timeframe_permission_unverified:'级别授权未核实'};
   const universeLabels = {a_share:'A 股',us_stock:'美股',cross_market:'跨市场'};
+  const queryParams = new URLSearchParams(window.location.search);
+  const initialDataset = queryParams.get('dataset') || 'all';
   let latestSnapshot = null;
   let latestReceivedAt = 0;
   let loading = false;
@@ -204,13 +207,14 @@ async def health_ui() -> str:
   function renderMatrix(snapshot) {
     const query = document.getElementById('search').value.trim().toLowerCase();
     const market = document.getElementById('market-filter').value;
+    const dataset = document.getElementById('dataset-filter').value;
     const timeframeFilter = document.getElementById('timeframe-filter').value;
     const statusFilter = document.getElementById('filter').value;
     const grouped = new Map();
     snapshot.cells.forEach(cell => {
       const universe = universeFor(cell);
       const matchesText = !query || `${cell.display_symbol || ''} ${cell.display_name || ''}`.toLowerCase().includes(query);
-      if (!matchesText || (market !== 'all' && universe !== market) || (statusFilter !== 'all' && cell.status !== statusFilter)) return;
+      if (!matchesText || (dataset !== 'all' && cell.dataset !== dataset) || (market !== 'all' && universe !== market) || (statusFilter !== 'all' && cell.status !== statusFilter)) return;
       const key = cell.instrument_id || cell.display_symbol;
       if (!grouped.has(universe)) grouped.set(universe, new Map());
       if (!grouped.get(universe).has(key)) grouped.get(universe).set(key, {symbol:cell.display_symbol, name:cell.display_name, cells:{}});
@@ -344,7 +348,8 @@ async def health_ui() -> str:
     } finally { clearTimeout(timeout); loading = false; }
   }
 
-  ['search','market-filter','timeframe-filter','filter'].forEach(id => {
+  if (['all','screening','watchlist'].includes(initialDataset)) document.getElementById('dataset-filter').value = initialDataset;
+  ['search','dataset-filter','market-filter','timeframe-filter','filter'].forEach(id => {
     document.getElementById(id).addEventListener(id === 'search' ? 'input' : 'change', () => { if (latestSnapshot) renderMatrix(latestSnapshot); });
   });
   document.getElementById('close-drawer').addEventListener('click', closeDetail);

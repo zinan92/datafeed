@@ -25,6 +25,7 @@ def test_combined_health_matrix_merges_screening_and_watchlist_stores(tmp_path) 
     watchlist_cells = [cell for cell in snapshot["cells"] if cell["instrument_id"].startswith("WATCH.")]
     assert len(watchlist_cells) == 58 * 5
     assert {cell["universe"] for cell in watchlist_cells} == {"watchlist"}
+    assert {cell["dataset"] for cell in watchlist_cells} == {"watchlist"}
     spx = next(cell for cell in watchlist_cells if cell["instrument_id"] == "WATCH.CROSS.SPX" and cell["timeframe"] == "1d")
     assert spx["provider_symbol"] == "SPY"
     assert spx["source_id"] == "yahoo_finance_etf"

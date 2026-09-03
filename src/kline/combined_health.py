@@ -175,7 +175,11 @@ def build_combined_health_matrix(
             free_source_ids=watchlist_free_source_ids,
         ),
     ]
-    cells = [cell for snapshot in snapshots for cell in snapshot["cells"]]
+    cells = [
+        {**cell, "dataset": dataset}
+        for dataset, snapshot in zip(("screening", "watchlist"), snapshots)
+        for cell in snapshot["cells"]
+    ]
     statuses = {
         cell["status"] for cell in cells if cell["applicability"] == "applicable"
     }
