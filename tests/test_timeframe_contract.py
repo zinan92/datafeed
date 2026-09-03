@@ -266,6 +266,45 @@ async def test_yahoo_daily_timestamp_end_uses_source_local_trade_date(monkeypatc
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("end", "expected"),
+    [
+        ("2026-09-02T17:59:00-04:00", ["2026-09-01"]),
+        ("2026-09-02T18:00:00-04:00", ["2026-09-01", "2026-09-02"]),
+        ("2026-09-02T18:01:00-04:00", ["2026-09-01", "2026-09-02"]),
+    ],
+)
+async def test_yahoo_daily_timestamp_end_respects_its_own_close_buffer(
+    monkeypatch, end: str, expected: list[str]
+):
+    frame = _daily_frame(
+        [
+            ("2026-09-01", 100, 105, 99, 104),
+            ("2026-09-02", 104, 110, 103, 109),
+        ]
+    )
+
+    class FakeTicker:
+        def history(self, **_kwargs):
+            return frame
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: FakeTicker())
+    provider = USStockProvider(
+        now=lambda: datetime(2026, 9, 3, 12, 0, tzinfo=timezone.utc)
+    )
+
+    candles = await provider.fetch(
+        "QCOM",
+        Timeframe.DAY,
+        start="2026-08-31T18:00:00-04:00",
+        end=end,
+        limit=10,
+    )
+
+    assert [item.timestamp for item in candles] == expected
+
+
+@pytest.mark.asyncio
 async def test_yahoo_korean_daily_uses_seoul_closed_date(monkeypatch):
     frame = _daily_frame(
         [

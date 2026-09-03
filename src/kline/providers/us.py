@@ -529,7 +529,12 @@ def _closed_daily_cutoff(
         requested_at = datetime.fromisoformat(end.replace("Z", "+00:00"))
         if requested_at.tzinfo is None:
             requested_at = requested_at.replace(tzinfo=ZoneInfo(timezone_name))
-        requested = requested_at.astimezone(ZoneInfo(timezone_name)).date()
+        requested_local = requested_at.astimezone(ZoneInfo(timezone_name))
+        requested = (
+            requested_local.date()
+            if requested_local.time() >= time(18, 0)
+            else requested_local.date() - timedelta(days=1)
+        )
     return min(requested, latest_finalized)
 
 
