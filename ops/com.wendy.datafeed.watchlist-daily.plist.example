@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.wendy.datafeed.watchlist-daily</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/python3</string>
+        <string>-m</string>
+        <string>ops.watchlist_seed</string>
+        <string>--manifest</string>
+        <string>/Users/wendy/datafeed-runtime-watchlist/configs/watchlist_manifest.json</string>
+        <string>--db</string>
+        <string>/Users/wendy/park-data/market/kline.db</string>
+        <string>--lock</string>
+        <string>/Users/wendy/park-data/market/watchlist-worker.lock</string>
+        <string>--batch-size</string>
+        <string>10</string>
+        <string>--request-interval</string>
+        <string>2</string>
+        <string>--max-retries</string>
+        <string>2</string>
+        <string>--retry-backoff</string>
+        <string>5</string>
+        <string>--provider-timeout</string>
+        <string>45</string>
+        <string>--receipt</string>
+        <string>/Users/wendy/park-data/market/watchlist-latest.json</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/wendy/datafeed-runtime-watchlist</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONPATH</key>
+        <string>/Users/wendy/datafeed-runtime-watchlist/src</string>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+        <key>KLINE_RUNTIME_ROOT</key>
+        <string>/Users/wendy/datafeed-runtime-watchlist</string>
+        <key>KLINE_BUILD_SHA</key>
+        <string>__KLINE_BUILD_SHA__</string>
+    </dict>
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>7</integer><key>Minute</key><integer>15</integer></dict>
+        <dict><key>Weekday</key><integer>2</integer><key>Hour</key><integer>7</integer><key>Minute</key><integer>15</integer></dict>
+        <dict><key>Weekday</key><integer>3</integer><key>Hour</key><integer>7</integer><key>Minute</key><integer>15</integer></dict>
+        <dict><key>Weekday</key><integer>4</integer><key>Hour</key><integer>7</integer><key>Minute</key><integer>15</integer></dict>
+        <dict><key>Weekday</key><integer>5</integer><key>Hour</key><integer>7</integer><key>Minute</key><integer>15</integer></dict>
+    </array>
+    <key>ProcessType</key>
+    <string>Background</string>
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+    <key>StandardOutPath</key>
+    <string>/Users/wendy/Library/Logs/datafeed/watchlist-daily.stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/wendy/Library/Logs/datafeed/watchlist-daily.stderr.log</string>
+</dict>
+</plist>

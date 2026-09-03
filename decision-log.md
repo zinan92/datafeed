@@ -330,3 +330,18 @@ consumers can use without direct exchange or private SQLite access.
   request shape. `.KS` symbols use `Asia/Seoul`.
 - QCOM, AAPL and `000660.KS` were probed with aware start/end timestamps at 2026-09-03 01:31 UTC;
   all returned September 2 as the latest daily session. Resident 8100 and #115 were not restarted.
+
+## 2026-09-03 - Schedule Watchlist daily catch-up independently
+
+- #122's initial 07:15 launchd catch-up was held as partial because it ran before #124 and Yahoo
+  still clipped the U.S. session. After #124 merged, the dedicated job was reloaded at
+  `0541cddbba9539dafab94bb33ecbd3913a696cac` and manually kicked after the A-share close.
+- The final receipt reported exit code 0, 42/42 current-ready, 42 source observations, 42 quality
+  receipts, 42 watermarks, zero missing cells, zero duplicate/future/invalid rows, and zero
+  `051505` rows. A-share/ETF attempts were 20/20 HTTP 200 with zero 429/403/5xx/timeout and P95
+  1,116.5 ms. The weekday 07:15 calendar trigger remains loaded.
+- Latest normalized trade dates were A-share 2026-09-02 (13 members) and 2026-09-03 (three
+  newly-listed members after today's close), ETF 2026-09-02 (four), and US/KR 2026-09-02 (22).
+  The three 2026-09-03 rows are closed bars observed after the A-share 15:00 close.
+- The Watchlist schedule is independent of Screening's issue-71 worker and resident 8100; neither
+  was restarted or reconfigured during this delivery.
