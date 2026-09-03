@@ -21,6 +21,7 @@
 - #132 已统一 Watchlist proxy metadata：SPX/SPY、NDX/QQQ、DXY/UUP 均使用 `identity_role=proxy + proxy_for`；VIX/^VIX 保持真实指数身份。只改 manifest/validator/test，不改历史 K 线、source 路由、provider 或 runner。
 - #133 已新增 `ready_unverified`，把“数据/质量/水位正常但免费源商业授权未认证”与真实 `partial/stale/failed/blocked` 分开。该状态计入数据健康覆盖但不冒充已认证 ready；真实质量闸和错误强度未放松。
 - #134 已为 8100 增加 Watchlist-only 的 identity-aware 双库查询层：旧 `klines` 继续承担显式 legacy/upstream，已验证且历史充分的 Watchlist 日线从只读 Market Data Database 提供，响应和 `/api/health` 明确标记真实后端。10 条日线已回填 14,603 根；实际 Newsletter 31/31 ready（9 market/22 legacy），Human Review 的主请求为 6 market/28 legacy。切换→回滚→再切换已真实演练，未改消费者、Screening、#115、18171 或 18172。Market 命中 15/15 byte-identical；全 69 实时重复请求因 Yahoo/Tencent 上游自身变化只能得到 61/69，未伪报为全量逐字节通过，详见 `docs/verification/consumer-market-database-cutover-2026-09-03.md`。
+- #139 已将 `zinan92/watchlist` 的 pinned snapshot（commit `29ce3c0`）编译为离线、可复现的 107 项 Price Universe：16 个 assets + 91 家 listed company（CN38/US48/HK4/KR1）。多赛道重复只保留一次采集身份但保留 registry provenance；已有 16 个 cross-market identity/source/proxy 字段逐项保持。#139 只建立编译/校验合同，尚未切换当前 58 项运行 manifest、provider、调度或面板；下一步按依赖进入 #140。
 
 ## 下一步
 - #69 中文 3+3 Health Matrix、#70 全量 216×5 矩阵和交互、#71 可靠性 runner、#81 免费 source 路由、#83 混合状态文案、#85 剩余 97+97 批处理器、#87 美股粗粒度源调整、#89 分阶段恢复、#91 Yahoo 点号 ticker 兼容、#93 空响应终止重试、#95 fallback 404 终止重试、#97 水位倒退保护、#99 provider 硬超时、#101 免费源 HTTP 超时上限、#103 Yahoo 历史请求线程化、#105 Yahoo 修复请求线程化、#107 Yahoo ISO intraday 窗口兼容、#111 Yahoo 美股全时间级别主源已合并；真实全量股票 seed 首轮已完成，Yahoo-only 首轮已验证 100 只美股五级别，DHR 两个粗粒度格按 fail-closed 记录，A 股开盘 forming-bar partial 按规则记录，601989 仍是已知缺口；全量常驻 worker 已切换为 100+100、4 小时刷新并保持 running。美股五级别统一 Yahoo，A 股继续 Tencent→Tonghuashun；日/周优先、日内失败降级、请求间隔/重试退避、P95/限流统计、水位不倒退、provider 超时和同步请求可取消已锁定。#71 七天验收仍开放且 blocked，#54 真实 30-day database acceptance 仍未开始。
@@ -28,4 +29,4 @@
 - 保持 canonical envelope 向后兼容并持续验证 Binance execution-venue 新鲜度；若走 API 外卖路线,先立商业化合同(对外发布风险轴归 Park)。
 - 完成 #115 的 24 小时调度锚点/开盘缓冲真实验收后，再按已批准顺序实施 #116；#118 不切换当前 #115 observer build，也不启动 #71 正式计时。
 - Watchlist 数据和独立双库健康面板已上线；下一步是重新设计消费者切换 spec，先纠正 ADR 0004 的“只换 db_path”错误假设，再做 Newsletter/Human Review 的逐字节切换验收。未经新 issue 批准不实施切换。
-- 当前 Watchlist 消费者切换主链已完成；后续若要消除剩余 legacy 比例，应分别为 30m/4h/1h 持久化、微型合约纳入与 UUP 历史缺口建立新合同，不回头扩大 #134。
+- 当前 Watchlist 主线：#139 registry compiler 已完成，#140 HK source contract 是下一张可启动票；随后按 #141 → #142 顺序激活 107 项日线采集并更新面板/8100。

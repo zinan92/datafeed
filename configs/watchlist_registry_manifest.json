@@ -1,0 +1,4699 @@
+{
+  "effective_at": "2026-09-03T00:00:00Z",
+  "excluded_symbols": [
+    "051505"
+  ],
+  "instruments": [
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "中兵红箭",
+      "display_symbol": "000519",
+      "instrument_id": "WATCH.CN.A.000519",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "geopolitics",
+            "sector_id": "russia_ukraine",
+            "sector_name": "俄乌战争"
+          }
+        ],
+        "registry_reason": "A股军工标杆",
+        "registry_reasons": [
+          "A股军工标杆"
+        ],
+        "registry_target_id": "中兵红箭",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "000519",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SZSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "浪潮信息",
+      "display_symbol": "000977",
+      "instrument_id": "WATCH.CN.A.000977",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "hyperscaler_capex",
+            "sector_name": "云厂商资本开支"
+          }
+        ],
+        "registry_reason": "A股服务器标杆",
+        "registry_reasons": [
+          "A股服务器标杆"
+        ],
+        "registry_target_id": "浪潮信息",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "000977",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SZSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "科大讯飞",
+      "display_symbol": "002230",
+      "instrument_id": "WATCH.CN.A.002230",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "model_application",
+            "sector_name": "模型与应用层"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "科大讯飞",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "002230",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SZSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "歌尔股份",
+      "display_symbol": "002241",
+      "instrument_id": "WATCH.CN.A.002241",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "edge_consumer",
+            "sector_name": "端侧与消费电子"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "歌尔股份",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "002241",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SZSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "北方华创",
+      "display_symbol": "002371",
+      "instrument_id": "WATCH.CN.A.002371",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "fab_equipment",
+            "sector_name": "晶圆制造与设备"
+          }
+        ],
+        "registry_reason": "A股设备标杆",
+        "registry_reasons": [
+          "A股设备标杆"
+        ],
+        "registry_target_id": "北方华创",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "002371",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SZSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "立讯精密",
+      "display_symbol": "002475",
+      "instrument_id": "WATCH.CN.A.002475",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "edge_consumer",
+            "sector_name": "端侧与消费电子"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "立讯精密",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "002475",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SZSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "汇川技术",
+      "display_symbol": "300124",
+      "instrument_id": "WATCH.CN.A.300124",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "robotics_embodied",
+            "sector_name": "机器人与具身智能"
+          }
+        ],
+        "registry_reason": "A股运控标杆",
+        "registry_reasons": [
+          "A股运控标杆"
+        ],
+        "registry_target_id": "汇川技术",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "300124",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SZSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "中际旭创",
+      "display_symbol": "300308",
+      "instrument_id": "WATCH.CN.A.300308",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "optical_interconnect",
+            "sector_name": "光通信与互连"
+          }
+        ],
+        "registry_reason": "A股光模块标杆",
+        "registry_reasons": [
+          "A股光模块标杆"
+        ],
+        "registry_target_id": "中际旭创",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "300308",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SZSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "天孚通信",
+      "display_symbol": "300394",
+      "instrument_id": "WATCH.CN.A.300394",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "optical_interconnect",
+            "sector_name": "光通信与互连"
+          }
+        ],
+        "registry_reason": "A股光器件标杆",
+        "registry_reasons": [
+          "A股光器件标杆"
+        ],
+        "registry_target_id": "天孚通信",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "300394",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SZSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "新易盛",
+      "display_symbol": "300502",
+      "instrument_id": "WATCH.CN.A.300502",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "optical_interconnect",
+            "sector_name": "光通信与互连"
+          }
+        ],
+        "registry_reason": "A股光模块标杆",
+        "registry_reasons": [
+          "A股光模块标杆"
+        ],
+        "registry_target_id": "新易盛",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "300502",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SZSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "上海瀚讯",
+      "display_symbol": "300762",
+      "instrument_id": "WATCH.CN.A.300762",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "commercial_space",
+            "sector_name": "商业航天"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "上海瀚讯",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "300762",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SZSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "特变电工",
+      "display_symbol": "600089",
+      "instrument_id": "WATCH.CN.A.600089",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "power_equipment",
+            "sector_name": "电力设备与线缆"
+          }
+        ],
+        "registry_reason": "A股变压器标杆",
+        "registry_reasons": [
+          "A股变压器标杆"
+        ],
+        "registry_target_id": "特变电工",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "600089",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "中国卫星",
+      "display_symbol": "600118",
+      "instrument_id": "WATCH.CN.A.600118",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "commercial_space",
+            "sector_name": "商业航天"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "中国卫星",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "600118",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "恒瑞医药",
+      "display_symbol": "600276",
+      "instrument_id": "WATCH.CN.A.600276",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "innovative_drugs",
+            "sector_name": "创新药"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "恒瑞医药",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "600276",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "平高电气",
+      "display_symbol": "600312",
+      "instrument_id": "WATCH.CN.A.600312",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "power_equipment",
+            "sector_name": "电力设备与线缆"
+          }
+        ],
+        "registry_reason": "A股开关标杆",
+        "registry_reasons": [
+          "A股开关标杆"
+        ],
+        "registry_target_id": "平高电气",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "600312",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "中天科技",
+      "display_symbol": "600522",
+      "instrument_id": "WATCH.CN.A.600522",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "power_equipment",
+            "sector_name": "电力设备与线缆"
+          }
+        ],
+        "registry_reason": "A股线缆标杆",
+        "registry_reasons": [
+          "A股线缆标杆"
+        ],
+        "registry_target_id": "中天科技",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "600522",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "山东黄金",
+      "display_symbol": "600547",
+      "instrument_id": "WATCH.CN.A.600547",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "geopolitics",
+            "sector_id": "safe_haven_gold",
+            "sector_name": "避险与央行购金"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "山东黄金",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "600547",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "中航沈飞",
+      "display_symbol": "600760",
+      "instrument_id": "WATCH.CN.A.600760",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "geopolitics",
+            "sector_id": "russia_ukraine",
+            "sector_name": "俄乌战争"
+          }
+        ],
+        "registry_reason": "A股军工标杆",
+        "registry_reasons": [
+          "A股军工标杆"
+        ],
+        "registry_target_id": "中航沈飞",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "600760",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "航天电子",
+      "display_symbol": "600879",
+      "instrument_id": "WATCH.CN.A.600879",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "commercial_space",
+            "sector_name": "商业航天"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "航天电子",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "600879",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "长江电力",
+      "display_symbol": "600900",
+      "instrument_id": "WATCH.CN.A.600900",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "rates",
+            "sector_id": "dividend_defensive",
+            "sector_name": "红利防守"
+          },
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "ai_generation",
+            "sector_name": "AI 发电"
+          }
+        ],
+        "registry_reason": "A股红利标杆",
+        "registry_reasons": [
+          "A股红利标杆",
+          "A股水电标杆"
+        ],
+        "registry_target_id": "长江电力",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "600900",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "中国海油",
+      "display_symbol": "600938",
+      "instrument_id": "WATCH.CN.A.600938",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "geopolitics",
+            "sector_id": "oil_chokepoint",
+            "sector_name": "中东与原油通道"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "中国海油",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "600938",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "工商银行",
+      "display_symbol": "601398",
+      "instrument_id": "WATCH.CN.A.601398",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "rates",
+            "sector_id": "dividend_defensive",
+            "sector_name": "红利防守"
+          }
+        ],
+        "registry_reason": "A股红利标杆",
+        "registry_reasons": [
+          "A股红利标杆"
+        ],
+        "registry_target_id": "工商银行",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "601398",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "中国石油",
+      "display_symbol": "601857",
+      "instrument_id": "WATCH.CN.A.601857",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "geopolitics",
+            "sector_id": "oil_chokepoint",
+            "sector_name": "中东与原油通道"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "中国石油",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "601857",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "紫金矿业",
+      "display_symbol": "601899",
+      "instrument_id": "WATCH.CN.A.601899",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "geopolitics",
+            "sector_id": "safe_haven_gold",
+            "sector_name": "避险与央行购金"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "紫金矿业",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "601899",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "中国核电",
+      "display_symbol": "601985",
+      "instrument_id": "WATCH.CN.A.601985",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "ai_generation",
+            "sector_name": "AI 发电"
+          }
+        ],
+        "registry_reason": "A股核电标杆",
+        "registry_reasons": [
+          "A股核电标杆"
+        ],
+        "registry_target_id": "中国核电",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "601985",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "中科曙光",
+      "display_symbol": "603019",
+      "instrument_id": "WATCH.CN.A.603019",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "hyperscaler_capex",
+            "sector_name": "云厂商资本开支"
+          }
+        ],
+        "registry_reason": "A股服务器标杆",
+        "registry_reasons": [
+          "A股服务器标杆"
+        ],
+        "registry_target_id": "中科曙光",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "603019",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "药明康德",
+      "display_symbol": "603259",
+      "instrument_id": "WATCH.CN.A.603259",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "innovative_drugs",
+            "sector_name": "创新药"
+          }
+        ],
+        "registry_reason": "A股CXO标杆",
+        "registry_reasons": [
+          "A股CXO标杆"
+        ],
+        "registry_target_id": "药明康德",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "603259",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "兆易创新",
+      "display_symbol": "603986",
+      "instrument_id": "WATCH.CN.A.603986",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "memory_hbm",
+            "sector_name": "存储与 HBM"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "兆易创新",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "603986",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "中微公司",
+      "display_symbol": "688012",
+      "instrument_id": "WATCH.CN.A.688012",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "fab_equipment",
+            "sector_name": "晶圆制造与设备"
+          }
+        ],
+        "registry_reason": "A股设备标杆",
+        "registry_reasons": [
+          "A股设备标杆"
+        ],
+        "registry_target_id": "中微公司",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "688012",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "绿的谐波",
+      "display_symbol": "688017",
+      "instrument_id": "WATCH.CN.A.688017",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "robotics_embodied",
+            "sector_name": "机器人与具身智能"
+          }
+        ],
+        "registry_reason": "A股谐波减速器标杆",
+        "registry_reasons": [
+          "A股谐波减速器标杆"
+        ],
+        "registry_target_id": "绿的谐波",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "688017",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "海光信息",
+      "display_symbol": "688041",
+      "instrument_id": "WATCH.CN.A.688041",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "ai_compute_chips",
+            "sector_name": "AI 算力芯片"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "海光信息",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "688041",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "金山办公",
+      "display_symbol": "688111",
+      "instrument_id": "WATCH.CN.A.688111",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "model_application",
+            "sector_name": "模型与应用层"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "金山办公",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "688111",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "百济神州",
+      "display_symbol": "688235",
+      "instrument_id": "WATCH.CN.A.688235",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "innovative_drugs",
+            "sector_name": "创新药"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "百济神州",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "688235",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "寒武纪",
+      "display_symbol": "688256",
+      "instrument_id": "WATCH.CN.A.688256",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "ai_compute_chips",
+            "sector_name": "AI 算力芯片"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "寒武纪",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "688256",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "华虹公司",
+      "display_symbol": "688347",
+      "instrument_id": "WATCH.CN.A.688347",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "fab_equipment",
+            "sector_name": "晶圆制造与设备"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "华虹公司",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "688347",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "长鑫科技",
+      "display_symbol": "688825",
+      "instrument_id": "WATCH.CN.A.688825",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "cxmt_solo",
+            "sector_name": "长鑫科技 · 单体"
+          }
+        ],
+        "registry_reason": "A股市值第一(3.31万亿)，DRAM全球第四；Park持有科创50，其权重使该股新闻≈科创50仓位新闻",
+        "registry_reasons": [
+          "A股市值第一(3.31万亿)，DRAM全球第四；Park持有科创50，其权重使该股新闻≈科创50仓位新闻"
+        ],
+        "registry_target_id": "688825",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "688825",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "宇树科技",
+      "display_symbol": "688836",
+      "instrument_id": "WATCH.CN.A.688836",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "robotics_embodied",
+            "sector_name": "机器人与具身智能"
+          }
+        ],
+        "registry_reason": "A股人形机器人龙头",
+        "registry_reasons": [
+          "A股人形机器人龙头"
+        ],
+        "registry_target_id": "688836",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "688836",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "qfq",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "a_share",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "中芯国际",
+      "display_symbol": "688981",
+      "instrument_id": "WATCH.CN.A.688981",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "CN",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "fab_equipment",
+            "sector_name": "晶圆制造与设备"
+          }
+        ],
+        "registry_reason": "A股标杆",
+        "registry_reasons": [
+          "A股标杆"
+        ],
+        "registry_target_id": "中芯国际",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "688981",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "tencent_stock_free",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "crypto",
+      "blocked_timeframes": [],
+      "calendar_id": "crypto_24x7",
+      "display_name": "BTC perpetual",
+      "display_symbol": "BTC",
+      "instrument_id": "WATCH.CROSS.BTC",
+      "metadata": {
+        "contract_type": "perpetual",
+        "registry_asset_id": "BTC",
+        "registry_asset_kind": "crypto",
+        "registry_market": "CRYPTO",
+        "settlement": "USDC",
+        "venue": "hyperliquid"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "BTC",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "crypto_perpetual",
+      "session_policy": "continuous_24x7",
+      "source_id": "hyperliquid_perpetual_public",
+      "source_status": "configured",
+      "timezone": "UTC",
+      "universe": "watchlist",
+      "venue": "Hyperliquid",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_index_level",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "index",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "Shanghai Dividend",
+      "display_symbol": "sh000015",
+      "instrument_id": "WATCH.CROSS.DIVIDEND",
+      "metadata": {
+        "fallback_policy": "explicit_only",
+        "fallback_sources": [
+          "sina_index"
+        ],
+        "index_identity": "actual_index",
+        "registry_asset_id": "SSE_DIV",
+        "registry_asset_kind": "index",
+        "registry_market": "CN"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "sh000015",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "index",
+      "session_policy": "regular_session",
+      "source_id": "tencent_kline",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "not_applicable"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "etf",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "DXY proxy (UUP)",
+      "display_symbol": "DXY",
+      "instrument_id": "WATCH.CROSS.DXY",
+      "metadata": {
+        "identity_role": "proxy",
+        "proxy_for": "DXY",
+        "registry_asset_id": "DXY",
+        "registry_asset_kind": "index",
+        "registry_market": "FX"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "UUP",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "etf",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance_etf",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "NYSE Arca",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "crypto",
+      "blocked_timeframes": [],
+      "calendar_id": "crypto_24x7",
+      "display_name": "ETH perpetual",
+      "display_symbol": "ETH",
+      "instrument_id": "WATCH.CROSS.ETH",
+      "metadata": {
+        "contract_type": "perpetual",
+        "registry_asset_id": "ETH",
+        "registry_asset_kind": "crypto",
+        "registry_market": "CRYPTO",
+        "settlement": "USDC",
+        "venue": "hyperliquid"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "ETH",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "crypto_perpetual",
+      "session_policy": "continuous_24x7",
+      "source_id": "hyperliquid_perpetual_public",
+      "source_status": "configured",
+      "timezone": "UTC",
+      "universe": "watchlist",
+      "venue": "Hyperliquid",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "continuous_roll_pending",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "commodity",
+      "blocked_timeframes": [],
+      "calendar_id": "us_futures",
+      "display_name": "Gold continuous future",
+      "display_symbol": "GC=F",
+      "instrument_id": "WATCH.CROSS.GOLD",
+      "metadata": {
+        "contract_type": "continuous_future",
+        "registry_asset_id": "XAU",
+        "registry_asset_kind": "commodity",
+        "registry_market": "COMDTY",
+        "roll_identity": "GC=F",
+        "roll_policy": "provider_continuous_contract"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "GC=F",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "continuous_future",
+      "session_policy": "commodity_session",
+      "source_id": "yahoo_finance_futures",
+      "source_status": "configured",
+      "timezone": "America/Chicago",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "crypto",
+      "blocked_timeframes": [],
+      "calendar_id": "crypto_24x7",
+      "display_name": "HYPE perpetual",
+      "display_symbol": "HYPE",
+      "instrument_id": "WATCH.CROSS.HYPE",
+      "metadata": {
+        "contract_type": "perpetual",
+        "registry_asset_id": "HYPE",
+        "registry_asset_kind": "crypto",
+        "registry_market": "CRYPTO",
+        "settlement": "USDC",
+        "venue": "hyperliquid"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "HYPE",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "crypto_perpetual",
+      "session_policy": "continuous_24x7",
+      "source_id": "hyperliquid_perpetual_public",
+      "source_status": "configured",
+      "timezone": "UTC",
+      "universe": "watchlist",
+      "venue": "Hyperliquid",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_index_level",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "index",
+      "blocked_timeframes": [],
+      "calendar_id": "kr_equities",
+      "display_name": "KOSPI",
+      "display_symbol": "^KS11",
+      "instrument_id": "WATCH.CROSS.KOSPI",
+      "metadata": {
+        "registry_asset_id": "KOSPI",
+        "registry_asset_kind": "index",
+        "registry_market": "KR"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "^KS11",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "index",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance_index",
+      "source_status": "configured",
+      "timezone": "Asia/Seoul",
+      "universe": "watchlist",
+      "venue": "KRX",
+      "volume_semantics": "not_applicable"
+    },
+    {
+      "adjustment_basis": "raw_index_level",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "index",
+      "blocked_timeframes": [],
+      "calendar_id": "jp_equities",
+      "display_name": "Nikkei 225",
+      "display_symbol": "^N225",
+      "instrument_id": "WATCH.CROSS.N225",
+      "metadata": {
+        "registry_asset_id": "N225",
+        "registry_asset_kind": "index",
+        "registry_market": "JP"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "^N225",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "index",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance_index",
+      "source_status": "configured",
+      "timezone": "Asia/Tokyo",
+      "universe": "watchlist",
+      "venue": "JPX",
+      "volume_semantics": "not_applicable"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "etf",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "Nasdaq-100 Index（QQQ proxy）",
+      "display_symbol": "NDX",
+      "instrument_id": "WATCH.CROSS.NDX",
+      "metadata": {
+        "identity_role": "proxy",
+        "proxy_for": "Nasdaq-100 Index",
+        "registry_asset_id": "NDX",
+        "registry_asset_kind": "index",
+        "registry_market": "US"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "QQQ",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "etf",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance_etf",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "NASDAQ",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "etf",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "Schwab US Dividend Equity ETF",
+      "display_symbol": "SCHD",
+      "instrument_id": "WATCH.CROSS.SCHD",
+      "metadata": {
+        "registry_asset_id": "SCHD",
+        "registry_asset_kind": "etf",
+        "registry_market": "US"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "SCHD",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "etf",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance_etf",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "NYSE Arca",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_index_level",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "index",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "Shanghai Composite",
+      "display_symbol": "sh000001",
+      "instrument_id": "WATCH.CROSS.SHCOMP",
+      "metadata": {
+        "fallback_policy": "explicit_only",
+        "fallback_sources": [
+          "sina_index"
+        ],
+        "index_identity": "actual_index",
+        "registry_asset_id": "SSE",
+        "registry_asset_kind": "index",
+        "registry_market": "CN"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "sh000001",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "index",
+      "session_policy": "regular_session",
+      "source_id": "tencent_kline",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "not_applicable"
+    },
+    {
+      "adjustment_basis": "continuous_roll_pending",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "commodity",
+      "blocked_timeframes": [],
+      "calendar_id": "us_futures",
+      "display_name": "Silver continuous future",
+      "display_symbol": "SI=F",
+      "instrument_id": "WATCH.CROSS.SILVER",
+      "metadata": {
+        "contract_type": "continuous_future",
+        "registry_asset_id": "XAG",
+        "registry_asset_kind": "commodity",
+        "registry_market": "COMDTY",
+        "roll_identity": "SI=F",
+        "roll_policy": "provider_continuous_contract"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "SI=F",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "continuous_future",
+      "session_policy": "commodity_session",
+      "source_id": "yahoo_finance_futures",
+      "source_status": "configured",
+      "timezone": "America/Chicago",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "etf",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "S&P 500 Index（SPY proxy）",
+      "display_symbol": "SPX",
+      "instrument_id": "WATCH.CROSS.SPX",
+      "metadata": {
+        "identity_role": "proxy",
+        "proxy_for": "S&P 500 Index",
+        "registry_asset_id": "SPX",
+        "registry_asset_kind": "index",
+        "registry_market": "US"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "SPY",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "etf",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance_etf",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "NYSE Arca",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_index_level",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "index",
+      "blocked_timeframes": [],
+      "calendar_id": "cn_a",
+      "display_name": "STAR 50",
+      "display_symbol": "sh000688",
+      "instrument_id": "WATCH.CROSS.STAR50",
+      "metadata": {
+        "fallback_policy": "explicit_only",
+        "fallback_sources": [
+          "sina_index"
+        ],
+        "index_identity": "actual_index",
+        "registry_asset_id": "STAR50",
+        "registry_asset_kind": "index",
+        "registry_market": "CN"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "sh000688",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "index",
+      "session_policy": "regular_session",
+      "source_id": "tencent_kline",
+      "source_status": "configured",
+      "timezone": "Asia/Shanghai",
+      "universe": "watchlist",
+      "venue": "SSE",
+      "volume_semantics": "not_applicable"
+    },
+    {
+      "adjustment_basis": "raw_index_level",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "index",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "CBOE Volatility Index",
+      "display_symbol": "VIX",
+      "instrument_id": "WATCH.CROSS.VIX",
+      "metadata": {
+        "index_identity": "actual_index",
+        "registry_asset_id": "VIX",
+        "registry_asset_kind": "index",
+        "registry_market": "US"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "^VIX",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "index",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance_index",
+      "source_status": "configured",
+      "timezone": "America/Chicago",
+      "universe": "watchlist",
+      "venue": "Cboe",
+      "volume_semantics": "not_applicable"
+    },
+    {
+      "adjustment_basis": "continuous_roll_pending",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "commodity",
+      "blocked_timeframes": [],
+      "calendar_id": "us_futures",
+      "display_name": "WTI continuous future",
+      "display_symbol": "CL=F",
+      "instrument_id": "WATCH.CROSS.WTI",
+      "metadata": {
+        "contract_type": "continuous_future",
+        "registry_asset_id": "WTI",
+        "registry_asset_kind": "commodity",
+        "registry_market": "COMDTY",
+        "roll_identity": "CL=F",
+        "roll_policy": "provider_continuous_contract"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "CL=F",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "continuous_future",
+      "session_policy": "commodity_session",
+      "source_id": "yahoo_finance_futures",
+      "source_status": "configured",
+      "timezone": "America/Chicago",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "hk_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "hk_equities",
+      "display_name": "MiniMax",
+      "display_symbol": "00100",
+      "instrument_id": "WATCH.HK.00100",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "HK",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "model_application",
+            "sector_name": "模型与应用层"
+          }
+        ],
+        "registry_reason": "Park指定；AI模型与应用层重要观察对象",
+        "registry_reasons": [
+          "Park指定；AI模型与应用层重要观察对象"
+        ],
+        "registry_target_id": "00100",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "0100.HK",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "foreign_common",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance_hk",
+      "source_status": "configured",
+      "timezone": "Asia/Hong_Kong",
+      "universe": "watchlist",
+      "venue": "HKEX",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "hk_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "hk_equities",
+      "display_name": "腾讯",
+      "display_symbol": "00700",
+      "instrument_id": "WATCH.HK.00700",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "HK",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "platform_consumer",
+            "sector_name": "大消费与平台"
+          }
+        ],
+        "registry_reason": "Park指定；港股平台、消费与AI生态观察对象",
+        "registry_reasons": [
+          "Park指定；港股平台、消费与AI生态观察对象"
+        ],
+        "registry_target_id": "00700",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "0700.HK",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "foreign_common",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance_hk",
+      "source_status": "configured",
+      "timezone": "Asia/Hong_Kong",
+      "universe": "watchlist",
+      "venue": "HKEX",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "hk_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "hk_equities",
+      "display_name": "智谱",
+      "display_symbol": "02513",
+      "instrument_id": "WATCH.HK.02513",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "HK",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "model_application",
+            "sector_name": "模型与应用层"
+          }
+        ],
+        "registry_reason": "Park指定；AI模型与应用层重要观察对象",
+        "registry_reasons": [
+          "Park指定；AI模型与应用层重要观察对象"
+        ],
+        "registry_target_id": "02513",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "2513.HK",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "foreign_common",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance_hk",
+      "source_status": "configured",
+      "timezone": "Asia/Hong_Kong",
+      "universe": "watchlist",
+      "venue": "HKEX",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "hk_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "hk_equities",
+      "display_name": "阿里巴巴",
+      "display_symbol": "09988",
+      "instrument_id": "WATCH.HK.09988",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "HK",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "platform_consumer",
+            "sector_name": "大消费与平台"
+          }
+        ],
+        "registry_reason": "Park指定；港股平台、消费与云业务观察对象",
+        "registry_reasons": [
+          "Park指定；港股平台、消费与云业务观察对象"
+        ],
+        "registry_target_id": "09988",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "9988.HK",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "foreign_common",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance_hk",
+      "source_status": "configured",
+      "timezone": "Asia/Hong_Kong",
+      "universe": "watchlist",
+      "venue": "HKEX",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "kr_equities",
+      "display_name": "SK海力士",
+      "display_symbol": "000660.KS",
+      "instrument_id": "WATCH.KR.000660",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "KR",
+        "registry_memberships": [
+          {
+            "macro_id": "rates",
+            "sector_id": "boj_path",
+            "sector_name": "日本央行路径"
+          },
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "memory_hbm",
+            "sector_name": "存储与 HBM"
+          }
+        ],
+        "registry_reason": "持仓关联KOSPI",
+        "registry_reasons": [
+          "持仓关联KOSPI",
+          "HBM龙头"
+        ],
+        "registry_target_id": "000660.KS",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "000660.KS",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "foreign_common",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "Asia/Seoul",
+      "universe": "watchlist",
+      "venue": "KRX",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "苹果",
+      "display_symbol": "AAPL",
+      "instrument_id": "WATCH.US.AAPL",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "edge_consumer",
+            "sector_name": "端侧与消费电子"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "AAPL",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "AAPL",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "应用材料",
+      "display_symbol": "AMAT",
+      "instrument_id": "WATCH.US.AMAT",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "fab_equipment",
+            "sector_name": "晶圆制造与设备"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "AMAT",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "AMAT",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "美国超威",
+      "display_symbol": "AMD",
+      "instrument_id": "WATCH.US.AMD",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "ai_compute_chips",
+            "sector_name": "AI 算力芯片"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "AMD",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "AMD",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "亚马逊",
+      "display_symbol": "AMZN",
+      "instrument_id": "WATCH.US.AMZN",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "hyperscaler_capex",
+            "sector_name": "云厂商资本开支"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "AMZN",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "AMZN",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "阿斯麦",
+      "display_symbol": "ASML",
+      "instrument_id": "WATCH.US.ASML",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "fab_equipment",
+            "sector_name": "晶圆制造与设备"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "ASML",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "ASML",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "foreign_common",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "AST SpaceMobile",
+      "display_symbol": "ASTS",
+      "instrument_id": "WATCH.US.ASTS",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "commercial_space",
+            "sector_name": "商业航天"
+          }
+        ],
+        "registry_reason": "赛道标杆",
+        "registry_reasons": [
+          "赛道标杆"
+        ],
+        "registry_target_id": "ASTS",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "ASTS",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "Atkore",
+      "display_symbol": "ATKR",
+      "instrument_id": "WATCH.US.ATKR",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "power_equipment",
+            "sector_name": "电力设备与线缆"
+          }
+        ],
+        "registry_reason": "线管/桥架/支架，最贴近电缆层",
+        "registry_reasons": [
+          "线管/桥架/支架，最贴近电缆层"
+        ],
+        "registry_target_id": "ATKR",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "ATKR",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "博通",
+      "display_symbol": "AVGO",
+      "instrument_id": "WATCH.US.AVGO",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "ai_compute_chips",
+            "sector_name": "AI 算力芯片"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "AVGO",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "AVGO",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "Constellation",
+      "display_symbol": "CEG",
+      "instrument_id": "WATCH.US.CEG",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "ai_generation",
+            "sector_name": "AI 发电"
+          }
+        ],
+        "registry_reason": "22GW核电，供电微软/Meta 20年1.1GW长约",
+        "registry_reasons": [
+          "22GW核电，供电微软/Meta 20年1.1GW长约"
+        ],
+        "registry_target_id": "CEG",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "CEG",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "Coherent",
+      "display_symbol": "COHR",
+      "instrument_id": "WATCH.US.COHR",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "optical_interconnect",
+            "sector_name": "光通信与互连"
+          }
+        ],
+        "registry_reason": "光模块标杆",
+        "registry_reasons": [
+          "光模块标杆"
+        ],
+        "registry_target_id": "COHR",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "COHR",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "Coinbase",
+      "display_symbol": "COIN",
+      "instrument_id": "WATCH.US.COIN",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "risk_crypto",
+            "sector_id": "crypto_equity_proxy",
+            "sector_name": "加密股权代理"
+          }
+        ],
+        "registry_reason": "BTC的股票表达",
+        "registry_reasons": [
+          "BTC的股票表达"
+        ],
+        "registry_target_id": "COIN",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "COIN",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "雪佛龙",
+      "display_symbol": "CVX",
+      "instrument_id": "WATCH.US.CVX",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "geopolitics",
+            "sector_id": "oil_chokepoint",
+            "sector_name": "中东与原油通道"
+          }
+        ],
+        "registry_reason": "WTI的股票表达",
+        "registry_reasons": [
+          "WTI的股票表达"
+        ],
+        "registry_target_id": "CVX",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "CVX",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "伊顿",
+      "display_symbol": "ETN",
+      "instrument_id": "WATCH.US.ETN",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "power_equipment",
+            "sector_name": "电力设备与线缆"
+          }
+        ],
+        "registry_reason": "变压器/开关柜/UPS/液冷，FY2026有机增长指引上调至10%",
+        "registry_reasons": [
+          "变压器/开关柜/UPS/液冷，FY2026有机增长指引上调至10%"
+        ],
+        "registry_target_id": "ETN",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "ETN",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "GE Vernova",
+      "display_symbol": "GEV",
+      "instrument_id": "WATCH.US.GEV",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "power_equipment",
+            "sector_name": "电力设备与线缆"
+          }
+        ],
+        "registry_reason": "燃机与电网设备",
+        "registry_reasons": [
+          "燃机与电网设备"
+        ],
+        "registry_target_id": "GEV",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "GEV",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "康宁",
+      "display_symbol": "GLW",
+      "instrument_id": "WATCH.US.GLW",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "optical_interconnect",
+            "sector_name": "光通信与互连"
+          }
+        ],
+        "registry_reason": "Park指定，光纤",
+        "registry_reasons": [
+          "Park指定，光纤"
+        ],
+        "registry_target_id": "GLW",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "GLW",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "巴里克",
+      "display_symbol": "GOLD",
+      "instrument_id": "WATCH.US.GOLD",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "geopolitics",
+            "sector_id": "safe_haven_gold",
+            "sector_name": "避险与央行购金"
+          }
+        ],
+        "registry_reason": "黄金的股票表达",
+        "registry_reasons": [
+          "黄金的股票表达"
+        ],
+        "registry_target_id": "GOLD",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "GOLD",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "谷歌",
+      "display_symbol": "GOOGL",
+      "instrument_id": "WATCH.US.GOOGL",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "hyperscaler_capex",
+            "sector_name": "云厂商资本开支"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "GOOGL",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "GOOGL",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "Robinhood",
+      "display_symbol": "HOOD",
+      "instrument_id": "WATCH.US.HOOD",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "risk_crypto",
+            "sector_id": "crypto_equity_proxy",
+            "sector_name": "加密股权代理"
+          }
+        ],
+        "registry_reason": "Park指定，零售资金流代理",
+        "registry_reasons": [
+          "Park指定，零售资金流代理"
+        ],
+        "registry_target_id": "HOOD",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "HOOD",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "英特尔",
+      "display_symbol": "INTC",
+      "instrument_id": "WATCH.US.INTC",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "fab_equipment",
+            "sector_name": "晶圆制造与设备"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "INTC",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "INTC",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "摩根大通",
+      "display_symbol": "JPM",
+      "instrument_id": "WATCH.US.JPM",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "rates",
+            "sector_id": "dividend_defensive",
+            "sector_name": "红利防守"
+          }
+        ],
+        "registry_reason": "持仓",
+        "registry_reasons": [
+          "持仓"
+        ],
+        "registry_target_id": "JPM",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "JPM",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "礼来",
+      "display_symbol": "LLY",
+      "instrument_id": "WATCH.US.LLY",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "innovative_drugs",
+            "sector_name": "创新药"
+          }
+        ],
+        "registry_reason": "GLP-1龙头",
+        "registry_reasons": [
+          "GLP-1龙头"
+        ],
+        "registry_target_id": "LLY",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "LLY",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "洛克希德马丁",
+      "display_symbol": "LMT",
+      "instrument_id": "WATCH.US.LMT",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "geopolitics",
+            "sector_id": "russia_ukraine",
+            "sector_name": "俄乌战争"
+          }
+        ],
+        "registry_reason": "国防标杆",
+        "registry_reasons": [
+          "国防标杆"
+        ],
+        "registry_target_id": "LMT",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "LMT",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "拉姆研究",
+      "display_symbol": "LRCX",
+      "instrument_id": "WATCH.US.LRCX",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "fab_equipment",
+            "sector_name": "晶圆制造与设备"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "LRCX",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "LRCX",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "Meta",
+      "display_symbol": "META",
+      "instrument_id": "WATCH.US.META",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "hyperscaler_capex",
+            "sector_name": "云厂商资本开支"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "META",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "META",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "迈威尔",
+      "display_symbol": "MRVL",
+      "instrument_id": "WATCH.US.MRVL",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "ai_compute_chips",
+            "sector_name": "AI 算力芯片"
+          },
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "optical_interconnect",
+            "sector_name": "光通信与互连"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定",
+          "Park指定，光DSP"
+        ],
+        "registry_target_id": "MRVL",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "MRVL",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "微软",
+      "display_symbol": "MSFT",
+      "instrument_id": "WATCH.US.MSFT",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "hyperscaler_capex",
+            "sector_name": "云厂商资本开支"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "MSFT",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "MSFT",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "MicroStrategy",
+      "display_symbol": "MSTR",
+      "instrument_id": "WATCH.US.MSTR",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "risk_crypto",
+            "sector_id": "crypto_equity_proxy",
+            "sector_name": "加密股权代理"
+          }
+        ],
+        "registry_reason": "BTC的股票表达",
+        "registry_reasons": [
+          "BTC的股票表达"
+        ],
+        "registry_target_id": "MSTR",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "MSTR",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "美光",
+      "display_symbol": "MU",
+      "instrument_id": "WATCH.US.MU",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "memory_hbm",
+            "sector_name": "存储与 HBM"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "MU",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "MU",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "纽蒙特",
+      "display_symbol": "NEM",
+      "instrument_id": "WATCH.US.NEM",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "geopolitics",
+            "sector_id": "safe_haven_gold",
+            "sector_name": "避险与央行购金"
+          }
+        ],
+        "registry_reason": "黄金的股票表达",
+        "registry_reasons": [
+          "黄金的股票表达"
+        ],
+        "registry_target_id": "NEM",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "NEM",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "英伟达",
+      "display_symbol": "NVDA",
+      "instrument_id": "WATCH.US.NVDA",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "ai_compute_chips",
+            "sector_name": "AI 算力芯片"
+          }
+        ],
+        "registry_reason": "赛道龙头",
+        "registry_reasons": [
+          "赛道龙头"
+        ],
+        "registry_target_id": "NVDA",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "NVDA",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "诺和诺德",
+      "display_symbol": "NVO",
+      "instrument_id": "WATCH.US.NVO",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "innovative_drugs",
+            "sector_name": "创新药"
+          }
+        ],
+        "registry_reason": "GLP-1龙头",
+        "registry_reasons": [
+          "GLP-1龙头"
+        ],
+        "registry_target_id": "NVO",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "NVO",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "nVent",
+      "display_symbol": "NVT",
+      "instrument_id": "WATCH.US.NVT",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "power_equipment",
+            "sector_name": "电力设备与线缆"
+          }
+        ],
+        "registry_reason": "电气保护",
+        "registry_reasons": [
+          "电气保护"
+        ],
+        "registry_target_id": "NVT",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "NVT",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "甲骨文",
+      "display_symbol": "ORCL",
+      "instrument_id": "WATCH.US.ORCL",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "hyperscaler_capex",
+            "sector_name": "云厂商资本开支"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "ORCL",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "ORCL",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "拼多多",
+      "display_symbol": "PDD",
+      "instrument_id": "WATCH.US.PDD",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "platform_consumer",
+            "sector_name": "大消费与平台"
+          }
+        ],
+        "registry_reason": "Park指定；纳斯达克上市的大消费与平台经济观察对象",
+        "registry_reasons": [
+          "Park指定；纳斯达克上市的大消费与平台经济观察对象"
+        ],
+        "registry_target_id": "PDD",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "PDD",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "Palantir",
+      "display_symbol": "PLTR",
+      "instrument_id": "WATCH.US.PLTR",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "model_application",
+            "sector_name": "模型与应用层"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "PLTR",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "PLTR",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "高通",
+      "display_symbol": "QCOM",
+      "instrument_id": "WATCH.US.QCOM",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "edge_consumer",
+            "sector_name": "端侧与消费电子"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "QCOM",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "QCOM",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "再生元",
+      "display_symbol": "REGN",
+      "instrument_id": "WATCH.US.REGN",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "innovative_drugs",
+            "sector_name": "创新药"
+          }
+        ],
+        "registry_reason": "创新药标杆",
+        "registry_reasons": [
+          "创新药标杆"
+        ],
+        "registry_target_id": "REGN",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "REGN",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "Rocket Lab",
+      "display_symbol": "RKLB",
+      "instrument_id": "WATCH.US.RKLB",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "commercial_space",
+            "sector_name": "商业航天"
+          }
+        ],
+        "registry_reason": "赛道标杆",
+        "registry_reasons": [
+          "赛道标杆"
+        ],
+        "registry_target_id": "RKLB",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "RKLB",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "雷神",
+      "display_symbol": "RTX",
+      "instrument_id": "WATCH.US.RTX",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "geopolitics",
+            "sector_id": "russia_ukraine",
+            "sector_name": "俄乌战争"
+          }
+        ],
+        "registry_reason": "国防标杆",
+        "registry_reasons": [
+          "国防标杆"
+        ],
+        "registry_target_id": "RTX",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "RTX",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "闪迪",
+      "display_symbol": "SNDK",
+      "instrument_id": "WATCH.US.SNDK",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "memory_hbm",
+            "sector_name": "存储与 HBM"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "SNDK",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "SNDK",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "Talen",
+      "display_symbol": "TLN",
+      "instrument_id": "WATCH.US.TLN",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "ai_generation",
+            "sector_name": "AI 发电"
+          }
+        ],
+        "registry_reason": "亚马逊Susquehanna长约至2042年，最高1920MW",
+        "registry_reasons": [
+          "亚马逊Susquehanna长约至2042年，最高1920MW"
+        ],
+        "registry_target_id": "TLN",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "TLN",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "特斯拉",
+      "display_symbol": "TSLA",
+      "instrument_id": "WATCH.US.TSLA",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "robotics_embodied",
+            "sector_name": "机器人与具身智能"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "TSLA",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "TSLA",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "台积电",
+      "display_symbol": "TSM",
+      "instrument_id": "WATCH.US.TSM",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "fab_equipment",
+            "sector_name": "晶圆制造与设备"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "TSM",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "TSM",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "foreign_common",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "Vertiv",
+      "display_symbol": "VRT",
+      "instrument_id": "WATCH.US.VRT",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "power_equipment",
+            "sector_name": "电力设备与线缆"
+          }
+        ],
+        "registry_reason": "UPS+精密冷却，在手订单超150亿美元",
+        "registry_reasons": [
+          "UPS+精密冷却，在手订单超150亿美元"
+        ],
+        "registry_target_id": "VRT",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "VRT",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "福泰",
+      "display_symbol": "VRTX",
+      "instrument_id": "WATCH.US.VRTX",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "standalone_cycle",
+            "sector_id": "innovative_drugs",
+            "sector_name": "创新药"
+          }
+        ],
+        "registry_reason": "创新药标杆",
+        "registry_reasons": [
+          "创新药标杆"
+        ],
+        "registry_target_id": "VRTX",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "VRTX",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "Vistra",
+      "display_symbol": "VST",
+      "instrument_id": "WATCH.US.VST",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "ai_generation",
+            "sector_name": "AI 发电"
+          }
+        ],
+        "registry_reason": "2026-01与Meta签20年2.1GW+核电长约",
+        "registry_reasons": [
+          "2026-01与Meta签20年2.1GW+核电长约"
+        ],
+        "registry_target_id": "VST",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "VST",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "西部数据",
+      "display_symbol": "WDC",
+      "instrument_id": "WATCH.US.WDC",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "ai_capex",
+            "sector_id": "memory_hbm",
+            "sector_name": "存储与 HBM"
+          }
+        ],
+        "registry_reason": "Park指定",
+        "registry_reasons": [
+          "Park指定"
+        ],
+        "registry_target_id": "WDC",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "WDC",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    },
+    {
+      "adjustment_basis": "raw_unadjusted",
+      "aggregation_rule_version": "native_daily_v1",
+      "asset_class": "us_stock",
+      "blocked_timeframes": [],
+      "calendar_id": "us_equities",
+      "display_name": "埃克森美孚",
+      "display_symbol": "XOM",
+      "instrument_id": "WATCH.US.XOM",
+      "metadata": {
+        "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+        "registry_market": "US",
+        "registry_memberships": [
+          {
+            "macro_id": "geopolitics",
+            "sector_id": "oil_chokepoint",
+            "sector_name": "中东与原油通道"
+          }
+        ],
+        "registry_reason": "WTI的股票表达",
+        "registry_reasons": [
+          "WTI的股票表达"
+        ],
+        "registry_target_id": "XOM",
+        "registry_target_type": "company"
+      },
+      "not_applicable_timeframes": [
+        "15m",
+        "1h",
+        "4h",
+        "1w"
+      ],
+      "provider_symbol": "XOM",
+      "required_timeframes": [
+        "1d"
+      ],
+      "security_type": "common_stock",
+      "session_policy": "regular_session",
+      "source_id": "yahoo_finance",
+      "source_status": "configured",
+      "timezone": "America/New_York",
+      "universe": "watchlist",
+      "venue": "Yahoo Finance",
+      "volume_semantics": "traded"
+    }
+  ],
+  "membership_policy": "park_exposure_registry_pinned",
+  "registry": {
+    "commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+    "repository": "zinan92/watchlist",
+    "source_sha256": "e43fdea4c50b0d559803f271ef098b2dbcac1aa0631dfde2c5150a601baddb0b",
+    "updated": "2026-09-03",
+    "version": 6
+  },
+  "selection_as_of": "2026-09-03",
+  "version": "watchlist_universe_v1"
+}
