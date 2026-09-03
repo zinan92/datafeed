@@ -475,3 +475,13 @@ consumers can use without direct exchange or private SQLite access.
   18171, Human Review and consumer code were untouched.
 - The combined aggregate can still say failed because Screening retains its independent blocked
   cells; the Watchlist-filtered view is healthy. Final canonical plist consolidation follows merge.
+
+## 2026-09-04 - Harden HK provenance and market grouping after Sonnet review
+
+- The Sonnet review found no P0/P1 issue. The valid P2 concern was provider identity state under
+  future direct concurrency; #147 now serializes `HKStockProvider` state and verifies the public
+  adapter seam with interleaved requests.
+- HK remains a truthful `hk_stock` source. KR deliberately remains `us_stock` at the public API for
+  backward compatibility, while `WATCH.KR.*` and `registry_market=KR` keep health grouping truthful.
+- Health tests now pin HK at 4 instruments/20 cells and KR at 1 instrument/5 cells, including commit
+  and source-hash provenance. No runtime restart or data mutation was needed for this hardening.
