@@ -363,3 +363,18 @@ consumers can use without direct exchange or private SQLite access.
   `docs/verification/watchlist-cross-market-ingestion-2026-09-03.md`.
 - This work does not update #115, the Screening manifest/worker, resident 8100, or the existing
   health observer. Dashboard visibility remains a separate dual-store task.
+
+## 2026-09-03 - Observe Screening and Watchlist through an isolated read-only dashboard
+
+- #128 adds a combined health read model while keeping the existing Screening matrix endpoint and
+  18171 service unchanged. Screening and Watchlist remain separate datasets and separate SQLite
+  files; the dashboard merges only their redacted read models.
+- Both combined-route stores are forced through SQLite `mode=ro` plus `query_only`, fail closed when
+  a configured database is missing, and reject public mutation methods. The dedicated launchd
+  service runs on 18172 from `main@ded8741`.
+- The Watchlist-filtered page shows 58 assets / 290 cells: A-share/ETF 20, US/KR 22, cross-market
+  16. Daily technical coverage is 58/58; all other Watchlist timeframes are explicitly
+  `not_applicable`. Public-source entitlement uncertainty remains `partial`, not fabricated ready.
+- A real API read left both database SHA-256 hashes unchanged. Resident 8100 and both #115 services
+  retained their original PID, build, and runtime. See
+  `docs/verification/combined-health-dashboard-2026-09-03.md`.
