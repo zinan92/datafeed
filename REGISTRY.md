@@ -24,6 +24,7 @@
 - #139 已将 `zinan92/watchlist` 的 pinned snapshot（commit `29ce3c0`）编译为离线、可复现的 107 项 Price Universe：16 个 assets + 91 家 listed company（CN38/US48/HK4/KR1）。多赛道重复只保留一次采集身份但保留 registry provenance；已有 16 个 cross-market identity/source/proxy 字段逐项保持。#139 只建立编译/校验合同，尚未切换当前 58 项运行 manifest、provider、调度或面板；下一步按依赖进入 #140。
 - #140 已为 4 个港股注册 truthful `hk_stock` Yahoo 日线 source：`00100→0100.HK`、`02513→2513.HK`、`00700→0700.HK`、`09988→9988.HK`，使用香港时区和 HKEX provenance。四个 symbol 的真实 Yahoo preflight 均返回 3 根已闭合日线；#140 未切换当前 58 项 manifest、调度、面板或 8100。下一步进入 #141。
 - #141 已将 pinned registry 的 107 项日线全部写入 Market Data Database：11/11 批次成功、107/107 current-ready、107 receipt/quality/watermark、1,630 promoted candles、P95 1,854.8ms，429/403/5xx/timeout/unclassified 均为 0。首轮暴露并修正 `hk_equities` calendar，四个港股最终全部成功；13 个旧本地 Watchlist identity 历史行保留但退出当前分母。调度、面板和 8100 仍由 #142 激活。
+- #142 已激活 107 项 Watchlist 健康和 8100 查询：Watchlist 535 cells（107 daily applicable + 428 not-applicable），日线 107/107 `ready_unverified`，HK/KR 分组和 registry provenance 可见；8100 实测 HK `00100` 与 A 股 `600900` 均从 Market Data Database 返回。候选→回滚→候选已用独立 plist、备份和 `bootout → bootstrap` 实演；Screening/#115/消费者未动。合并后的 canonical plist 收口已完成，综合总状态仍可能被 Screening 独立阻塞影响，Watchlist 过滤视图健康。
 
 ## 下一步
 - #69 中文 3+3 Health Matrix、#70 全量 216×5 矩阵和交互、#71 可靠性 runner、#81 免费 source 路由、#83 混合状态文案、#85 剩余 97+97 批处理器、#87 美股粗粒度源调整、#89 分阶段恢复、#91 Yahoo 点号 ticker 兼容、#93 空响应终止重试、#95 fallback 404 终止重试、#97 水位倒退保护、#99 provider 硬超时、#101 免费源 HTTP 超时上限、#103 Yahoo 历史请求线程化、#105 Yahoo 修复请求线程化、#107 Yahoo ISO intraday 窗口兼容、#111 Yahoo 美股全时间级别主源已合并；真实全量股票 seed 首轮已完成，Yahoo-only 首轮已验证 100 只美股五级别，DHR 两个粗粒度格按 fail-closed 记录，A 股开盘 forming-bar partial 按规则记录，601989 仍是已知缺口；全量常驻 worker 已切换为 100+100、4 小时刷新并保持 running。美股五级别统一 Yahoo，A 股继续 Tencent→Tonghuashun；日/周优先、日内失败降级、请求间隔/重试退避、P95/限流统计、水位不倒退、provider 超时和同步请求可取消已锁定。#71 七天验收仍开放且 blocked，#54 真实 30-day database acceptance 仍未开始。
@@ -31,4 +32,4 @@
 - 保持 canonical envelope 向后兼容并持续验证 Binance execution-venue 新鲜度；若走 API 外卖路线,先立商业化合同(对外发布风险轴归 Park)。
 - 完成 #115 的 24 小时调度锚点/开盘缓冲真实验收后，再按已批准顺序实施 #116；#118 不切换当前 #115 observer build，也不启动 #71 正式计时。
 - Watchlist 数据和独立双库健康面板已上线；下一步是重新设计消费者切换 spec，先纠正 ADR 0004 的“只换 db_path”错误假设，再做 Newsletter/Human Review 的逐字节切换验收。未经新 issue 批准不实施切换。
-- 当前 Watchlist 主线：#139 registry compiler、#140 HK source contract、#141 107 项日线持久化已完成，下一张可启动票为 #142；随后激活面板/8100。
+- 当前 Watchlist registry 主线（#139→#142）已完成：107 项名单、HK source、日线持久化、健康面板和 8100 双源运行均已落地；后续增量应以新的 registry pin/独立 issue 推进，不扩大本里程碑。
