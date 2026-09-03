@@ -349,12 +349,10 @@ def _cell(
         or instrument.source_status == "blocked_for_entitlement"
     ) and timeframe not in instrument.not_applicable_timeframes
     if not applicable:
-        return {
+        payload = {
             "instrument_id": instrument.instrument_id,
             "display_symbol": instrument.display_symbol,
             "display_name": instrument.display_name,
-            "universe": instrument.universe,
-            "metadata": dict(instrument.metadata),
             "provider_symbol": None,
             "asset_class": instrument.asset_class,
             "source_id": None,
@@ -378,6 +376,9 @@ def _cell(
             "watermark": None,
             "error": None,
         }
+        if instrument.universe == "watchlist":
+            payload.update({"universe": instrument.universe, "metadata": dict(instrument.metadata)})
+        return payload
 
     latest_timestamp = latest.get("latest_timestamp") if latest else None
     last_attempt = observation.get("observed_at") if observation else None
@@ -419,12 +420,10 @@ def _cell(
         and watermark is not None
         else status
     )
-    return {
+    payload = {
         "instrument_id": instrument.instrument_id,
         "display_symbol": instrument.display_symbol,
         "display_name": instrument.display_name,
-        "universe": instrument.universe,
-        "metadata": dict(instrument.metadata),
         "provider_symbol": instrument.provider_symbol,
         "asset_class": instrument.asset_class,
         "source_id": instrument.source_id,
@@ -452,6 +451,9 @@ def _cell(
         "watermark": dict(watermark) if watermark else None,
         "error": error,
     }
+    if instrument.universe == "watchlist":
+        payload.update({"universe": instrument.universe, "metadata": dict(instrument.metadata)})
+    return payload
 
 
 def _worker_payload(
