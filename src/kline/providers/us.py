@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 import math
-from typing import Any
+from typing import Any, Callable
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -130,13 +130,19 @@ def _row_quality_issue(row: Any) -> str | None:
 class USStockProvider:
     """Fetch US stock K-line data via Yahoo Finance."""
 
-    def __init__(self, *, four_hour_anchor: tuple[int, int] = (0, 0)) -> None:
+    def __init__(
+        self,
+        *,
+        four_hour_anchor: tuple[int, int] = (0, 0),
+        now: Callable[[], datetime] | None = None,
+    ) -> None:
         if not 0 <= four_hour_anchor[0] < 24 or not 0 <= four_hour_anchor[1] < 60:
             raise ValueError("four_hour_anchor must be (hour 0-23, minute 0-59)")
         self.last_raw_response: dict[str, Any] | None = None
         self.timeframe_transform: TimeframeTransform | None = None
         self.source_identity: dict[str, Any] = {}
         self._four_hour_anchor = four_hour_anchor
+        self._now = now or (lambda: datetime.now(timezone.utc))
 
     def supported_timeframes(self) -> list[Timeframe]:
         return [*list(_TF_MAP.keys()), Timeframe.HOUR_4]
@@ -306,7 +312,11 @@ class USStockProvider:
             )
 
         cutoff = (
-            _closed_daily_cutoff(end, timezone_name=_source_timezone(ticker))
+            _closed_daily_cutoff(
+                end,
+                timezone_name=_source_timezone(ticker),
+                now=self._now(),
+            )
             if timeframe == Timeframe.DAY
             else None
         )
@@ -449,6 +459,8 @@ class USStockProvider:
 
 
 def _source_timezone(ticker: str) -> str:
+    if ticker.upper().endswith(".KS"):
+        return "Asia/Seoul"
     return {
         "^VIX": "America/Chicago",
         "^N225": "Asia/Tokyo",
@@ -494,12 +506,36 @@ def _expected_transform(timeframe: Timeframe, anchor: tuple[int, int]) -> Timefr
     )
 
 
-def _closed_daily_cutoff(end: str | None, *, timezone_name: str) -> date:
-    """Use only bars strictly before the current calendar day."""
+def _closed_daily_cutoff(
+    end: str | None,
+    *,
+    timezone_name: str,
+    now: datetime | None = None,
+) -> date:
+    """Return the latest conservatively finalized local daily session."""
 
-    yesterday = datetime.now(ZoneInfo(timezone_name)).date() - timedelta(days=1)
-    requested = _exclusive_end_cutoff(end, timezone_name=timezone_name)
-    return min(requested, yesterday)
+    observed_at = now or datetime.now(timezone.utc)
+    if observed_at.tzinfo is None:
+        observed_at = observed_at.replace(tzinfo=timezone.utc)
+    local = observed_at.astimezone(ZoneInfo(timezone_name))
+    latest_finalized = (
+        local.date() if local.time() >= time(18, 0) else local.date() - timedelta(days=1)
+    )
+    if end is None:
+        requested = local.date()
+    elif len(end) == 10:
+        requested = date.fromisoformat(end) - timedelta(days=1)
+    else:
+        requested_at = datetime.fromisoformat(end.replace("Z", "+00:00"))
+        if requested_at.tzinfo is None:
+            requested_at = requested_at.replace(tzinfo=ZoneInfo(timezone_name))
+        requested_local = requested_at.astimezone(ZoneInfo(timezone_name))
+        requested = (
+            requested_local.date()
+            if requested_local.time() >= time(18, 0)
+            else requested_local.date() - timedelta(days=1)
+        )
+    return min(requested, latest_finalized)
 
 
 def _repair_context_end(end: str) -> str:

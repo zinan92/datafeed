@@ -316,3 +316,17 @@ consumers can use without direct exchange or private SQLite access.
   A-side P95 was 5,369.5 ms. See `docs/verification/watchlist-ingestion-2026-09-02.md`.
 - This does not cut the 8100 Query Service over to the Market Data Database. Consumer migration
   remains a separately reviewed spec because `klines` and `mvp_candles` have different schemas.
+
+## 2026-09-03 - Define Yahoo daily finalization by session, not midnight
+
+- The first launchd catch-up for #122 proved that raw Yahoo already exposed the September 2 U.S.
+  session while `USStockProvider` still returned September 1. The old cutoff treated every current
+  New York calendar date as forming until midnight, even hours after the market had closed.
+- #124 uses a conservative 18:00 source-local finalization boundary. Before it, the current local
+  trade date stays excluded; at or after it, an upstream-supplied row may pass. Missing rows are
+  never synthesized.
+- Date-only `end` remains an exclusive trade-date boundary. A timezone-aware timestamp `end` is
+  converted to the source timezone before choosing its trade date, matching the orchestrator's real
+  request shape. `.KS` symbols use `Asia/Seoul`.
+- QCOM, AAPL and `000660.KS` were probed with aware start/end timestamps at 2026-09-03 01:31 UTC;
+  all returned September 2 as the latest daily session. Resident 8100 and #115 were not restarted.

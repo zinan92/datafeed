@@ -1,5 +1,5 @@
 import asyncio
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time as datetime_time, timedelta, timezone
 import time
 from zoneinfo import ZoneInfo
 
@@ -168,11 +168,214 @@ async def test_yahoo_daily_excludes_current_calendar_day(monkeypatch):
             return _daily_frame(rows)
 
     monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda ticker: FakeTicker())
-    provider = USStockProvider()
+    provider = USStockProvider(
+        now=lambda: datetime.combine(
+            today,
+            datetime_time(17, 59),
+            tzinfo=ZoneInfo("America/New_York"),
+        )
+    )
 
     candles = await provider.fetch("^GSPC", Timeframe.DAY, limit=10)
 
     assert [item.timestamp for item in candles] == [(today - timedelta(days=1)).isoformat()]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("minute", [0, 1])
+async def test_yahoo_daily_includes_current_trade_date_after_close_buffer(
+    monkeypatch, minute: int
+):
+    frame = _daily_frame(
+        [
+            ("2026-09-01", 100, 105, 99, 104),
+            ("2026-09-02", 104, 110, 103, 109),
+        ]
+    )
+
+    class FakeTicker:
+        def history(self, **_kwargs):
+            return frame
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: FakeTicker())
+    provider = USStockProvider(
+        now=lambda: datetime(2026, 9, 2, 22, minute, tzinfo=timezone.utc)
+    )
+
+    candles = await provider.fetch("QCOM", Timeframe.DAY, limit=10)
+
+    assert [item.timestamp for item in candles] == ["2026-09-01", "2026-09-02"]
+
+
+@pytest.mark.asyncio
+async def test_yahoo_daily_explicit_end_remains_exclusive_after_close(monkeypatch):
+    frame = _daily_frame(
+        [
+            ("2026-09-01", 100, 105, 99, 104),
+            ("2026-09-02", 104, 110, 103, 109),
+        ]
+    )
+
+    class FakeTicker:
+        def history(self, **_kwargs):
+            return frame
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: FakeTicker())
+    provider = USStockProvider(
+        now=lambda: datetime(2026, 9, 2, 23, 0, tzinfo=timezone.utc)
+    )
+
+    candles = await provider.fetch(
+        "QCOM",
+        Timeframe.DAY,
+        start="2026-09-01",
+        end="2026-09-02",
+        limit=10,
+    )
+
+    assert [item.timestamp for item in candles] == ["2026-09-01"]
+
+
+@pytest.mark.asyncio
+async def test_yahoo_daily_timestamp_end_uses_source_local_trade_date(monkeypatch):
+    frame = _daily_frame(
+        [
+            ("2026-09-01", 100, 105, 99, 104),
+            ("2026-09-02", 104, 110, 103, 109),
+        ]
+    )
+
+    class FakeTicker:
+        def history(self, **_kwargs):
+            return frame
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: FakeTicker())
+    provider = USStockProvider(
+        now=lambda: datetime(2026, 9, 2, 23, 15, tzinfo=timezone.utc)
+    )
+
+    candles = await provider.fetch(
+        "QCOM",
+        Timeframe.DAY,
+        start="2026-08-31T23:15:00+00:00",
+        end="2026-09-02T23:15:00+00:00",
+        limit=10,
+    )
+
+    assert [item.timestamp for item in candles] == ["2026-09-01", "2026-09-02"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("end", "expected"),
+    [
+        ("2026-09-02T17:59:00-04:00", ["2026-09-01"]),
+        ("2026-09-02T18:00:00-04:00", ["2026-09-01", "2026-09-02"]),
+        ("2026-09-02T18:01:00-04:00", ["2026-09-01", "2026-09-02"]),
+    ],
+)
+async def test_yahoo_daily_timestamp_end_respects_its_own_close_buffer(
+    monkeypatch, end: str, expected: list[str]
+):
+    frame = _daily_frame(
+        [
+            ("2026-09-01", 100, 105, 99, 104),
+            ("2026-09-02", 104, 110, 103, 109),
+        ]
+    )
+
+    class FakeTicker:
+        def history(self, **_kwargs):
+            return frame
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: FakeTicker())
+    provider = USStockProvider(
+        now=lambda: datetime(2026, 9, 3, 12, 0, tzinfo=timezone.utc)
+    )
+
+    candles = await provider.fetch(
+        "QCOM",
+        Timeframe.DAY,
+        start="2026-08-31T18:00:00-04:00",
+        end=end,
+        limit=10,
+    )
+
+    assert [item.timestamp for item in candles] == expected
+
+
+@pytest.mark.asyncio
+async def test_yahoo_korean_daily_uses_seoul_closed_date(monkeypatch):
+    frame = _daily_frame(
+        [
+            ("2026-09-02", 100, 105, 99, 104),
+            ("2026-09-03", 104, 110, 103, 109),
+        ]
+    )
+
+    class FakeTicker:
+        def history(self, **_kwargs):
+            return frame
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: FakeTicker())
+    provider = USStockProvider(
+        now=lambda: datetime(2026, 9, 3, 1, 15, tzinfo=timezone.utc)
+    )
+
+    candles = await provider.fetch(
+        "000660.KS",
+        Timeframe.DAY,
+        start="2026-08-31T23:15:00+00:00",
+        end="2026-09-03T01:15:00+00:00",
+        limit=10,
+    )
+
+    assert [item.timestamp for item in candles] == ["2026-09-02"]
+
+
+@pytest.mark.asyncio
+async def test_yahoo_daily_weekend_keeps_latest_market_session(monkeypatch):
+    frame = _daily_frame([("2026-09-04", 100, 105, 99, 104)])
+
+    class FakeTicker:
+        def history(self, **_kwargs):
+            return frame
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: FakeTicker())
+    provider = USStockProvider(
+        now=lambda: datetime(2026, 9, 7, 0, 0, tzinfo=timezone.utc)
+    )
+
+    candles = await provider.fetch("QCOM", Timeframe.DAY, limit=10)
+
+    assert [item.timestamp for item in candles] == ["2026-09-04"]
+    assert provider.source_identity["repair_attempted"] is False
+
+
+@pytest.mark.asyncio
+async def test_yahoo_after_close_does_not_fabricate_a_missing_current_row(monkeypatch):
+    frame = _daily_frame([("2026-09-01", 100, 105, 99, 104)])
+
+    class FakeTicker:
+        def history(self, **_kwargs):
+            return frame
+
+    monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: FakeTicker())
+    provider = USStockProvider(
+        now=lambda: datetime(2026, 9, 2, 23, 15, tzinfo=timezone.utc)
+    )
+
+    candles = await provider.fetch(
+        "QCOM",
+        Timeframe.DAY,
+        start="2026-08-31T23:15:00+00:00",
+        end="2026-09-02T23:15:00+00:00",
+        limit=10,
+    )
+
+    assert [item.timestamp for item in candles] == ["2026-09-01"]
+    assert provider.source_identity["repair_attempted"] is True
+    assert provider.source_identity["repaired_timestamps"] == ["2026-09-01"]
 
 
 @pytest.mark.asyncio
@@ -378,7 +581,9 @@ async def test_yahoo_excludes_negative_volume_without_fabricating_a_replacement(
             return frame.copy()
 
     monkeypatch.setattr("kline.providers.us.yf.Ticker", lambda _ticker: FakeTicker())
-    provider = USStockProvider()
+    provider = USStockProvider(
+        now=lambda: datetime(2026, 9, 1, 22, 0, tzinfo=timezone.utc)
+    )
 
     candles = await provider.fetch("AAPL", Timeframe.DAY, limit=10)
 
