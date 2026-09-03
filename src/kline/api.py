@@ -458,19 +458,28 @@ def _market_database_response(
 ) -> CandleResponse:
     candles = list(result.candles)
     report = analyze_candles(candles, timeframe, meta, strict=policy.strict_quality)
-    _block_if_quality_rejected(
-        report=report,
-        meta=meta,
-        policy=policy,
-        served_from="market_data_database",
-        timeframe=timeframe,
-        timeframe_transform=result.timeframe_transform,
-        source_identity={
+    if report.reject_reason:
+        source_identity = {
             **dict(result.source_identity or {}),
             "requested_ticker": requested_ticker,
-        },
-        provider_symbol=result.provider_symbol or requested_ticker,
-    )
+        }
+        raise _error(
+            status_code=503,
+            error="data_blocked",
+            detail="All explicitly selected sources failed quality checks",
+            meta=meta,
+            served_from="upstream",
+            policy=policy,
+            report=report,
+            reject_reason=report.reject_reason,
+            access_issues=[f"{policy.source}: {report.reject_reason}"],
+            attempted_sources=[policy.source],
+            timeframe=timeframe,
+            timeframe_transform=result.timeframe_transform,
+            source_identity=source_identity,
+            selected_source=policy.source,
+            provider_symbol=result.provider_symbol or requested_ticker,
+        )
     return _build_response(
         result.provider_symbol or requested_ticker,
         asset_class,
