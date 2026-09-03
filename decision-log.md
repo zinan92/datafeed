@@ -421,3 +421,20 @@ consumers can use without direct exchange or private SQLite access.
 - The real rollback drill used `bootout → bootstrap`: candidate → byte-identical legacy plist →
   candidate. A real Newsletter source bundle was 31/31 ready (9 market / 22 legacy); Human Review
   returned 16 assets with six Market Data Database and 28 legacy primary identities.
+
+## 2026-09-04 - Pin Park Exposure Registry and compile the 107-member Price Universe
+
+- #139 adopts `zinan92/watchlist@29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2` as the pinned source for
+  Watchlist membership. The committed snapshot contains 16 price assets and 91 unique listed
+  company targets (38 CN, 48 US, 4 HK, 1 KR), for 107 daily K-line identities.
+- Multi-sector duplicate targets (`000660.KS`, 长江电力, MRVL) are deduplicated for collection while
+  all registry memberships and reasons remain provenance metadata. BTC/ETH/HYPE target rows are not
+  double-counted because they are already assets.
+- The generated artifact remains offline and byte-stable. Existing cross-market IDs, source/provider
+  fields and proxy metadata are preserved; the active 58-member manifest is intentionally not switched
+  by #139. #140 adds the live HK adapter, #141 backfills/activates the 107-member run, and #142
+  updates health/deployment in that order.
+- Manifest schema identity stays `watchlist_universe_v1`; upstream registry commit/hash are separate
+  snapshot provenance, so membership upgrades do not fork candle identity or duplicate history.
+- HK instruments use a truthful `hk_stock` declaration and exact Yahoo symbols (`0100.HK`, `2513.HK`,
+  `0700.HK`, `9988.HK`). No provider adapter or live HK request was added in this ticket.

@@ -17,6 +17,7 @@ from sqlalchemy.orm import DeclarativeBase
 class AssetClass(str, Enum):
     A_SHARE = "a_share"
     US_STOCK = "us_stock"
+    HK_STOCK = "hk_stock"
     CRYPTO = "crypto"
     COMMODITY = "commodity"
     FUTURES = "futures"

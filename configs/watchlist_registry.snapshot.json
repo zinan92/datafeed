@@ -1,0 +1,2389 @@
+{
+  "assets": [
+    {
+      "id": "SPX",
+      "kind": "index",
+      "market": "US",
+      "name": "标普500指数"
+    },
+    {
+      "id": "NDX",
+      "kind": "index",
+      "market": "US",
+      "name": "纳斯达克100指数"
+    },
+    {
+      "id": "DXY",
+      "kind": "index",
+      "market": "FX",
+      "name": "美元指数"
+    },
+    {
+      "id": "SCHD",
+      "kind": "etf",
+      "market": "US",
+      "name": "美股红利ETF"
+    },
+    {
+      "id": "VIX",
+      "kind": "index",
+      "market": "US",
+      "name": "恐慌指数"
+    },
+    {
+      "id": "BTC",
+      "kind": "crypto",
+      "market": "CRYPTO",
+      "name": "比特币"
+    },
+    {
+      "id": "ETH",
+      "kind": "crypto",
+      "market": "CRYPTO",
+      "name": "以太坊"
+    },
+    {
+      "id": "HYPE",
+      "kind": "crypto",
+      "market": "CRYPTO",
+      "name": "Hyperliquid HYPE"
+    },
+    {
+      "id": "SSE",
+      "kind": "index",
+      "market": "CN",
+      "name": "上证指数"
+    },
+    {
+      "id": "STAR50",
+      "kind": "index",
+      "market": "CN",
+      "name": "科创50"
+    },
+    {
+      "id": "SSE_DIV",
+      "kind": "index",
+      "market": "CN",
+      "name": "上证红利"
+    },
+    {
+      "id": "N225",
+      "kind": "index",
+      "market": "JP",
+      "name": "日经225"
+    },
+    {
+      "id": "KOSPI",
+      "kind": "index",
+      "market": "KR",
+      "name": "KOSPI"
+    },
+    {
+      "id": "WTI",
+      "kind": "commodity",
+      "market": "COMDTY",
+      "name": "WTI原油"
+    },
+    {
+      "id": "XAU",
+      "kind": "commodity",
+      "market": "COMDTY",
+      "name": "黄金"
+    },
+    {
+      "id": "XAG",
+      "kind": "commodity",
+      "market": "COMDTY",
+      "name": "白银"
+    }
+  ],
+  "schema_version": "park-exposure-registry-snapshot-v1",
+  "targets": [
+    {
+      "id": "federal-reserve",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "rates",
+          "sector_id": "fed_path",
+          "sector_name": "美联储路径"
+        }
+      ],
+      "name": "美联储",
+      "reason": "thesis",
+      "reasons": [
+        "thesis"
+      ],
+      "ticker": null,
+      "type": "macro"
+    },
+    {
+      "id": "bank-of-japan",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "rates",
+          "sector_id": "boj_path",
+          "sector_name": "日本央行路径"
+        }
+      ],
+      "name": "日本央行",
+      "reason": "thesis",
+      "reasons": [
+        "thesis"
+      ],
+      "ticker": null,
+      "type": "macro"
+    },
+    {
+      "id": "000660.KS",
+      "listed": true,
+      "market": "KR",
+      "memberships": [
+        {
+          "macro_id": "rates",
+          "sector_id": "boj_path",
+          "sector_name": "日本央行路径"
+        },
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "memory_hbm",
+          "sector_name": "存储与 HBM"
+        }
+      ],
+      "name": "SK海力士",
+      "reason": "持仓关联KOSPI",
+      "reasons": [
+        "持仓关联KOSPI",
+        "HBM龙头"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "JPM",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "rates",
+          "sector_id": "dividend_defensive",
+          "sector_name": "红利防守"
+        }
+      ],
+      "name": "摩根大通",
+      "reason": "持仓",
+      "reasons": [
+        "持仓"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "长江电力",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "rates",
+          "sector_id": "dividend_defensive",
+          "sector_name": "红利防守"
+        },
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "ai_generation",
+          "sector_name": "AI 发电"
+        }
+      ],
+      "name": "长江电力",
+      "reason": "A股红利标杆",
+      "reasons": [
+        "A股红利标杆",
+        "A股水电标杆"
+      ],
+      "ticker": "600900",
+      "type": "company"
+    },
+    {
+      "id": "工商银行",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "rates",
+          "sector_id": "dividend_defensive",
+          "sector_name": "红利防守"
+        }
+      ],
+      "name": "工商银行",
+      "reason": "A股红利标杆",
+      "reasons": [
+        "A股红利标杆"
+      ],
+      "ticker": "601398",
+      "type": "company"
+    },
+    {
+      "id": "hormuz-strait",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "oil_chokepoint",
+          "sector_name": "中东与原油通道"
+        }
+      ],
+      "name": "霍尔木兹海峡",
+      "reason": "thesis",
+      "reasons": [
+        "thesis"
+      ],
+      "ticker": null,
+      "type": "macro"
+    },
+    {
+      "id": "opec",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "oil_chokepoint",
+          "sector_name": "中东与原油通道"
+        }
+      ],
+      "name": "OPEC",
+      "reason": "thesis",
+      "reasons": [
+        "thesis"
+      ],
+      "ticker": null,
+      "type": "macro"
+    },
+    {
+      "id": "XOM",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "oil_chokepoint",
+          "sector_name": "中东与原油通道"
+        }
+      ],
+      "name": "埃克森美孚",
+      "reason": "WTI的股票表达",
+      "reasons": [
+        "WTI的股票表达"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "CVX",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "oil_chokepoint",
+          "sector_name": "中东与原油通道"
+        }
+      ],
+      "name": "雪佛龙",
+      "reason": "WTI的股票表达",
+      "reasons": [
+        "WTI的股票表达"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "中国海油",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "oil_chokepoint",
+          "sector_name": "中东与原油通道"
+        }
+      ],
+      "name": "中国海油",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "600938",
+      "type": "company"
+    },
+    {
+      "id": "中国石油",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "oil_chokepoint",
+          "sector_name": "中东与原油通道"
+        }
+      ],
+      "name": "中国石油",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "601857",
+      "type": "company"
+    },
+    {
+      "id": "russia-ukraine-war",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "russia_ukraine",
+          "sector_name": "俄乌战争"
+        }
+      ],
+      "name": "俄乌战争",
+      "reason": "thesis",
+      "reasons": [
+        "thesis"
+      ],
+      "ticker": null,
+      "type": "macro"
+    },
+    {
+      "id": "LMT",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "russia_ukraine",
+          "sector_name": "俄乌战争"
+        }
+      ],
+      "name": "洛克希德马丁",
+      "reason": "国防标杆",
+      "reasons": [
+        "国防标杆"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "RTX",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "russia_ukraine",
+          "sector_name": "俄乌战争"
+        }
+      ],
+      "name": "雷神",
+      "reason": "国防标杆",
+      "reasons": [
+        "国防标杆"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "中航沈飞",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "russia_ukraine",
+          "sector_name": "俄乌战争"
+        }
+      ],
+      "name": "中航沈飞",
+      "reason": "A股军工标杆",
+      "reasons": [
+        "A股军工标杆"
+      ],
+      "ticker": "600760",
+      "type": "company"
+    },
+    {
+      "id": "中兵红箭",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "russia_ukraine",
+          "sector_name": "俄乌战争"
+        }
+      ],
+      "name": "中兵红箭",
+      "reason": "A股军工标杆",
+      "reasons": [
+        "A股军工标杆"
+      ],
+      "ticker": "000519",
+      "type": "company"
+    },
+    {
+      "id": "NEM",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "safe_haven_gold",
+          "sector_name": "避险与央行购金"
+        }
+      ],
+      "name": "纽蒙特",
+      "reason": "黄金的股票表达",
+      "reasons": [
+        "黄金的股票表达"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "GOLD",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "safe_haven_gold",
+          "sector_name": "避险与央行购金"
+        }
+      ],
+      "name": "巴里克",
+      "reason": "黄金的股票表达",
+      "reasons": [
+        "黄金的股票表达"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "山东黄金",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "safe_haven_gold",
+          "sector_name": "避险与央行购金"
+        }
+      ],
+      "name": "山东黄金",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "600547",
+      "type": "company"
+    },
+    {
+      "id": "紫金矿业",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "safe_haven_gold",
+          "sector_name": "避险与央行购金"
+        }
+      ],
+      "name": "紫金矿业",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "601899",
+      "type": "company"
+    },
+    {
+      "id": "ai-compute",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "ai_compute_chips",
+          "sector_name": "AI 算力芯片"
+        }
+      ],
+      "name": "AI算力与基础设施",
+      "reason": "Park指定；AI基础设施主线的通用主题入口",
+      "reasons": [
+        "Park指定；AI基础设施主线的通用主题入口"
+      ],
+      "ticker": null,
+      "type": "theme"
+    },
+    {
+      "id": "electronic-components",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "ai_compute_chips",
+          "sector_name": "AI 算力芯片"
+        }
+      ],
+      "name": "电子元件与被动件",
+      "reason": "Park指定；MLCC等AI硬件供应链的主题入口",
+      "reasons": [
+        "Park指定；MLCC等AI硬件供应链的主题入口"
+      ],
+      "ticker": null,
+      "type": "theme"
+    },
+    {
+      "id": "NVDA",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "ai_compute_chips",
+          "sector_name": "AI 算力芯片"
+        }
+      ],
+      "name": "英伟达",
+      "reason": "赛道龙头",
+      "reasons": [
+        "赛道龙头"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "AMD",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "ai_compute_chips",
+          "sector_name": "AI 算力芯片"
+        }
+      ],
+      "name": "美国超威",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "AVGO",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "ai_compute_chips",
+          "sector_name": "AI 算力芯片"
+        }
+      ],
+      "name": "博通",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "MRVL",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "ai_compute_chips",
+          "sector_name": "AI 算力芯片"
+        },
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "optical_interconnect",
+          "sector_name": "光通信与互连"
+        }
+      ],
+      "name": "迈威尔",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定",
+        "Park指定，光DSP"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "寒武纪",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "ai_compute_chips",
+          "sector_name": "AI 算力芯片"
+        }
+      ],
+      "name": "寒武纪",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "688256",
+      "type": "company"
+    },
+    {
+      "id": "海光信息",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "ai_compute_chips",
+          "sector_name": "AI 算力芯片"
+        }
+      ],
+      "name": "海光信息",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "688041",
+      "type": "company"
+    },
+    {
+      "id": "MU",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "memory_hbm",
+          "sector_name": "存储与 HBM"
+        }
+      ],
+      "name": "美光",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "SNDK",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "memory_hbm",
+          "sector_name": "存储与 HBM"
+        }
+      ],
+      "name": "闪迪",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "WDC",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "memory_hbm",
+          "sector_name": "存储与 HBM"
+        }
+      ],
+      "name": "西部数据",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "兆易创新",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "memory_hbm",
+          "sector_name": "存储与 HBM"
+        }
+      ],
+      "name": "兆易创新",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "603986",
+      "type": "company"
+    },
+    {
+      "id": "688825",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "cxmt_solo",
+          "sector_name": "长鑫科技 · 单体"
+        }
+      ],
+      "name": "长鑫科技",
+      "reason": "A股市值第一(3.31万亿)，DRAM全球第四；Park持有科创50，其权重使该股新闻≈科创50仓位新闻",
+      "reasons": [
+        "A股市值第一(3.31万亿)，DRAM全球第四；Park持有科创50，其权重使该股新闻≈科创50仓位新闻"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "TSM",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "fab_equipment",
+          "sector_name": "晶圆制造与设备"
+        }
+      ],
+      "name": "台积电",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "ASML",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "fab_equipment",
+          "sector_name": "晶圆制造与设备"
+        }
+      ],
+      "name": "阿斯麦",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "LRCX",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "fab_equipment",
+          "sector_name": "晶圆制造与设备"
+        }
+      ],
+      "name": "拉姆研究",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "AMAT",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "fab_equipment",
+          "sector_name": "晶圆制造与设备"
+        }
+      ],
+      "name": "应用材料",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "INTC",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "fab_equipment",
+          "sector_name": "晶圆制造与设备"
+        }
+      ],
+      "name": "英特尔",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "中芯国际",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "fab_equipment",
+          "sector_name": "晶圆制造与设备"
+        }
+      ],
+      "name": "中芯国际",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "688981",
+      "type": "company"
+    },
+    {
+      "id": "华虹公司",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "fab_equipment",
+          "sector_name": "晶圆制造与设备"
+        }
+      ],
+      "name": "华虹公司",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "688347",
+      "type": "company"
+    },
+    {
+      "id": "北方华创",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "fab_equipment",
+          "sector_name": "晶圆制造与设备"
+        }
+      ],
+      "name": "北方华创",
+      "reason": "A股设备标杆",
+      "reasons": [
+        "A股设备标杆"
+      ],
+      "ticker": "002371",
+      "type": "company"
+    },
+    {
+      "id": "中微公司",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "fab_equipment",
+          "sector_name": "晶圆制造与设备"
+        }
+      ],
+      "name": "中微公司",
+      "reason": "A股设备标杆",
+      "reasons": [
+        "A股设备标杆"
+      ],
+      "ticker": "688012",
+      "type": "company"
+    },
+    {
+      "id": "MSFT",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "hyperscaler_capex",
+          "sector_name": "云厂商资本开支"
+        }
+      ],
+      "name": "微软",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "GOOGL",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "hyperscaler_capex",
+          "sector_name": "云厂商资本开支"
+        }
+      ],
+      "name": "谷歌",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "AMZN",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "hyperscaler_capex",
+          "sector_name": "云厂商资本开支"
+        }
+      ],
+      "name": "亚马逊",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "META",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "hyperscaler_capex",
+          "sector_name": "云厂商资本开支"
+        }
+      ],
+      "name": "Meta",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "ORCL",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "hyperscaler_capex",
+          "sector_name": "云厂商资本开支"
+        }
+      ],
+      "name": "甲骨文",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "浪潮信息",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "hyperscaler_capex",
+          "sector_name": "云厂商资本开支"
+        }
+      ],
+      "name": "浪潮信息",
+      "reason": "A股服务器标杆",
+      "reasons": [
+        "A股服务器标杆"
+      ],
+      "ticker": "000977",
+      "type": "company"
+    },
+    {
+      "id": "中科曙光",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "hyperscaler_capex",
+          "sector_name": "云厂商资本开支"
+        }
+      ],
+      "name": "中科曙光",
+      "reason": "A股服务器标杆",
+      "reasons": [
+        "A股服务器标杆"
+      ],
+      "ticker": "603019",
+      "type": "company"
+    },
+    {
+      "id": "ai-generation",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "ai_generation",
+          "sector_name": "AI 发电"
+        }
+      ],
+      "name": "AI发电",
+      "reason": "Park指定；区分AI算力增长带来的发电需求",
+      "reasons": [
+        "Park指定；区分AI算力增长带来的发电需求"
+      ],
+      "ticker": null,
+      "type": "theme"
+    },
+    {
+      "id": "CEG",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "ai_generation",
+          "sector_name": "AI 发电"
+        }
+      ],
+      "name": "Constellation",
+      "reason": "22GW核电，供电微软/Meta 20年1.1GW长约",
+      "reasons": [
+        "22GW核电，供电微软/Meta 20年1.1GW长约"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "VST",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "ai_generation",
+          "sector_name": "AI 发电"
+        }
+      ],
+      "name": "Vistra",
+      "reason": "2026-01与Meta签20年2.1GW+核电长约",
+      "reasons": [
+        "2026-01与Meta签20年2.1GW+核电长约"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "TLN",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "ai_generation",
+          "sector_name": "AI 发电"
+        }
+      ],
+      "name": "Talen",
+      "reason": "亚马逊Susquehanna长约至2042年，最高1920MW",
+      "reasons": [
+        "亚马逊Susquehanna长约至2042年，最高1920MW"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "中国核电",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "ai_generation",
+          "sector_name": "AI 发电"
+        }
+      ],
+      "name": "中国核电",
+      "reason": "A股核电标杆",
+      "reasons": [
+        "A股核电标杆"
+      ],
+      "ticker": "601985",
+      "type": "company"
+    },
+    {
+      "id": "power-equipment",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "power_equipment",
+          "sector_name": "电力设备与线缆"
+        }
+      ],
+      "name": "电力设备与线缆",
+      "reason": "Park指定；区分发电侧与输配电设备侧",
+      "reasons": [
+        "Park指定；区分发电侧与输配电设备侧"
+      ],
+      "ticker": null,
+      "type": "theme"
+    },
+    {
+      "id": "ETN",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "power_equipment",
+          "sector_name": "电力设备与线缆"
+        }
+      ],
+      "name": "伊顿",
+      "reason": "变压器/开关柜/UPS/液冷，FY2026有机增长指引上调至10%",
+      "reasons": [
+        "变压器/开关柜/UPS/液冷，FY2026有机增长指引上调至10%"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "VRT",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "power_equipment",
+          "sector_name": "电力设备与线缆"
+        }
+      ],
+      "name": "Vertiv",
+      "reason": "UPS+精密冷却，在手订单超150亿美元",
+      "reasons": [
+        "UPS+精密冷却，在手订单超150亿美元"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "NVT",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "power_equipment",
+          "sector_name": "电力设备与线缆"
+        }
+      ],
+      "name": "nVent",
+      "reason": "电气保护",
+      "reasons": [
+        "电气保护"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "ATKR",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "power_equipment",
+          "sector_name": "电力设备与线缆"
+        }
+      ],
+      "name": "Atkore",
+      "reason": "线管/桥架/支架，最贴近电缆层",
+      "reasons": [
+        "线管/桥架/支架，最贴近电缆层"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "GEV",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "power_equipment",
+          "sector_name": "电力设备与线缆"
+        }
+      ],
+      "name": "GE Vernova",
+      "reason": "燃机与电网设备",
+      "reasons": [
+        "燃机与电网设备"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "特变电工",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "power_equipment",
+          "sector_name": "电力设备与线缆"
+        }
+      ],
+      "name": "特变电工",
+      "reason": "A股变压器标杆",
+      "reasons": [
+        "A股变压器标杆"
+      ],
+      "ticker": "600089",
+      "type": "company"
+    },
+    {
+      "id": "平高电气",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "power_equipment",
+          "sector_name": "电力设备与线缆"
+        }
+      ],
+      "name": "平高电气",
+      "reason": "A股开关标杆",
+      "reasons": [
+        "A股开关标杆"
+      ],
+      "ticker": "600312",
+      "type": "company"
+    },
+    {
+      "id": "中天科技",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "power_equipment",
+          "sector_name": "电力设备与线缆"
+        }
+      ],
+      "name": "中天科技",
+      "reason": "A股线缆标杆",
+      "reasons": [
+        "A股线缆标杆"
+      ],
+      "ticker": "600522",
+      "type": "company"
+    },
+    {
+      "id": "optical-communication",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "optical_interconnect",
+          "sector_name": "光通信与互连"
+        }
+      ],
+      "name": "光通信",
+      "reason": "thesis",
+      "reasons": [
+        "thesis"
+      ],
+      "ticker": null,
+      "type": "theme"
+    },
+    {
+      "id": "GLW",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "optical_interconnect",
+          "sector_name": "光通信与互连"
+        }
+      ],
+      "name": "康宁",
+      "reason": "Park指定，光纤",
+      "reasons": [
+        "Park指定，光纤"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "COHR",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "optical_interconnect",
+          "sector_name": "光通信与互连"
+        }
+      ],
+      "name": "Coherent",
+      "reason": "光模块标杆",
+      "reasons": [
+        "光模块标杆"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "中际旭创",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "optical_interconnect",
+          "sector_name": "光通信与互连"
+        }
+      ],
+      "name": "中际旭创",
+      "reason": "A股光模块标杆",
+      "reasons": [
+        "A股光模块标杆"
+      ],
+      "ticker": "300308",
+      "type": "company"
+    },
+    {
+      "id": "新易盛",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "optical_interconnect",
+          "sector_name": "光通信与互连"
+        }
+      ],
+      "name": "新易盛",
+      "reason": "A股光模块标杆",
+      "reasons": [
+        "A股光模块标杆"
+      ],
+      "ticker": "300502",
+      "type": "company"
+    },
+    {
+      "id": "天孚通信",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "optical_interconnect",
+          "sector_name": "光通信与互连"
+        }
+      ],
+      "name": "天孚通信",
+      "reason": "A股光器件标杆",
+      "reasons": [
+        "A股光器件标杆"
+      ],
+      "ticker": "300394",
+      "type": "company"
+    },
+    {
+      "id": "AAPL",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "edge_consumer",
+          "sector_name": "端侧与消费电子"
+        }
+      ],
+      "name": "苹果",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "QCOM",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "edge_consumer",
+          "sector_name": "端侧与消费电子"
+        }
+      ],
+      "name": "高通",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "立讯精密",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "edge_consumer",
+          "sector_name": "端侧与消费电子"
+        }
+      ],
+      "name": "立讯精密",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "002475",
+      "type": "company"
+    },
+    {
+      "id": "歌尔股份",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "edge_consumer",
+          "sector_name": "端侧与消费电子"
+        }
+      ],
+      "name": "歌尔股份",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "002241",
+      "type": "company"
+    },
+    {
+      "id": "ai-development",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "model_application",
+          "sector_name": "模型与应用层"
+        }
+      ],
+      "name": "AI发展",
+      "reason": "Park指定；AI发展是Park四件事之首，承接不点名具体公司的AI新闻",
+      "reasons": [
+        "Park指定；AI发展是Park四件事之首，承接不点名具体公司的AI新闻"
+      ],
+      "ticker": null,
+      "type": "theme"
+    },
+    {
+      "id": "PLTR",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "model_application",
+          "sector_name": "模型与应用层"
+        }
+      ],
+      "name": "Palantir",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "openai",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "model_application",
+          "sector_name": "模型与应用层"
+        }
+      ],
+      "name": "OpenAI",
+      "reason": "AI发展是Park四件事之首；未上市，不分配代码",
+      "reasons": [
+        "AI发展是Park四件事之首；未上市，不分配代码"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "anthropic",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "model_application",
+          "sector_name": "模型与应用层"
+        }
+      ],
+      "name": "Anthropic",
+      "reason": "同上",
+      "reasons": [
+        "同上"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "00100",
+      "listed": true,
+      "market": "HK",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "model_application",
+          "sector_name": "模型与应用层"
+        }
+      ],
+      "name": "MiniMax",
+      "reason": "Park指定；AI模型与应用层重要观察对象",
+      "reasons": [
+        "Park指定；AI模型与应用层重要观察对象"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "02513",
+      "listed": true,
+      "market": "HK",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "model_application",
+          "sector_name": "模型与应用层"
+        }
+      ],
+      "name": "智谱",
+      "reason": "Park指定；AI模型与应用层重要观察对象",
+      "reasons": [
+        "Park指定；AI模型与应用层重要观察对象"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "github",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "model_application",
+          "sector_name": "模型与应用层"
+        }
+      ],
+      "name": "GitHub",
+      "reason": "Park指定；开发者与AI生态基础设施观察对象；非独立上市公司",
+      "reasons": [
+        "Park指定；开发者与AI生态基础设施观察对象；非独立上市公司"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "科大讯飞",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "model_application",
+          "sector_name": "模型与应用层"
+        }
+      ],
+      "name": "科大讯飞",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "002230",
+      "type": "company"
+    },
+    {
+      "id": "金山办公",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "model_application",
+          "sector_name": "模型与应用层"
+        }
+      ],
+      "name": "金山办公",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "688111",
+      "type": "company"
+    },
+    {
+      "id": "embodied-ai",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "robotics_embodied",
+          "sector_name": "机器人与具身智能"
+        }
+      ],
+      "name": "具身智能",
+      "reason": "thesis",
+      "reasons": [
+        "thesis"
+      ],
+      "ticker": null,
+      "type": "theme"
+    },
+    {
+      "id": "TSLA",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "robotics_embodied",
+          "sector_name": "机器人与具身智能"
+        }
+      ],
+      "name": "特斯拉",
+      "reason": "Park指定",
+      "reasons": [
+        "Park指定"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "figure",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "robotics_embodied",
+          "sector_name": "机器人与具身智能"
+        }
+      ],
+      "name": "Figure",
+      "reason": "人形机器人标杆，未上市",
+      "reasons": [
+        "人形机器人标杆，未上市"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "688836",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "robotics_embodied",
+          "sector_name": "机器人与具身智能"
+        }
+      ],
+      "name": "宇树科技",
+      "reason": "A股人形机器人龙头",
+      "reasons": [
+        "A股人形机器人龙头"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "汇川技术",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "robotics_embodied",
+          "sector_name": "机器人与具身智能"
+        }
+      ],
+      "name": "汇川技术",
+      "reason": "A股运控标杆",
+      "reasons": [
+        "A股运控标杆"
+      ],
+      "ticker": "300124",
+      "type": "company"
+    },
+    {
+      "id": "绿的谐波",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "ai_capex",
+          "sector_id": "robotics_embodied",
+          "sector_name": "机器人与具身智能"
+        }
+      ],
+      "name": "绿的谐波",
+      "reason": "A股谐波减速器标杆",
+      "reasons": [
+        "A股谐波减速器标杆"
+      ],
+      "ticker": "688017",
+      "type": "company"
+    },
+    {
+      "id": "BTC",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "risk_crypto",
+          "sector_id": "crypto_core",
+          "sector_name": "加密核心资产"
+        }
+      ],
+      "name": "BTC",
+      "reason": "持仓",
+      "reasons": [
+        "持仓"
+      ],
+      "ticker": null,
+      "type": "asset"
+    },
+    {
+      "id": "ETH",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "risk_crypto",
+          "sector_id": "crypto_core",
+          "sector_name": "加密核心资产"
+        }
+      ],
+      "name": "ETH",
+      "reason": "持仓",
+      "reasons": [
+        "持仓"
+      ],
+      "ticker": null,
+      "type": "asset"
+    },
+    {
+      "id": "COIN",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "risk_crypto",
+          "sector_id": "crypto_equity_proxy",
+          "sector_name": "加密股权代理"
+        }
+      ],
+      "name": "Coinbase",
+      "reason": "BTC的股票表达",
+      "reasons": [
+        "BTC的股票表达"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "MSTR",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "risk_crypto",
+          "sector_id": "crypto_equity_proxy",
+          "sector_name": "加密股权代理"
+        }
+      ],
+      "name": "MicroStrategy",
+      "reason": "BTC的股票表达",
+      "reasons": [
+        "BTC的股票表达"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "HOOD",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "risk_crypto",
+          "sector_id": "crypto_equity_proxy",
+          "sector_name": "加密股权代理"
+        }
+      ],
+      "name": "Robinhood",
+      "reason": "Park指定，零售资金流代理",
+      "reasons": [
+        "Park指定，零售资金流代理"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "HYPE",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "risk_crypto",
+          "sector_id": "onchain_perp",
+          "sector_name": "链上与永续"
+        }
+      ],
+      "name": "HYPE",
+      "reason": "持仓",
+      "reasons": [
+        "持仓"
+      ],
+      "ticker": null,
+      "type": "asset"
+    },
+    {
+      "id": "hyperliquid",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "risk_crypto",
+          "sector_id": "onchain_perp",
+          "sector_name": "链上与永续"
+        }
+      ],
+      "name": "Hyperliquid",
+      "reason": "协议本身，非上市主体",
+      "reasons": [
+        "协议本身，非上市主体"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "innovative-drugs",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "innovative_drugs",
+          "sector_name": "创新药"
+        }
+      ],
+      "name": "创新药",
+      "reason": "Park指定赛道",
+      "reasons": [
+        "Park指定赛道"
+      ],
+      "ticker": null,
+      "type": "theme"
+    },
+    {
+      "id": "LLY",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "innovative_drugs",
+          "sector_name": "创新药"
+        }
+      ],
+      "name": "礼来",
+      "reason": "GLP-1龙头",
+      "reasons": [
+        "GLP-1龙头"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "NVO",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "innovative_drugs",
+          "sector_name": "创新药"
+        }
+      ],
+      "name": "诺和诺德",
+      "reason": "GLP-1龙头",
+      "reasons": [
+        "GLP-1龙头"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "VRTX",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "innovative_drugs",
+          "sector_name": "创新药"
+        }
+      ],
+      "name": "福泰",
+      "reason": "创新药标杆",
+      "reasons": [
+        "创新药标杆"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "REGN",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "innovative_drugs",
+          "sector_name": "创新药"
+        }
+      ],
+      "name": "再生元",
+      "reason": "创新药标杆",
+      "reasons": [
+        "创新药标杆"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "恒瑞医药",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "innovative_drugs",
+          "sector_name": "创新药"
+        }
+      ],
+      "name": "恒瑞医药",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "600276",
+      "type": "company"
+    },
+    {
+      "id": "百济神州",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "innovative_drugs",
+          "sector_name": "创新药"
+        }
+      ],
+      "name": "百济神州",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "688235",
+      "type": "company"
+    },
+    {
+      "id": "药明康德",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "innovative_drugs",
+          "sector_name": "创新药"
+        }
+      ],
+      "name": "药明康德",
+      "reason": "A股CXO标杆",
+      "reasons": [
+        "A股CXO标杆"
+      ],
+      "ticker": "603259",
+      "type": "company"
+    },
+    {
+      "id": "platform-consumer",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "platform_consumer",
+          "sector_name": "大消费与平台"
+        }
+      ],
+      "name": "大消费与平台",
+      "reason": "Park指定；不点名单一公司的平台与消费行业新闻入口",
+      "reasons": [
+        "Park指定；不点名单一公司的平台与消费行业新闻入口"
+      ],
+      "ticker": null,
+      "type": "theme"
+    },
+    {
+      "id": "PDD",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "platform_consumer",
+          "sector_name": "大消费与平台"
+        }
+      ],
+      "name": "拼多多",
+      "reason": "Park指定；纳斯达克上市的大消费与平台经济观察对象",
+      "reasons": [
+        "Park指定；纳斯达克上市的大消费与平台经济观察对象"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "00700",
+      "listed": true,
+      "market": "HK",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "platform_consumer",
+          "sector_name": "大消费与平台"
+        }
+      ],
+      "name": "腾讯",
+      "reason": "Park指定；港股平台、消费与AI生态观察对象",
+      "reasons": [
+        "Park指定；港股平台、消费与AI生态观察对象"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "09988",
+      "listed": true,
+      "market": "HK",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "platform_consumer",
+          "sector_name": "大消费与平台"
+        }
+      ],
+      "name": "阿里巴巴",
+      "reason": "Park指定；港股平台、消费与云业务观察对象",
+      "reasons": [
+        "Park指定；港股平台、消费与云业务观察对象"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "geopolitical-crisis",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "geopolitics",
+          "sector_id": "geopolitical_crisis",
+          "sector_name": "地缘冲突"
+        }
+      ],
+      "name": "地缘冲突",
+      "reason": "Park指定；承接不局限于中东或俄乌的地缘事件",
+      "reasons": [
+        "Park指定；承接不局限于中东或俄乌的地缘事件"
+      ],
+      "ticker": null,
+      "type": "macro"
+    },
+    {
+      "id": "commercial-space",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "commercial_space",
+          "sector_name": "商业航天"
+        }
+      ],
+      "name": "商业航天",
+      "reason": "Park指定赛道",
+      "reasons": [
+        "Park指定赛道"
+      ],
+      "ticker": null,
+      "type": "theme"
+    },
+    {
+      "id": "RKLB",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "commercial_space",
+          "sector_name": "商业航天"
+        }
+      ],
+      "name": "Rocket Lab",
+      "reason": "赛道标杆",
+      "reasons": [
+        "赛道标杆"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "ASTS",
+      "listed": true,
+      "market": "US",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "commercial_space",
+          "sector_name": "商业航天"
+        }
+      ],
+      "name": "AST SpaceMobile",
+      "reason": "赛道标杆",
+      "reasons": [
+        "赛道标杆"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "spacex",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "commercial_space",
+          "sector_name": "商业航天"
+        }
+      ],
+      "name": "SpaceX",
+      "reason": "赛道龙头，未上市",
+      "reasons": [
+        "赛道龙头，未上市"
+      ],
+      "ticker": null,
+      "type": "company"
+    },
+    {
+      "id": "中国卫星",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "commercial_space",
+          "sector_name": "商业航天"
+        }
+      ],
+      "name": "中国卫星",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "600118",
+      "type": "company"
+    },
+    {
+      "id": "航天电子",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "commercial_space",
+          "sector_name": "商业航天"
+        }
+      ],
+      "name": "航天电子",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "600879",
+      "type": "company"
+    },
+    {
+      "id": "上海瀚讯",
+      "listed": true,
+      "market": "CN",
+      "memberships": [
+        {
+          "macro_id": "standalone_cycle",
+          "sector_id": "commercial_space",
+          "sector_name": "商业航天"
+        }
+      ],
+      "name": "上海瀚讯",
+      "reason": "A股标杆",
+      "reasons": [
+        "A股标杆"
+      ],
+      "ticker": "300762",
+      "type": "company"
+    },
+    {
+      "id": "pboc",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "china_policy",
+          "sector_id": "cn_policy_liquidity",
+          "sector_name": "政策与流动性"
+        }
+      ],
+      "name": "中国人民银行",
+      "reason": "thesis",
+      "reasons": [
+        "thesis"
+      ],
+      "ticker": null,
+      "type": "macro"
+    },
+    {
+      "id": "cn-fiscal",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "china_policy",
+          "sector_id": "cn_policy_liquidity",
+          "sector_name": "政策与流动性"
+        }
+      ],
+      "name": "财政与专项债",
+      "reason": "thesis",
+      "reasons": [
+        "thesis"
+      ],
+      "ticker": null,
+      "type": "macro"
+    },
+    {
+      "id": "domestic-substitution",
+      "listed": false,
+      "market": null,
+      "memberships": [
+        {
+          "macro_id": "china_policy",
+          "sector_id": "cn_localization",
+          "sector_name": "国产替代"
+        }
+      ],
+      "name": "国产替代",
+      "reason": "thesis",
+      "reasons": [
+        "thesis"
+      ],
+      "ticker": null,
+      "type": "theme"
+    }
+  ],
+  "upstream": {
+    "commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+    "repository": "zinan92/watchlist",
+    "source_sha256": "e43fdea4c50b0d559803f271ef098b2dbcac1aa0631dfde2c5150a601baddb0b",
+    "updated": "2026-09-03",
+    "version": 6
+  }
+}

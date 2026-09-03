@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import json
 from pathlib import Path
@@ -15,20 +15,6 @@ from kline.provenance import source_manifest
 
 
 WATCHLIST_MANIFEST_VERSION = "watchlist_universe_v1"
-WATCHLIST_SYMBOLS = frozenset(
-    {
-        "588180", "588780", "159510", "159516",
-        "300308", "300394", "688027", "002639", "002181", "002342", "601869",
-        "688525", "000547", "002475", "603667", "688017", "688012", "688981",
-        "688836", "688825",
-        "AAPL", "WDC", "TSM", "MRVL", "INTC", "HOOD", "NVDA", "ASML", "AMZN",
-        "SNDK", "GLW", "QCOM", "AMD", "MU", "TSLA", "PLTR", "AMAT", "LRCX",
-        "LLY", "TEM", "VRTX", "000660.KS",
-        "SPX", "NDX", "DXY", "SCHD", "VIX", "BTC", "ETH", "HYPE",
-        "SH000001", "SH000688", "SH000015", "^N225", "^KS11",
-        "CL=F", "GC=F", "SI=F",
-    }
-)
 _SECURITY_TYPES = frozenset(
     {
         "common_stock",
@@ -77,9 +63,10 @@ class WatchlistManifest:
     membership_policy: str
     excluded_symbols: tuple[str, ...]
     instruments: tuple[ManifestInstrument, ...]
+    registry: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "version": self.version,
             "selection_as_of": self.selection_as_of,
             "effective_at": self.effective_at,
@@ -87,6 +74,9 @@ class WatchlistManifest:
             "excluded_symbols": list(self.excluded_symbols),
             "instruments": [item.to_dict() for item in self.instruments],
         }
+        if self.registry:
+            payload["registry"] = dict(self.registry)
+        return payload
 
     def validated_digest(self) -> str:
         return watchlist_manifest_digest(self)
@@ -153,6 +143,8 @@ def _validate_instrument(item: ManifestInstrument, *, index: int) -> None:
         expected = ("etf", "tencent_etf_free")
     elif item.asset_class == AssetClass.US_STOCK.value:
         expected = (("common_stock", "adr", "foreign_common"), "yahoo_finance")
+    elif item.asset_class == AssetClass.HK_STOCK.value:
+        expected = (("common_stock", "foreign_common"), "yahoo_finance_hk")
     else:
         raise ManifestError(f"instrument[{index}] has unsupported asset_class")
     if expected is not None:
@@ -195,17 +187,33 @@ def validate_watchlist_manifest(
         raise ManifestError("Watchlist instrument_id values must be unique")
     if len(provider_keys) != len(set(provider_keys)):
         raise ManifestError("Watchlist provider identities must be unique")
-    if set(symbols) != WATCHLIST_SYMBOLS or len(symbols) != len(WATCHLIST_SYMBOLS):
-        raise ManifestError("Watchlist membership must match the approved 58 symbols")
+    if len(symbols) < 1:
+        raise ManifestError("Watchlist membership must contain at least one instrument")
     excluded = raw.get("excluded_symbols")
     if not isinstance(excluded, list) or "051505" not in excluded:
         raise ManifestError("Watchlist must keep unresolved 051505 explicitly excluded")
     membership_policy = _required_text(raw, "membership_policy")
-    if membership_policy != "wendy_direct_judgment_no_freeze":
-        raise ManifestError("Watchlist membership_policy must remain no-freeze")
+    if membership_policy not in {
+        "wendy_direct_judgment_no_freeze",
+        "park_exposure_registry_pinned",
+    }:
+        raise ManifestError("Watchlist membership_policy is unsupported")
     effective_at = raw.get("effective_at")
     if effective_at is not None and not isinstance(effective_at, str):
         raise ManifestError("watchlist.effective_at must be a string or null")
+    registry = raw.get("registry", {})
+    if not isinstance(registry, Mapping):
+        raise ManifestError("watchlist.registry must be an object")
+    if registry:
+        repository = registry.get("repository")
+        commit = registry.get("commit")
+        source_sha256 = registry.get("source_sha256")
+        if repository != "zinan92/watchlist":
+            raise ManifestError("watchlist.registry.repository is invalid")
+        if not isinstance(commit, str) or len(commit) != 40:
+            raise ManifestError("watchlist.registry.commit must be a 40-character SHA")
+        if not isinstance(source_sha256, str) or len(source_sha256) != 64:
+            raise ManifestError("watchlist.registry.source_sha256 must be SHA-256")
     return WatchlistManifest(
         version=version,
         selection_as_of=_required_text(raw, "selection_as_of"),
@@ -213,6 +221,7 @@ def validate_watchlist_manifest(
         membership_policy=membership_policy,
         excluded_symbols=tuple(str(value) for value in excluded),
         instruments=instruments,
+        registry=dict(registry),
     )
 
 

@@ -392,6 +392,12 @@ cp .env.example .env
 # 编辑 .env 填入 KLINE_TUSHARE_TOKEN（如果确实使用 TuShare）
 # Phase 1 的三个指数 sh000001/sh000688/sh000015 不需要 TuShare token。
 
+# Watchlist registry upgrades are explicit and pinned; scheduled runs use the
+# committed generated artifacts without contacting GitHub.
+# python3 -m ops.sync_watchlist_registry --source watchlist.yaml \
+#   --snapshot-output configs/watchlist_registry.snapshot.json \
+#   --manifest-output configs/watchlist_registry_manifest.json
+
 # 4. 启动服务
 python -m kline
 # 访问 http://localhost:8100/docs 查看交互式 API 文档
