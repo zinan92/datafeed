@@ -197,7 +197,11 @@ class MarketQueryReader:
             ),
             0,
         )
-        if available_rows < max(self.minimum_series_rows, limit):
+        # A caller's requested limit is the truthful lower bound. Provider
+        # history ceilings differ (Tencent can cap at 500; recent HK listings
+        # can have fewer than 600), so a global minimum must not hide a series
+        # that can fully satisfy this specific request.
+        if available_rows < limit:
             return self._miss("insufficient_market_history")
         rows = self.store.query_mvp_candles(
             key,
