@@ -10,7 +10,7 @@
         <string>-m</string>
         <string>ops.watchlist_seed</string>
         <string>--manifest</string>
-        <string>/Users/wendy/datafeed-runtime-watchlist/configs/watchlist_manifest.json</string>
+        <string>/Users/wendy/datafeed-runtime-watchlist/configs/watchlist_registry_manifest.json</string>
         <string>--db</string>
         <string>/Users/wendy/park-data/market/kline.db</string>
         <string>--lock</string>

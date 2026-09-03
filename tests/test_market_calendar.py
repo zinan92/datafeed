@@ -59,6 +59,15 @@ def test_manifest_cells_resolve_to_matching_calendar_specs() -> None:
         assert spec.timezone == instrument.timezone
 
 
+def test_hong_kong_calendar_uses_hong_kong_sessions() -> None:
+    spec = calendar_spec("hk_equities")
+    assert spec.timezone == "Asia/Hong_Kong"
+    assert [(window.open_time.isoformat(), window.close_time.isoformat()) for window in spec.sessions] == [
+        ("09:30:00", "12:00:00"),
+        ("13:00:00", "16:00:00"),
+    ]
+
+
 def test_cn_a_4h_joins_morning_and_afternoon_without_lunch_bars() -> None:
     key = _key(instrument_id="CN.A.300308", display_symbol="300308")
     session_date = date(2026, 8, 31)

@@ -20,6 +20,7 @@ from ops.watchlist_seed import (
 
 
 MANIFEST_PATH = Path(__file__).parents[1] / "configs" / "watchlist_manifest.json"
+REGISTRY_MANIFEST_PATH = Path(__file__).parents[1] / "configs" / "watchlist_registry_manifest.json"
 
 
 class _DailyAdapter:
@@ -139,6 +140,29 @@ async def test_watchlist_runner_persists_all_daily_members_without_screening_pro
     }
     assert {row["manifest_version"] for row in persisted} == {manifest.version}
     assert {row["timeframe"] for row in persisted} == {"1d"}
+
+
+@pytest.mark.asyncio
+async def test_watchlist_runner_persists_all_107_registry_members(tmp_path: Path) -> None:
+    manifest = load_watchlist_manifest(REGISTRY_MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "watchlist-107.db"))
+
+    report = await execute_watchlist_batches(
+        manifest=manifest,
+        store=store,
+        lock_path=tmp_path / "watchlist-107.lock",
+        adapter_resolver=lambda _instrument: _DailyAdapter(),
+        now=datetime(2026, 9, 4, 12, tzinfo=timezone.utc),
+        batch_size=10,
+        request_interval_seconds=0,
+    )
+
+    assert report["status"] == "success"
+    assert report["instrument_count"] == 107
+    assert report["persisted_instrument_count"] == 107
+    assert report["remaining_after"] == []
+    assert report["batch_count"] == 11
+    assert len(store.mvp_latest_closed_bars()) == 107
 
 
 @pytest.mark.asyncio

@@ -127,6 +127,17 @@ _CALENDARS = {
         four_hour_rule="kr_regular_fixed_4h_v1",
         four_hour_anchor=time(9, 0),
     ),
+    "hk_equities": CalendarSpec(
+        calendar_id="hk_equities",
+        timezone="Asia/Hong_Kong",
+        sessions=(
+            SessionWindow(time(9, 30), time(12, 0)),
+            SessionWindow(time(13, 0), time(16, 0)),
+        ),
+        continuous=False,
+        four_hour_rule="hk_regular_fixed_4h_v1",
+        four_hour_anchor=time(9, 30),
+    ),
 }
 
 
