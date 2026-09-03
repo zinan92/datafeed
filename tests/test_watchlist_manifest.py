@@ -34,7 +34,7 @@ def test_watchlist_manifest_contains_all_sixteen_cross_market_bindings() -> None
     expected = {
         "SPX": ("yahoo_finance_etf", "SPY", "proxy"),
         "NDX": ("yahoo_finance_etf", "QQQ", "proxy"),
-        "DXY": ("yahoo_finance_etf", "UUP", "DXY"),
+        "DXY": ("yahoo_finance_etf", "UUP", "proxy"),
         "SCHD": ("yahoo_finance_etf", "SCHD", None),
         "VIX": ("yahoo_finance_index", "^VIX", None),
         "BTC": ("hyperliquid_perpetual_public", "BTC", None),
@@ -59,10 +59,33 @@ def test_watchlist_manifest_contains_all_sixteen_cross_market_bindings() -> None
         assert item.asset_class in {"index", "etf", "crypto", "commodity"}
         if identity_role is None:
             assert "identity_role" not in item.metadata
-        elif symbol == "DXY":
-            assert item.metadata["proxy_for"] == "DXY"
         else:
             assert item.metadata["identity_role"] == identity_role
+            assert item.metadata["proxy_for"]
+
+
+def test_watchlist_proxy_metadata_is_uniform_and_excludes_real_indices() -> None:
+    manifest = load_watchlist_manifest(MANIFEST_PATH)
+    proxies = {
+        item.display_symbol: item
+        for item in manifest.instruments
+        if item.metadata.get("proxy_for")
+    }
+
+    assert set(proxies) == {"SPX", "NDX", "DXY"}
+    assert {
+        symbol: (item.provider_symbol, item.metadata["identity_role"], item.metadata["proxy_for"])
+        for symbol, item in proxies.items()
+    } == {
+        "SPX": ("SPY", "proxy", "S&P 500 Index"),
+        "NDX": ("QQQ", "proxy", "Nasdaq-100 Index"),
+        "DXY": ("UUP", "proxy", "DXY"),
+    }
+    assert all(item.provider_symbol != item.display_symbol for item in proxies.values())
+    vix = next(item for item in manifest.instruments if item.display_symbol == "VIX")
+    assert vix.provider_symbol == "^VIX"
+    assert "identity_role" not in vix.metadata
+    assert "proxy_for" not in vix.metadata
 
 
 def test_tencent_kline_allowlist_remains_three_indices() -> None:

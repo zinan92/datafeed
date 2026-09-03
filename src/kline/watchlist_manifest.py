@@ -62,6 +62,11 @@ _CROSS_MARKET_EXPECTATIONS: dict[str, tuple[str, str, str, str]] = {
     "GC=F": ("commodity", "continuous_future", "yahoo_finance_futures", "GC=F"),
     "SI=F": ("commodity", "continuous_future", "yahoo_finance_futures", "SI=F"),
 }
+_PROXY_TARGETS = {
+    "SPX": "S&P 500 Index",
+    "NDX": "Nasdaq-100 Index",
+    "DXY": "DXY",
+}
 
 
 @dataclass(frozen=True)
@@ -129,19 +134,14 @@ def _validate_instrument(item: ManifestInstrument, *, index: int) -> None:
             raise ManifestError(
                 f"instrument[{index}] cross-market source/provider identity is invalid"
             )
-        if item.display_symbol in {"SPX", "NDX"}:
-            if item.metadata.get("identity_role") != "proxy":
+        if item.display_symbol in _PROXY_TARGETS:
+            expected_proxy_for = _PROXY_TARGETS[item.display_symbol]
+            if (
+                item.metadata.get("identity_role") != "proxy"
+                or item.metadata.get("proxy_for") != expected_proxy_for
+            ):
                 raise ManifestError(
-                    f"instrument[{index}] {item.display_symbol} must declare proxy identity"
-                )
-            if not item.metadata.get("proxy_for"):
-                raise ManifestError(
-                    f"instrument[{index}] {item.display_symbol} must declare proxy_for"
-                )
-        elif item.display_symbol == "DXY":
-            if item.metadata.get("proxy_for") != "DXY" or "identity_role" in item.metadata:
-                raise ManifestError(
-                    f"instrument[{index}] DXY must declare proxy_for without identity_role"
+                    f"instrument[{index}] {item.display_symbol} must declare uniform proxy metadata"
                 )
         elif "identity_role" in item.metadata or "proxy_for" in item.metadata:
             raise ManifestError(
