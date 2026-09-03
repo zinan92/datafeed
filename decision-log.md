@@ -378,3 +378,12 @@ consumers can use without direct exchange or private SQLite access.
 - A real API read left both database SHA-256 hashes unchanged. Resident 8100 and both #115 services
   retained their original PID, build, and runtime. See
   `docs/verification/combined-health-dashboard-2026-09-03.md`.
+
+## 2026-09-03 - Normalize proxy identity metadata
+
+- #132 makes proxy discovery uniform across the Watchlist: SPX/SPY, NDX/QQQ, and DXY/UUP all
+  declare `metadata.identity_role=proxy` together with the exact `proxy_for` target.
+- VIX remains a real `^VIX` index identity and is explicitly kept out of the proxy set.
+- The validator now enforces the complete proxy metadata pair and exact target names. Existing
+  candle rows are not rewritten; source IDs, provider symbols, routes, and runner behavior do not
+  change.
