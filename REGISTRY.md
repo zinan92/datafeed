@@ -19,6 +19,7 @@
 - #126 已将 #49 的 16 个非国债跨市场资产追加到 Watchlist manifest，Watchlist 现为 58 个日线成员；SPX/NDX 使用显式 SPY/QQQ proxy、DXY 使用 UUP、VIX 使用 `^VIX`，其余沿用已审定 source mapping。真实运行已将 58/58 写入 Market Data Database，限流/403/5xx/timeout 均为 0；证据见 `docs/verification/watchlist-cross-market-ingestion-2026-09-03.md`。
 - #128 已上线独立双库只读健康面板：`http://127.0.0.1:18172/health-ui?view=combined&dataset=watchlist`。Watchlist 视图真实显示 58 个资产/290 个 cell、日线 58/58 有技术数据、跨市场 16/16；Screening/Market Data 两库使用 `mode=ro + query_only`，请求前后 SHA-256 不变。18171/#115 与 resident 8100 未重启或改配置；证据见 `docs/verification/combined-health-dashboard-2026-09-03.md`。
 - #132 已统一 Watchlist proxy metadata：SPX/SPY、NDX/QQQ、DXY/UUP 均使用 `identity_role=proxy + proxy_for`；VIX/^VIX 保持真实指数身份。只改 manifest/validator/test，不改历史 K 线、source 路由、provider 或 runner。
+- #133 已新增 `ready_unverified`，把“数据/质量/水位正常但免费源商业授权未认证”与真实 `partial/stale/failed/blocked` 分开。该状态计入数据健康覆盖但不冒充已认证 ready；真实质量闸和错误强度未放松。
 
 ## 下一步
 - #69 中文 3+3 Health Matrix、#70 全量 216×5 矩阵和交互、#71 可靠性 runner、#81 免费 source 路由、#83 混合状态文案、#85 剩余 97+97 批处理器、#87 美股粗粒度源调整、#89 分阶段恢复、#91 Yahoo 点号 ticker 兼容、#93 空响应终止重试、#95 fallback 404 终止重试、#97 水位倒退保护、#99 provider 硬超时、#101 免费源 HTTP 超时上限、#103 Yahoo 历史请求线程化、#105 Yahoo 修复请求线程化、#107 Yahoo ISO intraday 窗口兼容、#111 Yahoo 美股全时间级别主源已合并；真实全量股票 seed 首轮已完成，Yahoo-only 首轮已验证 100 只美股五级别，DHR 两个粗粒度格按 fail-closed 记录，A 股开盘 forming-bar partial 按规则记录，601989 仍是已知缺口；全量常驻 worker 已切换为 100+100、4 小时刷新并保持 running。美股五级别统一 Yahoo，A 股继续 Tencent→Tonghuashun；日/周优先、日内失败降级、请求间隔/重试退避、P95/限流统计、水位不倒退、provider 超时和同步请求可取消已锁定。#71 七天验收仍开放且 blocked，#54 真实 30-day database acceptance 仍未开始。
@@ -26,4 +27,4 @@
 - 保持 canonical envelope 向后兼容并持续验证 Binance execution-venue 新鲜度；若走 API 外卖路线,先立商业化合同(对外发布风险轴归 Park)。
 - 完成 #115 的 24 小时调度锚点/开盘缓冲真实验收后，再按已批准顺序实施 #116；#118 不切换当前 #115 observer build，也不启动 #71 正式计时。
 - Watchlist 数据和独立双库健康面板已上线；下一步是重新设计消费者切换 spec，先纠正 ADR 0004 的“只换 db_path”错误假设，再做 Newsletter/Human Review 的逐字节切换验收。未经新 issue 批准不实施切换。
-- Dev Queue 下一项为 #133：在不放松质量闸的前提下，把“免费源 entitlement 未认证”与真实 stale/failed/blocked 问题分开展示；完成后才进入 #134 消费者切换。
+- Dev Queue 下一项为 #134：先枚举 Newsletter 与 Human Review 的真实运行时请求集并回帖 issue，再实施 8100 双源消费者切换、逐字节验收和切换→回滚→再验证演练。

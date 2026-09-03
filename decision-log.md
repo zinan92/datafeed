@@ -387,3 +387,15 @@ consumers can use without direct exchange or private SQLite access.
 - The validator now enforces the complete proxy metadata pair and exact target names. Existing
   candle rows are not rewritten; source IDs, provider symbols, routes, and runner behavior do not
   change.
+
+## 2026-09-03 - Separate healthy unverified data from real degradation
+
+- #133 introduces `ready_unverified` for cells whose candle, quality receipt, freshness, and
+  watermark are healthy while the public/free source lacks a separate commercial entitlement
+  receipt. The API keeps `status_reason=entitlement_unverified` and does not claim certified ready.
+- `ready_unverified` counts as data-healthy for aggregate readiness and coverage, while
+  `quality_partial`, `watermark_missing`, `transform_receipt_missing`, stale, failed, blocked, and
+  unavailable keep their existing severity and continue to degrade the overall status.
+- The Chinese UI gives `ready_unverified` its own filter, label, and visual treatment. A fully
+  healthy Watchlist can show `数据正常（授权未认证）`; mixed real problems remain partial/failed.
+- No provider, entitlement mechanism, Screening manifest/runner, or quality-gate ordering changes.

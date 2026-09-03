@@ -14,7 +14,15 @@ from kline.time_utils import parse_utc_timestamp
 
 
 MATRIX_TIMEFRAMES = ("15m", "1h", "4h", "1d", "1w")
-MATRIX_STATUSES = ("ready", "partial", "stale", "failed", "blocked", "unavailable")
+MATRIX_STATUSES = (
+    "ready",
+    "ready_unverified",
+    "partial",
+    "stale",
+    "failed",
+    "blocked",
+    "unavailable",
+)
 MATRIX_SCOPE_DEMO = "demo_3x3"
 MATRIX_SCOPE_FULL = "full_216"
 MATRIX_SCOPE_WATCHLIST = "watchlist_58"
@@ -61,7 +69,12 @@ def _status_counts(cells: Sequence[Mapping[str, Any]]) -> dict[str, dict[str, An
                 if cell.get("technical_status") == "ready":
                     states["technical_ready"] += 1
         states["ratio"] = (
-            round(states["ready"] / states["applicable"], 4) if states["applicable"] else None
+            round(
+                (states["ready"] + states["ready_unverified"]) / states["applicable"],
+                4,
+            )
+            if states["applicable"]
+            else None
         )
         coverage[timeframe] = states
     return coverage
@@ -655,7 +668,7 @@ def build_mvp_health_matrix(
                 and entitlement is None
                 and instrument.source_id in free_source_ids
             ):
-                status, reason = "partial", "entitlement_unverified"
+                status, reason = "ready_unverified", "entitlement_unverified"
             cells.append(
                 _cell(
                     instrument,
