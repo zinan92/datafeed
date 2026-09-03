@@ -217,6 +217,68 @@ async def test_run_once_uses_watermark_overlap_and_is_idempotent(tmp_path: Path)
 
 
 @pytest.mark.asyncio
+async def test_explicit_history_backfill_bypasses_existing_watermark(tmp_path: Path) -> None:
+    manifest = load_manifest(MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "history-backfill.db"))
+
+    class RecordingAdapter(FakeCryptoAdapter):
+        def __init__(self) -> None:
+            self.starts: list[str | None] = []
+
+        async def fetch_candles_with_receipt(self, ticker, timeframe, *, start, end, limit):
+            self.starts.append(start)
+            return await super().fetch_candles_with_receipt(
+                ticker,
+                timeframe,
+                start=start,
+                end=end,
+                limit=limit,
+            )
+
+    adapter = RecordingAdapter()
+    orchestrator = IngestionOrchestrator(store, adapter_resolver=lambda _instrument: adapter)
+    await orchestrator.run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="watermark-first",
+            now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+            instrument_ids=("CRYPTO.PERP.BTC",),
+            timeframes=("1d",),
+        )
+    )
+    await orchestrator.run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="forced-history-backfill",
+            now=datetime(2026, 9, 2, 12, tzinfo=timezone.utc),
+            history_start="2021-01-01T00:00:00+00:00",
+            force_history_start=True,
+            instrument_ids=("CRYPTO.PERP.BTC",),
+            timeframes=("1d",),
+        )
+    )
+
+    assert adapter.starts[-1] == "2021-01-01T00:00:00+00:00"
+
+
+@pytest.mark.asyncio
+async def test_explicit_history_backfill_requires_history_start(tmp_path: Path) -> None:
+    manifest = load_manifest(MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "history-backfill-missing-start.db"))
+
+    with pytest.raises(IngestionError, match="requires history_start"):
+        await IngestionOrchestrator(store).run_once(
+            IngestionPlan(
+                manifest=manifest,
+                run_id="forced-history-backfill-missing-start",
+                force_history_start=True,
+                instrument_ids=("CRYPTO.PERP.BTC",),
+                timeframes=("1d",),
+            )
+        )
+
+
+@pytest.mark.asyncio
 async def test_run_once_atomic_failure_leaves_rerun_point(tmp_path: Path) -> None:
     manifest = load_manifest(MANIFEST_PATH)
     store = KlineStore(str(tmp_path / "failure.db"))

@@ -399,3 +399,25 @@ consumers can use without direct exchange or private SQLite access.
 - The Chinese UI gives `ready_unverified` its own filter, label, and visual treatment. A fully
   healthy Watchlist can show `数据正常（授权未认证）`; mixed real problems remain partial/failed.
 - No provider, entitlement mechanism, Screening manifest/runner, or quality-gate ordering changes.
+
+## 2026-09-03 - Serve Watchlist consumers through an identity-aware dual-store query layer
+
+- #134 corrects ADR 0004's disproved “change only `db_path`” assumption. The resident service keeps
+  the legacy `klines` database and adds a read-only `mvp_candles` adapter behind
+  `KLINE_QUERY_BACKEND=market_first`; the public 8100 request and response contract remains stable.
+- The exact runtime denominator is 69 logical requests: Newsletter 28 after owner-excluded Treasury,
+  Human Review 34 primary and seven conditional 1h fallbacks. Only Watchlist daily identities may
+  resolve to the Market Data Database; Screening is not queried by the adapter.
+- Ten eligible daily histories were explicitly backfilled from 2021 with the canonical Watchlist
+  lock. Both real runs passed 10/10 quality cells and promoted 14,603 candles with no blocked cells.
+- Fail-closed routing keeps intraday, two dated micro contracts, insufficient history,
+  `volume_semantics=not_applicable`, and UUP's intermittently missing 2026-08-28 history on the
+  visible legacy path. No candle or volume is synthesized.
+- The switched Market Data Database set was byte-identical 15/15 in the final same-build lockstep
+  replay. Literal 69/69 live bytes are not a valid oracle for the remaining upstream routes: eight
+  adjacent Yahoo/Tencent calls returned different provider data despite identical build, URL,
+  cutoff and policy. This limitation is preserved in the verification record rather than reported
+  as a pass.
+- The real rollback drill used `bootout → bootstrap`: candidate → byte-identical legacy plist →
+  candidate. A real Newsletter source bundle was 31/31 ready (9 market / 22 legacy); Human Review
+  returned 16 assets with six Market Data Database and 28 legacy primary identities.

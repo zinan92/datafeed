@@ -22,6 +22,12 @@ from kline.models import (
     InstrumentDefinition,
 )
 from kline.combined_health import build_combined_health_matrix
+from kline.market_query import (
+    MarketQueryReader,
+    MarketQueryResult,
+    get_market_query_reader,
+    query_backend_status,
+)
 from kline.free_source_profile import apply_free_source_profile
 from kline.health_matrix import (
     MATRIX_SCOPE_DEMO,
@@ -420,6 +426,10 @@ def _block_if_quality_rejected(
     meta: ProviderMeta,
     policy: RequestPolicy,
     served_from: str,
+    timeframe: Timeframe | None = None,
+    timeframe_transform: TimeframeTransform | Mapping[str, Any] | None = None,
+    source_identity: Mapping[str, Any] | None = None,
+    provider_symbol: str | None = None,
 ) -> None:
     if report.reject_reason:
         raise _error(
@@ -430,7 +440,128 @@ def _block_if_quality_rejected(
             served_from=served_from,
             policy=policy,
             report=report,
+            timeframe=timeframe,
+            timeframe_transform=timeframe_transform,
+            source_identity=source_identity,
+            provider_symbol=provider_symbol,
         )
+
+
+def _market_database_response(
+    result: MarketQueryResult,
+    *,
+    requested_ticker: str,
+    asset_class: AssetClass,
+    timeframe: Timeframe,
+    meta: ProviderMeta,
+    policy: RequestPolicy,
+) -> CandleResponse:
+    candles = list(result.candles)
+    report = analyze_candles(candles, timeframe, meta, strict=policy.strict_quality)
+    if report.reject_reason:
+        source_identity = {
+            **dict(result.source_identity or {}),
+            "requested_ticker": requested_ticker,
+        }
+        raise _error(
+            status_code=503,
+            error="data_blocked",
+            detail="All explicitly selected sources failed quality checks",
+            meta=meta,
+            served_from="upstream",
+            policy=policy,
+            report=report,
+            reject_reason=report.reject_reason,
+            access_issues=[f"{policy.source}: {report.reject_reason}"],
+            attempted_sources=[policy.source],
+            timeframe=timeframe,
+            timeframe_transform=result.timeframe_transform,
+            source_identity=source_identity,
+            selected_source=policy.source,
+            provider_symbol=result.provider_symbol or requested_ticker,
+        )
+    return _build_response(
+        result.provider_symbol or requested_ticker,
+        asset_class,
+        timeframe,
+        candles,
+        meta,
+        # Keep the established consumer contract. The more precise storage
+        # origin is explicit inside source_identity.query_served_from.
+        served_from="upstream",
+        policy=policy,
+        selected_source=policy.source,
+        attempted_sources=[policy.source],
+        instrument_id=result.instrument_id,
+        timeframe_transform=result.timeframe_transform,
+        source_identity={
+            **dict(result.source_identity or {}),
+            "requested_ticker": requested_ticker,
+        },
+    )
+
+
+def _annotate_legacy_response(
+    response: CandleResponse,
+    *,
+    reader: MarketQueryReader,
+    miss: MarketQueryResult,
+    requested_ticker: str,
+    asset_class: AssetClass,
+    timeframe: Timeframe,
+) -> CandleResponse:
+    query_served_from = (
+        "legacy_cache" if response.served_from == "cache" else "legacy_upstream"
+    )
+    miss_reason = miss.miss_reason or "market_data_unavailable"
+    reader.record_legacy_fallback(
+        asset_class=asset_class,
+        ticker=requested_ticker,
+        timeframe=timeframe,
+        miss_reason=miss_reason,
+    )
+    return response.model_copy(
+        update={
+            "source_identity": {
+                **dict(response.source_identity),
+                "served_from": query_served_from,
+                "query_served_from": query_served_from,
+                "market_data_miss_reason": miss_reason,
+            }
+        }
+    )
+
+
+def _annotate_legacy_error(
+    error: HTTPException,
+    *,
+    reader: MarketQueryReader,
+    miss: MarketQueryResult,
+    requested_ticker: str,
+    asset_class: AssetClass,
+    timeframe: Timeframe,
+) -> HTTPException:
+    detail = dict(error.detail) if isinstance(error.detail, Mapping) else {"detail": error.detail}
+    top_level_origin = str(detail.get("served_from") or "upstream")
+    query_served_from = (
+        "legacy_cache" if top_level_origin == "cache" else "legacy_upstream"
+    )
+    miss_reason = miss.miss_reason or "market_data_unavailable"
+    reader.record_legacy_fallback(
+        asset_class=asset_class,
+        ticker=requested_ticker,
+        timeframe=timeframe,
+        miss_reason=miss_reason,
+    )
+    identity = detail.get("source_identity")
+    detail["source_identity"] = {
+        **(dict(identity) if isinstance(identity, Mapping) else {}),
+        "served_from": query_served_from,
+        "query_served_from": query_served_from,
+        "market_data_miss_reason": miss_reason,
+    }
+    error.detail = detail
+    return error
 
 
 async def _fetch_upstream_candles(
@@ -774,6 +905,43 @@ async def get_candles(
             access_issues=[f"unsupported symbol/timeframe: {ticker}/{timeframe.value}"],
         )
 
+    try:
+        market_reader = get_market_query_reader()
+    except RuntimeError as error:
+        raise _error(
+            status_code=503,
+            error="market_query_unavailable",
+            detail="Market Data Database query backend is not configured",
+            meta=meta,
+            served_from="market_data_database",
+            policy=policy,
+            timeframe=timeframe,
+            provider_symbol=ticker,
+            reject_reason="market_query_configuration_missing",
+            access_issues=[type(error).__name__],
+        ) from error
+    market_miss: MarketQueryResult | None = None
+    if market_reader is not None and not policy.require_execution_venue:
+        market_result = market_reader.read(
+            asset_class=asset_class,
+            ticker=requested_ticker,
+            timeframe=timeframe,
+            requested_source="auto" if policy.requested_source == "auto" else policy.source,
+            limit=limit,
+            start=start,
+            end=end,
+        )
+        if market_result.hit:
+            return _market_database_response(
+                market_result,
+                requested_ticker=requested_ticker,
+                asset_class=asset_class,
+                timeframe=timeframe,
+                meta=meta,
+                policy=policy,
+            )
+        market_miss = market_result
+
     store = get_store()
 
     if policy.cache_policy in (CachePolicy.ALLOW, CachePolicy.REQUIRE):
@@ -788,14 +956,26 @@ async def get_candles(
         )
         if cached:
             report = analyze_candles(cached, timeframe, meta, strict=policy.strict_quality)
-            _block_if_quality_rejected(
-                report=report,
-                meta=meta,
-                policy=policy,
-                served_from="cache",
-            )
+            try:
+                _block_if_quality_rejected(
+                    report=report,
+                    meta=meta,
+                    policy=policy,
+                    served_from="cache",
+                )
+            except HTTPException as error:
+                if market_reader is not None and market_miss is not None:
+                    raise _annotate_legacy_error(
+                        error,
+                        reader=market_reader,
+                        miss=market_miss,
+                        requested_ticker=requested_ticker,
+                        asset_class=asset_class,
+                        timeframe=timeframe,
+                    ) from error
+                raise
             if timeframe in (Timeframe.DAY, Timeframe.HOUR_4, Timeframe.WEEK):
-                raise _error(
+                error = _error(
                     status_code=503,
                     error="data_blocked",
                     detail="Cached timeframe transformation metadata is unavailable",
@@ -810,7 +990,17 @@ async def get_candles(
                     reject_reason="timeframe_transform_missing",
                     access_issues=["legacy cache row has no timeframe transformation receipt"],
                 )
-            return _build_response(
+                if market_reader is not None and market_miss is not None:
+                    raise _annotate_legacy_error(
+                        error,
+                        reader=market_reader,
+                        miss=market_miss,
+                        requested_ticker=requested_ticker,
+                        asset_class=asset_class,
+                        timeframe=timeframe,
+                    )
+                raise error
+            response = _build_response(
                 ticker,
                 asset_class,
                 timeframe,
@@ -822,8 +1012,20 @@ async def get_candles(
                     policy.source, asset_class
                 ).canonical_instrument_id(requested_ticker),
             )
+            return (
+                _annotate_legacy_response(
+                    response,
+                    reader=market_reader,
+                    miss=market_miss,
+                    requested_ticker=requested_ticker,
+                    asset_class=asset_class,
+                    timeframe=timeframe,
+                )
+                if market_reader is not None and market_miss is not None
+                else response
+            )
         if policy.cache_policy == CachePolicy.REQUIRE:
-            raise _error(
+            error = _error(
                 status_code=404,
                 error="cache_miss",
                 detail="cache_policy=require but no cached candles were found",
@@ -838,16 +1040,50 @@ async def get_candles(
                 attempted_sources=[policy.source],
                 provider_symbol=ticker,
             )
+            if market_reader is not None and market_miss is not None:
+                raise _annotate_legacy_error(
+                    error,
+                    reader=market_reader,
+                    miss=market_miss,
+                    requested_ticker=requested_ticker,
+                    asset_class=asset_class,
+                    timeframe=timeframe,
+                )
+            raise error
 
-    return await _fetch_upstream_candles(
-        asset_class=asset_class,
-        timeframe=timeframe,
-        start=start,
-        end=end,
-        limit=limit,
-        meta=meta,
-        policy=policy,
-        ticker=requested_ticker,
+    try:
+        response = await _fetch_upstream_candles(
+            asset_class=asset_class,
+            timeframe=timeframe,
+            start=start,
+            end=end,
+            limit=limit,
+            meta=meta,
+            policy=policy,
+            ticker=requested_ticker,
+        )
+    except HTTPException as error:
+        if market_reader is not None and market_miss is not None:
+            raise _annotate_legacy_error(
+                error,
+                reader=market_reader,
+                miss=market_miss,
+                requested_ticker=requested_ticker,
+                asset_class=asset_class,
+                timeframe=timeframe,
+            ) from error
+        raise
+    return (
+        _annotate_legacy_response(
+            response,
+            reader=market_reader,
+            miss=market_miss,
+            requested_ticker=requested_ticker,
+            asset_class=asset_class,
+            timeframe=timeframe,
+        )
+        if market_reader is not None and market_miss is not None
+        else response
     )
 
 
@@ -1121,6 +1357,7 @@ async def health() -> dict:
         "storage": get_store().storage_health(),
         "storage_coverage": coverage,
         "latest_observations": get_store().latest_source_observations(),
+        "query_backend": query_backend_status(),
     }
 
 
