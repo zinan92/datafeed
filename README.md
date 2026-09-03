@@ -413,6 +413,13 @@ Operator 面板：`/health-ui` 保留 Screening 观察；`/health-ui?view=combin
 Screening + Watchlist，并可按数据集筛选。合并视图需要同时配置
 `KLINE_DB_PATH` 与 `KLINE_MARKET_DB_PATH`，且应启用 `KLINE_READ_ONLY=true`。
 
+8100 消费者切换使用独立的 identity-aware 查询层，而不是把旧 `klines` 数据库路径
+直接替换成 `mvp_candles` 数据库。`KLINE_QUERY_BACKEND=market_first` 时，Watchlist
+中已验证且覆盖足够历史窗口的日线先从 `KLINE_MARKET_DB_PATH` 只读获取；未持久化的
+日内周期、成交量语义不兼容或未通过窗口验证的 cell 明确走现有 legacy/upstream
+路径。`source_identity.served_from` 与 `query_served_from` 会标出真实查询后端，
+`/api/health.query_backend` 汇总命中、回退和原因。默认 `legacy` 模式保持原行为。
+
 ### 参数
 
 | 参数 | 类型 | 默认值 | 说明 |
@@ -508,7 +515,9 @@ kline/
 |------|------|------|--------|
 | `KLINE_TUSHARE_TOKEN` | TuShare Pro token（非 Phase 1 A-share equity 可选） | 否 | — |
 | `KLINE_DB_PATH` | SQLite 数据库路径 | 否 | `data/kline.db` |
-| `KLINE_MARKET_DB_PATH` | Combined Health 使用的 Market Data Database 路径 | 仅合并面板 | — |
+| `KLINE_MARKET_DB_PATH` | Combined Health 或 `market_first` 使用的 Market Data Database 路径 | 按模式 | — |
+| `KLINE_QUERY_BACKEND` | 8100 查询后端模式：`legacy` / `market_first` | 否 | `legacy` |
+| `KLINE_MARKET_MIN_ROWS` | 新库序列允许服务前的最少历史行数；请求 limit 更大时以 limit 为准 | 否 | `600` |
 | `KLINE_READ_ONLY` | 使用 SQLite `mode=ro` + `query_only`，禁止建表、迁移和数据写入；SQLite 仍可能维护只读锁所需的 `-shm`/空 `-wal` sidecar | 否 | `false` |
 | `KLINE_PORT` | 服务端口 | 否 | `8100` |
 | `KLINE_REQUEST_TIMEOUT` | 上游请求超时 (秒) | 否 | `30` |

@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     # Database
     db_path: str = "data/kline.db"
     read_only: bool = False
+    market_db_path: str = ""
+    query_backend: str = "legacy"
+    market_min_rows: int = 600
 
     # Server
     port: int = 8100

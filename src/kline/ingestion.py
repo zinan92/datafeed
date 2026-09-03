@@ -53,6 +53,7 @@ class IngestionPlan:
     run_id: str
     now: datetime | None = None
     history_start: str | None = None
+    force_history_start: bool = False
     overlap_bars: int = 2
     fetch_limit: int = 500
     max_retries: int = 2
@@ -430,6 +431,8 @@ class IngestionOrchestrator:
             raise IngestionError("request_interval_seconds must be non-negative")
         if plan.provider_timeout_seconds <= 0:
             raise IngestionError("provider_timeout_seconds must be positive")
+        if plan.force_history_start and not plan.history_start:
+            raise IngestionError("force_history_start requires history_start")
         selected_ids = set(plan.instrument_ids) if plan.instrument_ids is not None else None
         if selected_ids is not None:
             known_ids = {instrument.instrument_id for instrument in manifest.instruments}
@@ -558,8 +561,14 @@ class IngestionOrchestrator:
                     quality_counts["fail"] += 1
                     continue
                 key = self._key(instrument, timeframe, manifest)
-                request_start = self._overlap_start(
-                    key, history_start=plan.history_start, overlap_bars=plan.overlap_bars
+                request_start = (
+                    plan.history_start
+                    if plan.force_history_start
+                    else self._overlap_start(
+                        key,
+                        history_start=plan.history_start,
+                        overlap_bars=plan.overlap_bars,
+                    )
                 )
                 adapter = self._adapter_resolver(instrument)
                 request_count += 1
