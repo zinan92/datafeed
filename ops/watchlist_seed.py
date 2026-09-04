@@ -15,6 +15,7 @@ from kline.ingestion import IngestionOrchestrator, IngestionPlan, IngestionRunRe
 from kline.mvp_worker import _SingleRunLock
 from kline.ports import MarketDataPort
 from kline.registry import init
+from kline.session_freshness import assess_daily_freshness
 from kline.store import KlineStore
 from kline.watchlist_manifest import (
     WatchlistManifest,
@@ -189,25 +190,59 @@ async def execute_watchlist_batches(
     remaining = [
         item_id for item_id in selected_ids if item_id not in persisted
     ]
-    current_failed = [
-        item_id
-        for item_id in selected_ids
-        if current_cells.get(item_id) is None or current_cells[item_id].status != "ready"
-    ]
-    statuses = {
-        item_id: {
-            "status": current_cells[item_id].status if item_id in current_cells
-            else "missing_receipt",
-            "reason": (
-                current_cells[item_id].error or current_cells[item_id].status
-            ) if item_id in current_cells and current_cells[item_id].status != "ready"
-            else None,
+    latest_by_id = {
+        str(row["instrument_id"]): row
+        for row in store.mvp_latest_closed_bars()
+        if row.get("manifest_version") == manifest.version
+        and row.get("timeframe") == "1d"
+        and row.get("instrument_id") in selected_set
+    }
+    instruments_by_id = {item.instrument_id: item for item in manifest.instruments}
+    evaluation_now = now or datetime.now(timezone.utc)
+    statuses: dict[str, dict[str, Any]] = {}
+    for item_id in selected_ids:
+        cell = current_cells.get(item_id)
+        status = cell.status if cell is not None else "missing_receipt"
+        reason = (
+            cell.error or cell.status
+            if cell is not None and cell.status != "ready"
+            else None
+        )
+        details: dict[str, Any] = {
+            "status": status,
+            "reason": reason,
             "available_in_store": item_id in persisted,
         }
-        for item_id in selected_ids
-    }
+        latest = latest_by_id.get(item_id)
+        declared = assess_daily_freshness(
+            instruments_by_id[item_id],
+            str(latest.get("latest_timestamp")) if latest is not None else None,
+            now=evaluation_now,
+        )
+        if declared.convention is not None:
+            details.update(
+                {
+                    "daily_timestamp_convention": declared.convention,
+                    "observed_session": declared.observed_session.isoformat()
+                    if declared.observed_session is not None
+                    else None,
+                    "expected_session": declared.expected_session.isoformat()
+                    if declared.expected_session is not None
+                    else None,
+                }
+            )
+        if status == "ready" and declared.stale is True:
+            details["status"] = "stale"
+            details["reason"] = "latest_closed_session_missing"
+        statuses[item_id] = details
+    current_failed = [
+        item_id for item_id in selected_ids if statuses[item_id]["status"] != "ready"
+    ]
+    instrument_status_counts = Counter(
+        details["status"] for details in statuses.values()
+    )
     return {
-        "observed_at": (now or datetime.now(timezone.utc)).isoformat(),
+        "observed_at": evaluation_now.isoformat(),
         "status": "success" if not current_failed else "partial",
         "manifest_version": manifest.version,
         "manifest_hash": manifest_hash,
@@ -215,6 +250,7 @@ async def execute_watchlist_batches(
         "persisted_instrument_count": len(persisted),
         "remaining_after": remaining,
         "current_failed": current_failed,
+        "instrument_status_counts": dict(instrument_status_counts),
         "timeframes": ["1d"],
         "batch_count": len(reports),
         "batch_status_counts": dict(status_counts),

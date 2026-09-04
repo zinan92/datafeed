@@ -35,3 +35,4 @@
 - 当前 Watchlist registry 主线（#139→#142）已完成：107 项名单、HK source、日线持久化、健康面板和 8100 双源运行均已落地；后续增量应以新的 registry pin/独立 issue 推进，不扩大本里程碑。
 - Sonnet review 后的 #147 hardening 已补上 HK provider 并发状态回归和 HK/KR 健康分组断言；KR 保留 `us_stock` API 兼容身份，面板以 `WATCH.KR.*`/registry metadata 单独显示韩股。
 - #149 已将 Watchlist 工作日 daily trigger 从 07:15 调整到 08:15 北京时间，并完成 Gold/Silver/WTI 定向补采：3/3 quality pass、receipt/watermark 齐全、429/403/5xx/timeout/unclassified 均为 0。07:15 旧任务形成状态被保留为证据，后续自动轮次使用 08:15。
+- #151 已显式声明中国日线时间戳约定：A 股个股按本地午夜映射交易日，三个腾讯中国指数按 UTC 午夜直接表示交易日；runner 与 Health 统一按最新已闭合场次判 freshness。真实全轮已补齐 SHCOMP/STAR50/DIVIDEND 的 2026-09-03 日线（SHCOMP=3942.09）及 observation/quality/watermark；午间仍形成中的 4 个 A 股行保持 fail-closed，未改写历史时间戳或放宽质量闸。

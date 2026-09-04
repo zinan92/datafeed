@@ -9,6 +9,7 @@ from typing import Any, Collection, Mapping, Sequence
 from kline.market_calendar import calendar_spec, is_trading_session
 from kline.models import AssetClass
 from kline.mvp_manifest import MvpManifest, ManifestInstrument, manifest_digest
+from kline.session_freshness import assess_daily_freshness
 from kline.storage import StoragePort
 from kline.time_utils import parse_utc_timestamp
 
@@ -113,6 +114,10 @@ def _freshness_stale(
 ) -> bool:
     """Apply calendar-aware freshness without treating a closed session as stale."""
 
+    if timeframe == "1d":
+        declared = assess_daily_freshness(instrument, latest_timestamp, now=now)
+        if declared.stale is not None:
+            return declared.stale
     latest = parse_utc_timestamp(latest_timestamp)
     if latest is None:
         return False

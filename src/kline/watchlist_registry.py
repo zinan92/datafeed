@@ -10,6 +10,10 @@ import re
 from typing import Any, Mapping
 
 from kline.models import AssetClass
+from kline.session_freshness import (
+    SESSION_DATE_AT_LOCAL_MIDNIGHT,
+    SESSION_DATE_AT_UTC_MIDNIGHT,
+)
 
 
 APPROVED_WATCHLIST_COMMIT = "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2"
@@ -246,6 +250,7 @@ def _asset_metadata(asset: RegistryAsset) -> dict[str, Any]:
         "registry_asset_id": asset.asset_id,
         "registry_market": asset.market,
         "registry_asset_kind": asset.kind,
+        "daily_timestamp_convention": SESSION_DATE_AT_UTC_MIDNIGHT,
     }
     if asset.asset_id in {"SPX", "NDX", "DXY"}:
         metadata.update(
@@ -355,6 +360,20 @@ def _company_identity(target: RegistryTarget) -> dict[str, Any]:
         security_type = "foreign_common"
     else:
         raise RegistryError(f"listed company has unsupported market: {market}")
+    metadata = {
+        "registry_target_id": target.target_id,
+        "registry_target_type": target.target_type,
+        "registry_market": market,
+        "registry_reason": target.reason,
+        "registry_reasons": list(target.reasons),
+        "registry_memberships": [dict(item) for item in target.memberships],
+        "registry_commit": APPROVED_WATCHLIST_COMMIT,
+    }
+    metadata["daily_timestamp_convention"] = (
+        SESSION_DATE_AT_LOCAL_MIDNIGHT
+        if market == "CN"
+        else SESSION_DATE_AT_UTC_MIDNIGHT
+    )
     return {
         "universe": "watchlist",
         "instrument_id": instrument_id,
@@ -375,15 +394,7 @@ def _company_identity(target: RegistryTarget) -> dict[str, Any]:
         "aggregation_rule_version": "native_daily_v1",
         "source_status": "configured",
         "venue": venue,
-        "metadata": {
-            "registry_target_id": target.target_id,
-            "registry_target_type": target.target_type,
-            "registry_market": market,
-            "registry_reason": target.reason,
-            "registry_reasons": list(target.reasons),
-            "registry_memberships": [dict(item) for item in target.memberships],
-            "registry_commit": APPROVED_WATCHLIST_COMMIT,
-        },
+        "metadata": metadata,
     }
 
 
