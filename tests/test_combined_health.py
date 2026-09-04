@@ -90,6 +90,75 @@ def _seed_watchlist_proxy(
     )
 
 
+def _seed_watchlist_daily(
+    store: KlineStore,
+    *,
+    instrument_id: str,
+    display_symbol: str,
+    provider_symbol: str,
+    source_id: str,
+    asset_class: str,
+    adjustment_basis: str,
+    timestamp: str,
+) -> None:
+    run_id = f"watchlist-{display_symbol.lower()}-freshness-test"
+    key = CandleSeriesKey(
+        instrument_id=instrument_id,
+        display_symbol=display_symbol,
+        provider_symbol=provider_symbol,
+        source_id=source_id,
+        asset_class=asset_class,
+        timeframe="1d",
+        adjustment_basis=adjustment_basis,
+        manifest_version="watchlist_universe_v1",
+    )
+    candle = MvpCandle(
+        key=key,
+        timestamp=timestamp,
+        open=100,
+        high=102,
+        low=99,
+        close=101,
+        volume=None if asset_class == "index" else 1000,
+        volume_semantics="not_applicable" if asset_class == "index" else "traded",
+    )
+    store.commit_mvp_run(
+        MvpRunWrite(
+            run_id=run_id,
+            manifest_version=key.manifest_version,
+            manifest_hash="c" * 64,
+            started_at="2026-09-04T00:10:00+00:00",
+            completed_at="2026-09-04T00:11:00+00:00",
+            window_start=None,
+            window_end="2026-09-04T00:10:00+00:00",
+            policy={"runner": "fixture"},
+            candles=(candle,),
+            source_observations=(
+                SourceObservationWrite(
+                    run_id=run_id,
+                    key=key,
+                    success=True,
+                    request_start=None,
+                    request_end="2026-09-04T00:10:00+00:00",
+                    response_hash="d" * 64,
+                    candle_count=1,
+                    latest_timestamp=candle.timestamp,
+                    observed_at="2026-09-04T00:11:00+00:00",
+                ),
+            ),
+            quality_receipts=(QualityReceiptWrite(run_id=run_id, key=key, status="pass"),),
+            watermarks=(
+                WatermarkWrite(
+                    key=key,
+                    last_closed_timestamp=candle.timestamp,
+                    cursor=None,
+                    run_id=run_id,
+                ),
+            ),
+        )
+    )
+
+
 def test_combined_health_matrix_merges_screening_and_watchlist_stores(tmp_path) -> None:
     market_store = KlineStore(str(tmp_path / "market.db"))
     _seed_watchlist_proxy(market_store)
@@ -168,6 +237,66 @@ def test_ready_unverified_is_overall_data_healthy_without_claiming_entitlement(
     assert snapshot["coverage"]["1d"]["ready_unverified"] == 1
     assert snapshot["coverage"]["1d"]["partial"] == 0
     assert snapshot["coverage"]["1d"]["ready"] == 0
+
+
+def test_health_uses_declared_china_daily_timestamp_conventions(tmp_path) -> None:
+    store = KlineStore(str(tmp_path / "watchlist-china-freshness.db"))
+    _seed_watchlist_daily(
+        store,
+        instrument_id="WATCH.CN.A.600900",
+        display_symbol="600900",
+        provider_symbol="600900",
+        source_id="tencent_stock_free",
+        asset_class="a_share",
+        adjustment_basis="qfq",
+        timestamp="2026-09-02T16:00:00+00:00",
+    )
+    _seed_watchlist_daily(
+        store,
+        instrument_id="WATCH.CROSS.SHCOMP",
+        display_symbol="sh000001",
+        provider_symbol="sh000001",
+        source_id="tencent_kline",
+        asset_class="index",
+        adjustment_basis="raw_index_level",
+        timestamp="2026-09-03T00:00:00+00:00",
+    )
+    _seed_watchlist_daily(
+        store,
+        instrument_id="WATCH.CROSS.STAR50",
+        display_symbol="sh000688",
+        provider_symbol="sh000688",
+        source_id="tencent_kline",
+        asset_class="index",
+        adjustment_basis="raw_index_level",
+        timestamp="2026-09-02T00:00:00+00:00",
+    )
+    manifest = load_watchlist_manifest(WATCHLIST_MANIFEST_PATH)
+
+    snapshot = build_mvp_health_matrix(
+        manifest,
+        store,
+        now=datetime(2026, 9, 4, 0, 15, tzinfo=timezone.utc),
+        scope=MATRIX_SCOPE_WATCHLIST,
+        instrument_ids=(
+            "WATCH.CN.A.600900",
+            "WATCH.CROSS.SHCOMP",
+            "WATCH.CROSS.STAR50",
+        ),
+        free_source_ids={"tencent_stock_free", "tencent_kline"},
+    )
+
+    daily = {
+        cell["instrument_id"]: cell
+        for cell in snapshot["cells"]
+        if cell["timeframe"] == "1d"
+    }
+    assert daily["WATCH.CN.A.600900"]["status"] == "ready_unverified"
+    assert daily["WATCH.CROSS.SHCOMP"]["status"] == "ready_unverified"
+    assert daily["WATCH.CROSS.STAR50"]["status"] == "stale"
+    assert daily["WATCH.CROSS.STAR50"]["status_reason"] == "freshness_sla_exceeded"
+    assert snapshot["coverage"]["1d"]["ready_unverified"] == 2
+    assert snapshot["coverage"]["1d"]["stale"] == 1
 
 
 def test_real_partial_still_degrades_a_mixed_unverified_snapshot(tmp_path) -> None:

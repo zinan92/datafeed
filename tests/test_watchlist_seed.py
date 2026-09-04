@@ -26,6 +26,15 @@ REGISTRY_MANIFEST_PATH = Path(__file__).parents[1] / "configs" / "watchlist_regi
 class _DailyAdapter:
     fail_ticker: str | None = None
 
+    def __init__(
+        self,
+        *,
+        timestamp: str = "2026-09-01",
+        china_timestamp: str = "2026-09-02",
+    ) -> None:
+        self.timestamp = timestamp
+        self.china_timestamp = china_timestamp
+
     async def fetch_candles_with_receipt(
         self,
         ticker: str,
@@ -35,10 +44,15 @@ class _DailyAdapter:
         assert timeframe == Timeframe.DAY
         if ticker == self.fail_ticker:
             raise ProviderError(f"fixture failure for {ticker}")
+        timestamp = (
+            self.china_timestamp
+            if ticker.startswith("sh") or ticker.isdigit()
+            else self.timestamp
+        )
         return FetchReceipt(
             candles=[
                 Candle(
-                    timestamp="2026-09-01",
+                    timestamp=timestamp,
                     open=100,
                     high=102,
                     low=99,
@@ -151,7 +165,10 @@ async def test_watchlist_runner_persists_all_107_registry_members(tmp_path: Path
         manifest=manifest,
         store=store,
         lock_path=tmp_path / "watchlist-107.lock",
-        adapter_resolver=lambda _instrument: _DailyAdapter(),
+        adapter_resolver=lambda _instrument: _DailyAdapter(
+            timestamp="2026-09-03",
+            china_timestamp="2026-09-04",
+        ),
         now=datetime(2026, 9, 4, 12, tzinfo=timezone.utc),
         batch_size=10,
         request_interval_seconds=0,
@@ -187,6 +204,8 @@ async def test_watchlist_current_failure_is_not_hidden_by_historical_coverage(
     assert first["status"] == "success"
 
     adapter.fail_ticker = "000660.KS"
+    adapter.timestamp = "2026-09-02"
+    adapter.china_timestamp = "2026-09-03"
     second = await execute_watchlist_batches(
         **common,
         now=datetime(2026, 9, 3, 12, tzinfo=timezone.utc),
@@ -228,6 +247,43 @@ async def test_watchlist_runner_can_target_only_selected_instruments(tmp_path: P
     assert report["persisted_instrument_count"] == 3
     assert report["batch_count"] == 1
     assert {row["instrument_id"] for row in store.mvp_latest_closed_bars()} == set(selected)
+
+
+@pytest.mark.asyncio
+async def test_watchlist_runner_marks_lagging_china_indices_stale(tmp_path: Path) -> None:
+    manifest = load_watchlist_manifest(REGISTRY_MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "watchlist-stale-index.db"))
+    selected = (
+        "WATCH.CROSS.SHCOMP",
+        "WATCH.CROSS.STAR50",
+        "WATCH.CROSS.DIVIDEND",
+    )
+
+    report = await execute_watchlist_batches(
+        manifest=manifest,
+        store=store,
+        lock_path=tmp_path / "watchlist-stale-index.lock",
+        adapter_resolver=lambda _instrument: _DailyAdapter(
+            timestamp="2026-09-01",
+            china_timestamp="2026-09-02",
+        ),
+        now=datetime(2026, 9, 4, 0, 15, tzinfo=timezone.utc),
+        instrument_ids=selected,
+        batch_size=10,
+        request_interval_seconds=0,
+    )
+
+    assert report["status"] == "partial"
+    assert report["current_failed"] == list(selected)
+    assert report["instrument_status_counts"] == {"stale": 3}
+    assert {
+        instrument_id: details["status"]
+        for instrument_id, details in report["instrument_statuses"].items()
+    } == {instrument_id: "stale" for instrument_id in selected}
+    assert all(
+        details["reason"] == "latest_closed_session_missing"
+        for details in report["instrument_statuses"].values()
+    )
 
 
 @pytest.mark.asyncio

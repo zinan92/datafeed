@@ -5,7 +5,7 @@ import pytest
 from kline.models import AssetClass
 from kline.mvp_manifest import ManifestError
 from kline.provenance import source_manifest
-from kline.watchlist_manifest import load_watchlist_manifest
+from kline.watchlist_manifest import load_watchlist_manifest, validate_watchlist_manifest
 
 
 MANIFEST_PATH = Path(__file__).parents[1] / "configs" / "watchlist_manifest.json"
@@ -62,6 +62,38 @@ def test_watchlist_manifest_contains_all_sixteen_cross_market_bindings() -> None
         else:
             assert item.metadata["identity_role"] == identity_role
             assert item.metadata["proxy_for"]
+
+
+def test_china_daily_timestamp_conventions_are_explicit_and_source_specific() -> None:
+    manifest = load_watchlist_manifest(MANIFEST_PATH)
+    a_shares = [item for item in manifest.instruments if item.asset_class == "a_share"]
+    china_indices = [
+        item
+        for item in manifest.instruments
+        if item.calendar_id == "cn_a" and item.source_id == "tencent_kline"
+    ]
+
+    assert len(a_shares) == 38
+    assert len(china_indices) == 3
+    assert {
+        item.metadata["daily_timestamp_convention"] for item in a_shares
+    } == {"session_date_at_local_midnight"}
+    assert {
+        item.metadata["daily_timestamp_convention"] for item in china_indices
+    } == {"session_date_at_utc_midnight"}
+
+
+def test_watchlist_manifest_rejects_a_wrong_china_timestamp_convention() -> None:
+    manifest = load_watchlist_manifest(MANIFEST_PATH).to_dict()
+    china_index = next(
+        item for item in manifest["instruments"] if item["instrument_id"] == "WATCH.CROSS.SHCOMP"
+    )
+    china_index["metadata"]["daily_timestamp_convention"] = (
+        "session_date_at_local_midnight"
+    )
+
+    with pytest.raises(ManifestError, match="daily_timestamp_convention must be"):
+        validate_watchlist_manifest(manifest)
 
 
 def test_watchlist_proxy_metadata_is_uniform_and_excludes_real_indices() -> None:

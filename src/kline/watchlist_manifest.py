@@ -12,6 +12,11 @@ from typing import Any, Mapping
 from kline.models import AssetClass, Timeframe
 from kline.mvp_manifest import ALLOWED_TIMEFRAMES, ManifestError, ManifestInstrument
 from kline.provenance import source_manifest
+from kline.session_freshness import (
+    DAILY_TIMESTAMP_CONVENTIONS,
+    SESSION_DATE_AT_LOCAL_MIDNIGHT,
+    SESSION_DATE_AT_UTC_MIDNIGHT,
+)
 
 
 WATCHLIST_MANIFEST_VERSION = "watchlist_universe_v1"
@@ -100,6 +105,19 @@ def _validate_instrument(item: ManifestInstrument, *, index: int) -> None:
         raise ManifestError(f"instrument[{index}] has unknown volume_semantics")
     if item.source_status not in _SOURCE_STATUS:
         raise ManifestError(f"instrument[{index}] has unknown source_status")
+    convention = item.metadata.get("daily_timestamp_convention")
+    if convention is not None and convention not in DAILY_TIMESTAMP_CONVENTIONS:
+        raise ManifestError(
+            f"instrument[{index}] has unknown daily_timestamp_convention: {convention}"
+        )
+    expected_convention = {
+        (AssetClass.A_SHARE.value, "tencent_stock_free"): SESSION_DATE_AT_LOCAL_MIDNIGHT,
+        (AssetClass.INDEX.value, "tencent_kline"): SESSION_DATE_AT_UTC_MIDNIGHT,
+    }.get((item.asset_class, item.source_id))
+    if expected_convention is not None and convention != expected_convention:
+        raise ManifestError(
+            f"instrument[{index}] daily_timestamp_convention must be {expected_convention}"
+        )
     required = set(item.required_timeframes)
     not_applicable = set(item.not_applicable_timeframes)
     blocked = set(item.blocked_timeframes)

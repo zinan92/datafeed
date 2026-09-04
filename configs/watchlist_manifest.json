@@ -14,6 +14,7 @@
       "display_symbol": "000519",
       "instrument_id": "WATCH.CN.A.000519",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -60,6 +61,7 @@
       "display_symbol": "000977",
       "instrument_id": "WATCH.CN.A.000977",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -106,6 +108,7 @@
       "display_symbol": "002230",
       "instrument_id": "WATCH.CN.A.002230",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -152,6 +155,7 @@
       "display_symbol": "002241",
       "instrument_id": "WATCH.CN.A.002241",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -198,6 +202,7 @@
       "display_symbol": "002371",
       "instrument_id": "WATCH.CN.A.002371",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -244,6 +249,7 @@
       "display_symbol": "002475",
       "instrument_id": "WATCH.CN.A.002475",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -290,6 +296,7 @@
       "display_symbol": "300124",
       "instrument_id": "WATCH.CN.A.300124",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -336,6 +343,7 @@
       "display_symbol": "300308",
       "instrument_id": "WATCH.CN.A.300308",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -382,6 +390,7 @@
       "display_symbol": "300394",
       "instrument_id": "WATCH.CN.A.300394",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -428,6 +437,7 @@
       "display_symbol": "300502",
       "instrument_id": "WATCH.CN.A.300502",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -474,6 +484,7 @@
       "display_symbol": "300762",
       "instrument_id": "WATCH.CN.A.300762",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -520,6 +531,7 @@
       "display_symbol": "600089",
       "instrument_id": "WATCH.CN.A.600089",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -566,6 +578,7 @@
       "display_symbol": "600118",
       "instrument_id": "WATCH.CN.A.600118",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -612,6 +625,7 @@
       "display_symbol": "600276",
       "instrument_id": "WATCH.CN.A.600276",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -658,6 +672,7 @@
       "display_symbol": "600312",
       "instrument_id": "WATCH.CN.A.600312",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -704,6 +719,7 @@
       "display_symbol": "600522",
       "instrument_id": "WATCH.CN.A.600522",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -750,6 +766,7 @@
       "display_symbol": "600547",
       "instrument_id": "WATCH.CN.A.600547",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -796,6 +813,7 @@
       "display_symbol": "600760",
       "instrument_id": "WATCH.CN.A.600760",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -842,6 +860,7 @@
       "display_symbol": "600879",
       "instrument_id": "WATCH.CN.A.600879",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -888,6 +907,7 @@
       "display_symbol": "600900",
       "instrument_id": "WATCH.CN.A.600900",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -940,6 +960,7 @@
       "display_symbol": "600938",
       "instrument_id": "WATCH.CN.A.600938",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -986,6 +1007,7 @@
       "display_symbol": "601398",
       "instrument_id": "WATCH.CN.A.601398",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1032,6 +1054,7 @@
       "display_symbol": "601857",
       "instrument_id": "WATCH.CN.A.601857",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1078,6 +1101,7 @@
       "display_symbol": "601899",
       "instrument_id": "WATCH.CN.A.601899",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1124,6 +1148,7 @@
       "display_symbol": "601985",
       "instrument_id": "WATCH.CN.A.601985",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1170,6 +1195,7 @@
       "display_symbol": "603019",
       "instrument_id": "WATCH.CN.A.603019",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1216,6 +1242,7 @@
       "display_symbol": "603259",
       "instrument_id": "WATCH.CN.A.603259",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1262,6 +1289,7 @@
       "display_symbol": "603986",
       "instrument_id": "WATCH.CN.A.603986",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1308,6 +1336,7 @@
       "display_symbol": "688012",
       "instrument_id": "WATCH.CN.A.688012",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1354,6 +1383,7 @@
       "display_symbol": "688017",
       "instrument_id": "WATCH.CN.A.688017",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1400,6 +1430,7 @@
       "display_symbol": "688041",
       "instrument_id": "WATCH.CN.A.688041",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1446,6 +1477,7 @@
       "display_symbol": "688111",
       "instrument_id": "WATCH.CN.A.688111",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1492,6 +1524,7 @@
       "display_symbol": "688235",
       "instrument_id": "WATCH.CN.A.688235",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1538,6 +1571,7 @@
       "display_symbol": "688256",
       "instrument_id": "WATCH.CN.A.688256",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1584,6 +1618,7 @@
       "display_symbol": "688347",
       "instrument_id": "WATCH.CN.A.688347",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1630,6 +1665,7 @@
       "display_symbol": "688825",
       "instrument_id": "WATCH.CN.A.688825",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1676,6 +1712,7 @@
       "display_symbol": "688836",
       "instrument_id": "WATCH.CN.A.688836",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1722,6 +1759,7 @@
       "display_symbol": "688981",
       "instrument_id": "WATCH.CN.A.688981",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_local_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "CN",
         "registry_memberships": [
@@ -1806,6 +1844,7 @@
       "display_symbol": "sh000015",
       "instrument_id": "WATCH.CROSS.DIVIDEND",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "fallback_policy": "explicit_only",
         "fallback_sources": [
           "sina_index"
@@ -2139,6 +2178,7 @@
       "display_symbol": "sh000001",
       "instrument_id": "WATCH.CROSS.SHCOMP",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "fallback_policy": "explicit_only",
         "fallback_sources": [
           "sina_index"
@@ -2254,6 +2294,7 @@
       "display_symbol": "sh000688",
       "instrument_id": "WATCH.CROSS.STAR50",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "fallback_policy": "explicit_only",
         "fallback_sources": [
           "sina_index"
