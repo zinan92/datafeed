@@ -111,18 +111,29 @@ async def execute_watchlist_batches(
     max_retries: int = 2,
     retry_backoff_seconds: float = 2.0,
     provider_timeout_seconds: float = 30.0,
+    instrument_ids: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     if batch_size <= 0:
         raise ValueError("batch_size must be positive")
     if request_interval_seconds < 0:
         raise ValueError("request_interval_seconds must be non-negative")
     manifest_hash = manifest.validated_digest()
+    selected_ids = (
+        tuple(instrument_ids)
+        if instrument_ids is not None
+        else tuple(item.instrument_id for item in manifest.instruments)
+    )
+    known_ids = {item.instrument_id for item in manifest.instruments}
+    unknown_ids = sorted(set(selected_ids) - known_ids)
+    if unknown_ids:
+        raise ValueError(f"Watchlist target identities missing from manifest: {unknown_ids}")
+    if not selected_ids:
+        raise ValueError("Watchlist target selection must not be empty")
     orchestrator = IngestionOrchestrator(store, adapter_resolver=adapter_resolver)
     reports: list[dict[str, Any]] = []
     current_cells: dict[str, Any] = {}
-    instrument_ids = tuple(item.instrument_id for item in manifest.instruments)
     with _SingleRunLock(Path(lock_path)):
-        for batch_index, batch in enumerate(_batches(instrument_ids, batch_size), start=1):
+        for batch_index, batch in enumerate(_batches(selected_ids, batch_size), start=1):
             run_now = now or datetime.now(timezone.utc)
             run_id = (
                 f"watchlist-{run_now.astimezone(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
@@ -173,37 +184,34 @@ async def execute_watchlist_batches(
         if latency_values
         else None
     )
-    persisted = _persisted_ids(store, manifest)
+    selected_set = set(selected_ids)
+    persisted = _persisted_ids(store, manifest) & selected_set
     remaining = [
-        item.instrument_id for item in manifest.instruments if item.instrument_id not in persisted
+        item_id for item_id in selected_ids if item_id not in persisted
     ]
     current_failed = [
-        item.instrument_id
-        for item in manifest.instruments
-        if current_cells.get(item.instrument_id) is None
-        or current_cells[item.instrument_id].status != "ready"
+        item_id
+        for item_id in selected_ids
+        if current_cells.get(item_id) is None or current_cells[item_id].status != "ready"
     ]
     statuses = {
-        item.instrument_id: {
-            "status": current_cells[item.instrument_id].status
-            if item.instrument_id in current_cells
+        item_id: {
+            "status": current_cells[item_id].status if item_id in current_cells
             else "missing_receipt",
             "reason": (
-                current_cells[item.instrument_id].error or current_cells[item.instrument_id].status
-            )
-            if item.instrument_id in current_cells
-            and current_cells[item.instrument_id].status != "ready"
+                current_cells[item_id].error or current_cells[item_id].status
+            ) if item_id in current_cells and current_cells[item_id].status != "ready"
             else None,
-            "available_in_store": item.instrument_id in persisted,
+            "available_in_store": item_id in persisted,
         }
-        for item in manifest.instruments
+        for item_id in selected_ids
     }
     return {
         "observed_at": (now or datetime.now(timezone.utc)).isoformat(),
         "status": "success" if not current_failed else "partial",
         "manifest_version": manifest.version,
         "manifest_hash": manifest_hash,
-        "instrument_count": len(manifest.instruments),
+        "instrument_count": len(selected_ids),
         "persisted_instrument_count": len(persisted),
         "remaining_after": remaining,
         "current_failed": current_failed,
@@ -236,6 +244,7 @@ async def run_watchlist_seed_once(
     max_retries: int = 2,
     retry_backoff_seconds: float = 2.0,
     provider_timeout_seconds: float = 30.0,
+    instrument_ids: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     database, lock_file = validate_watchlist_target(db_path, lock_path)
     manifest = load_watchlist_manifest(manifest_path)
@@ -249,6 +258,7 @@ async def run_watchlist_seed_once(
         max_retries=max_retries,
         retry_backoff_seconds=retry_backoff_seconds,
         provider_timeout_seconds=provider_timeout_seconds,
+        instrument_ids=instrument_ids,
     )
 
 

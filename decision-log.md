@@ -485,3 +485,12 @@ consumers can use without direct exchange or private SQLite access.
   backward compatibility, while `WATCH.KR.*` and `registry_market=KR` keep health grouping truthful.
 - Health tests now pin HK at 4 instruments/20 cells and KR at 1 instrument/5 cells, including commit
   and source-hash provenance. No runtime restart or data mutation was needed for this hardening.
+
+## 2026-09-04 - Move Watchlist daily trigger to 08:15 and catch up commodities
+
+- #149 moves the weekday Watchlist trigger from 07:15 to 08:15 Beijing time. The earlier scheduled
+  run correctly found Gold, Silver and WTI still forming at 07:15 because the Yahoo continuous-future
+  daily bar closes at the UTC-day boundary.
+- A targeted post-close run selected only `WATCH.CROSS.GOLD`, `WATCH.CROSS.SILVER` and
+  `WATCH.CROSS.WTI`. All three passed quality, wrote 3 observations/receipts/watermarks and promoted
+  12 candles; rate-limit/403/5xx/timeout/unclassified counts were all zero, P95 2,362.5ms.

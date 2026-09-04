@@ -34,3 +34,4 @@
 - Watchlist 数据和独立双库健康面板已上线；下一步是重新设计消费者切换 spec，先纠正 ADR 0004 的“只换 db_path”错误假设，再做 Newsletter/Human Review 的逐字节切换验收。未经新 issue 批准不实施切换。
 - 当前 Watchlist registry 主线（#139→#142）已完成：107 项名单、HK source、日线持久化、健康面板和 8100 双源运行均已落地；后续增量应以新的 registry pin/独立 issue 推进，不扩大本里程碑。
 - Sonnet review 后的 #147 hardening 已补上 HK provider 并发状态回归和 HK/KR 健康分组断言；KR 保留 `us_stock` API 兼容身份，面板以 `WATCH.KR.*`/registry metadata 单独显示韩股。
+- #149 已将 Watchlist 工作日 daily trigger 从 07:15 调整到 08:15 北京时间，并完成 Gold/Silver/WTI 定向补采：3/3 quality pass、receipt/watermark 齐全、429/403/5xx/timeout/unclassified 均为 0。07:15 旧任务形成状态被保留为证据，后续自动轮次使用 08:15。
