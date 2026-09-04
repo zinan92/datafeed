@@ -250,6 +250,7 @@ def _asset_metadata(asset: RegistryAsset) -> dict[str, Any]:
         "registry_asset_id": asset.asset_id,
         "registry_market": asset.market,
         "registry_asset_kind": asset.kind,
+        "daily_timestamp_convention": SESSION_DATE_AT_UTC_MIDNIGHT,
     }
     if asset.asset_id in {"SPX", "NDX", "DXY"}:
         metadata.update(
@@ -270,7 +271,6 @@ def _asset_metadata(asset: RegistryAsset) -> dict[str, Any]:
                 "index_identity": "actual_index",
                 "fallback_sources": ["sina_index"],
                 "fallback_policy": "explicit_only",
-                "daily_timestamp_convention": SESSION_DATE_AT_UTC_MIDNIGHT,
             }
         )
     if asset.asset_id in {"BTC", "ETH", "HYPE"}:
@@ -369,8 +369,11 @@ def _company_identity(target: RegistryTarget) -> dict[str, Any]:
         "registry_memberships": [dict(item) for item in target.memberships],
         "registry_commit": APPROVED_WATCHLIST_COMMIT,
     }
-    if market == "CN":
-        metadata["daily_timestamp_convention"] = SESSION_DATE_AT_LOCAL_MIDNIGHT
+    metadata["daily_timestamp_convention"] = (
+        SESSION_DATE_AT_LOCAL_MIDNIGHT
+        if market == "CN"
+        else SESSION_DATE_AT_UTC_MIDNIGHT
+    )
     return {
         "universe": "watchlist",
         "instrument_id": instrument_id,

@@ -110,11 +110,13 @@ def _validate_instrument(item: ManifestInstrument, *, index: int) -> None:
         raise ManifestError(
             f"instrument[{index}] has unknown daily_timestamp_convention: {convention}"
         )
-    expected_convention = {
-        (AssetClass.A_SHARE.value, "tencent_stock_free"): SESSION_DATE_AT_LOCAL_MIDNIGHT,
-        (AssetClass.INDEX.value, "tencent_kline"): SESSION_DATE_AT_UTC_MIDNIGHT,
-    }.get((item.asset_class, item.source_id))
-    if expected_convention is not None and convention != expected_convention:
+    expected_convention = (
+        SESSION_DATE_AT_LOCAL_MIDNIGHT
+        if (item.asset_class, item.source_id)
+        == (AssetClass.A_SHARE.value, "tencent_stock_free")
+        else SESSION_DATE_AT_UTC_MIDNIGHT
+    )
+    if convention != expected_convention:
         raise ManifestError(
             f"instrument[{index}] daily_timestamp_convention must be {expected_convention}"
         )

@@ -1807,6 +1807,7 @@
       "instrument_id": "WATCH.CROSS.BTC",
       "metadata": {
         "contract_type": "perpetual",
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_asset_id": "BTC",
         "registry_asset_kind": "crypto",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
@@ -1885,6 +1886,7 @@
       "display_symbol": "DXY",
       "instrument_id": "WATCH.CROSS.DXY",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "identity_role": "proxy",
         "proxy_for": "DXY",
         "registry_asset_id": "DXY",
@@ -1923,6 +1925,7 @@
       "instrument_id": "WATCH.CROSS.ETH",
       "metadata": {
         "contract_type": "perpetual",
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_asset_id": "ETH",
         "registry_asset_kind": "crypto",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
@@ -1961,6 +1964,7 @@
       "instrument_id": "WATCH.CROSS.GOLD",
       "metadata": {
         "contract_type": "continuous_future",
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_asset_id": "XAU",
         "registry_asset_kind": "commodity",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
@@ -1999,6 +2003,7 @@
       "instrument_id": "WATCH.CROSS.HYPE",
       "metadata": {
         "contract_type": "perpetual",
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_asset_id": "HYPE",
         "registry_asset_kind": "crypto",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
@@ -2036,6 +2041,7 @@
       "display_symbol": "^KS11",
       "instrument_id": "WATCH.CROSS.KOSPI",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_asset_id": "KOSPI",
         "registry_asset_kind": "index",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
@@ -2071,6 +2077,7 @@
       "display_symbol": "^N225",
       "instrument_id": "WATCH.CROSS.N225",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_asset_id": "N225",
         "registry_asset_kind": "index",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
@@ -2106,6 +2113,7 @@
       "display_symbol": "NDX",
       "instrument_id": "WATCH.CROSS.NDX",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "identity_role": "proxy",
         "proxy_for": "Nasdaq-100 Index",
         "registry_asset_id": "NDX",
@@ -2143,6 +2151,7 @@
       "display_symbol": "SCHD",
       "instrument_id": "WATCH.CROSS.SCHD",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_asset_id": "SCHD",
         "registry_asset_kind": "etf",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
@@ -2220,6 +2229,7 @@
       "instrument_id": "WATCH.CROSS.SILVER",
       "metadata": {
         "contract_type": "continuous_future",
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_asset_id": "XAG",
         "registry_asset_kind": "commodity",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
@@ -2257,6 +2267,7 @@
       "display_symbol": "SPX",
       "instrument_id": "WATCH.CROSS.SPX",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "identity_role": "proxy",
         "proxy_for": "S&P 500 Index",
         "registry_asset_id": "SPX",
@@ -2335,6 +2346,7 @@
       "display_symbol": "VIX",
       "instrument_id": "WATCH.CROSS.VIX",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "index_identity": "actual_index",
         "registry_asset_id": "VIX",
         "registry_asset_kind": "index",
@@ -2372,6 +2384,7 @@
       "instrument_id": "WATCH.CROSS.WTI",
       "metadata": {
         "contract_type": "continuous_future",
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_asset_id": "WTI",
         "registry_asset_kind": "commodity",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
@@ -2409,6 +2422,7 @@
       "display_symbol": "00100",
       "instrument_id": "WATCH.HK.00100",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "HK",
         "registry_memberships": [
@@ -2455,6 +2469,7 @@
       "display_symbol": "00700",
       "instrument_id": "WATCH.HK.00700",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "HK",
         "registry_memberships": [
@@ -2501,6 +2516,7 @@
       "display_symbol": "02513",
       "instrument_id": "WATCH.HK.02513",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "HK",
         "registry_memberships": [
@@ -2547,6 +2563,7 @@
       "display_symbol": "09988",
       "instrument_id": "WATCH.HK.09988",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "HK",
         "registry_memberships": [
@@ -2593,6 +2610,7 @@
       "display_symbol": "000660.KS",
       "instrument_id": "WATCH.KR.000660",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "KR",
         "registry_memberships": [
@@ -2645,6 +2663,7 @@
       "display_symbol": "AAPL",
       "instrument_id": "WATCH.US.AAPL",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -2691,6 +2710,7 @@
       "display_symbol": "AMAT",
       "instrument_id": "WATCH.US.AMAT",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -2737,6 +2757,7 @@
       "display_symbol": "AMD",
       "instrument_id": "WATCH.US.AMD",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -2783,6 +2804,7 @@
       "display_symbol": "AMZN",
       "instrument_id": "WATCH.US.AMZN",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -2829,6 +2851,7 @@
       "display_symbol": "ASML",
       "instrument_id": "WATCH.US.ASML",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -2875,6 +2898,7 @@
       "display_symbol": "ASTS",
       "instrument_id": "WATCH.US.ASTS",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -2921,6 +2945,7 @@
       "display_symbol": "ATKR",
       "instrument_id": "WATCH.US.ATKR",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -2967,6 +2992,7 @@
       "display_symbol": "AVGO",
       "instrument_id": "WATCH.US.AVGO",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3013,6 +3039,7 @@
       "display_symbol": "CEG",
       "instrument_id": "WATCH.US.CEG",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3059,6 +3086,7 @@
       "display_symbol": "COHR",
       "instrument_id": "WATCH.US.COHR",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3105,6 +3133,7 @@
       "display_symbol": "COIN",
       "instrument_id": "WATCH.US.COIN",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3151,6 +3180,7 @@
       "display_symbol": "CVX",
       "instrument_id": "WATCH.US.CVX",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3197,6 +3227,7 @@
       "display_symbol": "ETN",
       "instrument_id": "WATCH.US.ETN",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3243,6 +3274,7 @@
       "display_symbol": "GEV",
       "instrument_id": "WATCH.US.GEV",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3289,6 +3321,7 @@
       "display_symbol": "GLW",
       "instrument_id": "WATCH.US.GLW",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3335,6 +3368,7 @@
       "display_symbol": "GOLD",
       "instrument_id": "WATCH.US.GOLD",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3381,6 +3415,7 @@
       "display_symbol": "GOOGL",
       "instrument_id": "WATCH.US.GOOGL",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3427,6 +3462,7 @@
       "display_symbol": "HOOD",
       "instrument_id": "WATCH.US.HOOD",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3473,6 +3509,7 @@
       "display_symbol": "INTC",
       "instrument_id": "WATCH.US.INTC",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3519,6 +3556,7 @@
       "display_symbol": "JPM",
       "instrument_id": "WATCH.US.JPM",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3565,6 +3603,7 @@
       "display_symbol": "LLY",
       "instrument_id": "WATCH.US.LLY",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3611,6 +3650,7 @@
       "display_symbol": "LMT",
       "instrument_id": "WATCH.US.LMT",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3657,6 +3697,7 @@
       "display_symbol": "LRCX",
       "instrument_id": "WATCH.US.LRCX",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3703,6 +3744,7 @@
       "display_symbol": "META",
       "instrument_id": "WATCH.US.META",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3749,6 +3791,7 @@
       "display_symbol": "MRVL",
       "instrument_id": "WATCH.US.MRVL",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3801,6 +3844,7 @@
       "display_symbol": "MSFT",
       "instrument_id": "WATCH.US.MSFT",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3847,6 +3891,7 @@
       "display_symbol": "MSTR",
       "instrument_id": "WATCH.US.MSTR",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3893,6 +3938,7 @@
       "display_symbol": "MU",
       "instrument_id": "WATCH.US.MU",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3939,6 +3985,7 @@
       "display_symbol": "NEM",
       "instrument_id": "WATCH.US.NEM",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -3985,6 +4032,7 @@
       "display_symbol": "NVDA",
       "instrument_id": "WATCH.US.NVDA",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4031,6 +4079,7 @@
       "display_symbol": "NVO",
       "instrument_id": "WATCH.US.NVO",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4077,6 +4126,7 @@
       "display_symbol": "NVT",
       "instrument_id": "WATCH.US.NVT",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4123,6 +4173,7 @@
       "display_symbol": "ORCL",
       "instrument_id": "WATCH.US.ORCL",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4169,6 +4220,7 @@
       "display_symbol": "PDD",
       "instrument_id": "WATCH.US.PDD",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4215,6 +4267,7 @@
       "display_symbol": "PLTR",
       "instrument_id": "WATCH.US.PLTR",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4261,6 +4314,7 @@
       "display_symbol": "QCOM",
       "instrument_id": "WATCH.US.QCOM",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4307,6 +4361,7 @@
       "display_symbol": "REGN",
       "instrument_id": "WATCH.US.REGN",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4353,6 +4408,7 @@
       "display_symbol": "RKLB",
       "instrument_id": "WATCH.US.RKLB",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4399,6 +4455,7 @@
       "display_symbol": "RTX",
       "instrument_id": "WATCH.US.RTX",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4445,6 +4502,7 @@
       "display_symbol": "SNDK",
       "instrument_id": "WATCH.US.SNDK",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4491,6 +4549,7 @@
       "display_symbol": "TLN",
       "instrument_id": "WATCH.US.TLN",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4537,6 +4596,7 @@
       "display_symbol": "TSLA",
       "instrument_id": "WATCH.US.TSLA",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4583,6 +4643,7 @@
       "display_symbol": "TSM",
       "instrument_id": "WATCH.US.TSM",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4629,6 +4690,7 @@
       "display_symbol": "VRT",
       "instrument_id": "WATCH.US.VRT",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4675,6 +4737,7 @@
       "display_symbol": "VRTX",
       "instrument_id": "WATCH.US.VRTX",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4721,6 +4784,7 @@
       "display_symbol": "VST",
       "instrument_id": "WATCH.US.VST",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4767,6 +4831,7 @@
       "display_symbol": "WDC",
       "instrument_id": "WATCH.US.WDC",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [
@@ -4813,6 +4878,7 @@
       "display_symbol": "XOM",
       "instrument_id": "WATCH.US.XOM",
       "metadata": {
+        "daily_timestamp_convention": "session_date_at_utc_midnight",
         "registry_commit": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
         "registry_market": "US",
         "registry_memberships": [

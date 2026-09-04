@@ -81,6 +81,13 @@ def test_china_daily_timestamp_conventions_are_explicit_and_source_specific() ->
     assert {
         item.metadata["daily_timestamp_convention"] for item in china_indices
     } == {"session_date_at_utc_midnight"}
+    assert len(manifest.instruments) == 107
+    assert {
+        item.metadata["daily_timestamp_convention"] for item in manifest.instruments
+    } == {
+        "session_date_at_local_midnight",
+        "session_date_at_utc_midnight",
+    }
 
 
 def test_watchlist_manifest_rejects_a_wrong_china_timestamp_convention() -> None:

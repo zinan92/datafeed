@@ -198,6 +198,7 @@ async def execute_watchlist_batches(
         and row.get("instrument_id") in selected_set
     }
     instruments_by_id = {item.instrument_id: item for item in manifest.instruments}
+    evaluation_now = now or datetime.now(timezone.utc)
     statuses: dict[str, dict[str, Any]] = {}
     for item_id in selected_ids:
         cell = current_cells.get(item_id)
@@ -216,7 +217,7 @@ async def execute_watchlist_batches(
         declared = assess_daily_freshness(
             instruments_by_id[item_id],
             str(latest.get("latest_timestamp")) if latest is not None else None,
-            now=now or datetime.now(timezone.utc),
+            now=evaluation_now,
         )
         if declared.convention is not None:
             details.update(
@@ -241,7 +242,7 @@ async def execute_watchlist_batches(
         details["status"] for details in statuses.values()
     )
     return {
-        "observed_at": (now or datetime.now(timezone.utc)).isoformat(),
+        "observed_at": evaluation_now.isoformat(),
         "status": "success" if not current_failed else "partial",
         "manifest_version": manifest.version,
         "manifest_hash": manifest_hash,

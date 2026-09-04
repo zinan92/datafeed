@@ -15,6 +15,7 @@ SESSION_DATE_AT_UTC_MIDNIGHT = "session_date_at_utc_midnight"
 DAILY_TIMESTAMP_CONVENTIONS = frozenset(
     {SESSION_DATE_AT_LOCAL_MIDNIGHT, SESSION_DATE_AT_UTC_MIDNIGHT}
 )
+_MAX_SESSION_LOOKBACK_DAYS = 15
 
 
 @dataclass(frozen=True)
@@ -48,17 +49,25 @@ def assess_daily_freshness(
         spec = calendar_spec(instrument.calendar_id)
     except (KeyError, ValueError):
         return DailyFreshness(convention, None, None, None)
-    if spec.continuous or not spec.sessions:
-        return DailyFreshness(convention, None, None, None)
-
     if convention == SESSION_DATE_AT_LOCAL_MIDNIGHT:
         observed_session = latest.astimezone(spec.zone).date()
     else:
         observed_session = latest.astimezone(timezone.utc).date()
 
+    if spec.continuous:
+        expected_session = now.astimezone(timezone.utc).date() - timedelta(days=1)
+        return DailyFreshness(
+            convention=convention,
+            observed_session=observed_session,
+            expected_session=expected_session,
+            stale=observed_session < expected_session,
+        )
+    if not spec.sessions:
+        return DailyFreshness(convention, observed_session, None, None)
+
     local_now = now.astimezone(spec.zone)
     expected_session: date | None = None
-    for offset in range(15):
+    for offset in range(_MAX_SESSION_LOOKBACK_DAYS):
         candidate = local_now.date() - timedelta(days=offset)
         if not is_trading_session(instrument.calendar_id, candidate):
             continue

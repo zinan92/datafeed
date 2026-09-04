@@ -498,12 +498,14 @@ consumers can use without direct exchange or private SQLite access.
 ## 2026-09-04 - Interpret China daily timestamps by declared session convention
 
 - #151 declares `session_date_at_local_midnight` for Tencent A-share stock rows and
-  `session_date_at_utc_midnight` for the three Tencent China-index rows. The declaration lives in
-  validated Watchlist manifest metadata and is generated from the pinned registry compiler.
+  `session_date_at_utc_midnight` for the remaining Watchlist daily sources, including the three
+  Tencent China-index rows. All 107 declarations live in validated Watchlist manifest metadata and
+  are generated from the pinned registry compiler.
 - Watchlist runner receipts and Health now compare the represented session date with the latest
   closed calendar session. A historical row can no longer remain ready merely because its raw UTC
   timestamp falls inside the previous 26-hour grace window.
 - A real run backfilled SHCOMP, STAR50 and DIVIDEND through 2026-09-03. SHCOMP closed at 3942.09;
   all three wrote successful observations, pass quality receipts and watermarks. Four A-share
   current-session rows remained explicit forming-bar failures; no quality gate or historical
-  timestamp was changed. See `docs/verification/china-index-freshness-2026-09-04.md`.
+  timestamp was changed. The 107-row reconciliation recorded zero mismatches between reported and
+  expected status. See `docs/verification/china-index-freshness-2026-09-04.md`.
