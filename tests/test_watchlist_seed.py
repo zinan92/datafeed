@@ -203,6 +203,34 @@ async def test_watchlist_current_failure_is_not_hidden_by_historical_coverage(
 
 
 @pytest.mark.asyncio
+async def test_watchlist_runner_can_target_only_selected_instruments(tmp_path: Path) -> None:
+    manifest = load_watchlist_manifest(REGISTRY_MANIFEST_PATH)
+    store = KlineStore(str(tmp_path / "watchlist-targeted.db"))
+    selected = (
+        "WATCH.CROSS.GOLD",
+        "WATCH.CROSS.SILVER",
+        "WATCH.CROSS.WTI",
+    )
+
+    report = await execute_watchlist_batches(
+        manifest=manifest,
+        store=store,
+        lock_path=tmp_path / "watchlist-targeted.lock",
+        adapter_resolver=lambda _instrument: _DailyAdapter(),
+        now=datetime(2026, 9, 4, 12, tzinfo=timezone.utc),
+        instrument_ids=selected,
+        batch_size=10,
+        request_interval_seconds=0,
+    )
+
+    assert report["status"] == "success"
+    assert report["instrument_count"] == 3
+    assert report["persisted_instrument_count"] == 3
+    assert report["batch_count"] == 1
+    assert {row["instrument_id"] for row in store.mvp_latest_closed_bars()} == set(selected)
+
+
+@pytest.mark.asyncio
 async def test_watchlist_runner_rejects_a_second_full_cycle_while_lock_is_held(
     tmp_path: Path,
 ) -> None:

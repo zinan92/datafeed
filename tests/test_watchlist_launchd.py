@@ -33,7 +33,7 @@ def test_watchlist_launchd_contract_is_daily_isolated_and_fail_closed() -> None:
     assert payload["StandardOutPath"].endswith("/watchlist-daily.stdout.log")
     assert payload["StandardErrorPath"].endswith("/watchlist-daily.stderr.log")
     assert payload["StartCalendarInterval"] == [
-        {"Weekday": weekday, "Hour": 7, "Minute": 15} for weekday in range(1, 6)
+        {"Weekday": weekday, "Hour": 8, "Minute": 15} for weekday in range(1, 6)
     ]
     for forbidden in ("RunAtLoad", "KeepAlive", "StartInterval"):
         assert forbidden not in payload
