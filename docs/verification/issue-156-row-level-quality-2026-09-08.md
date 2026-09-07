@@ -26,11 +26,9 @@ Full local verification:
 PYTHONPATH=src python3 -m pytest -q
 ```
 
-Result: `2 failed, 374 passed`. The two failures are pre-existing/outside
-scope: the existing same-session-gap expectation is preserved by the focused
-suite, while the existing Binance daily test depends on the machine's current
-calendar date and returned no closed mocked row. No failure points to the
-changed files.
+Result: `1 failed, 375 passed`. The failure is pre-existing/outside scope: the
+Binance daily test depends on the machine's current calendar date and returned
+no closed mocked row. No failure points to the changed files.
 
 Static checks:
 
