@@ -540,3 +540,16 @@ consumers can use without direct exchange or private SQLite access.
   current-session rows remained explicit forming-bar failures; no quality gate or historical
   timestamp was changed. The 107-row reconciliation recorded zero mismatches between reported and
   expected status. See `docs/verification/china-index-freshness-2026-09-04.md`.
+
+## 2026-09-08 - Cut MVP worker and API over to the canonical Market Data Database (#154)
+
+- The issue-71 observer database is merged into `/Users/wendy/park-data/market/kline.db` with
+  `ops/merge_mvp_databases.py`. Only `mvp_candles` is copied because run/receipt tables contain
+  database-local IDs; the exact candle identity is the source-aware series key plus timestamp.
+  Rows at or after 2026-09-02 are considered, and issue-71 wins conflicting candle values.
+- The merge is transactional and repeatable: new rows are inserted, differing conflicts are
+  replaced, identical conflicts are counted, and every invocation emits a JSON receipt. The old
+  issue-71 database is retained under `.retired-YYYYMMDD` for rollback and retention review.
+- Gotchas: cutover must happen while the worker is idle between its observed cycle and the next
+  `xx:05Z` run; plist files are backed up before editing; `launchctl kickstart` is limited to the
+  two named MVP jobs. The 8100 Query Service and its third database path remain unchanged.

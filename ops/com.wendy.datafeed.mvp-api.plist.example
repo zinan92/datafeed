@@ -25,7 +25,7 @@
         <key>PYTHONPATH</key>
         <string>/Users/wendy/datafeed-runtime/src</string>
         <key>KLINE_DB_PATH</key>
-        <string>/Users/wendy/datafeed-runtime/data/kline.db</string>
+        <string>/Users/wendy/park-data/market/kline.db</string>
         <key>KLINE_LOAD_ENTRYPOINT_ADAPTERS</key>
         <string>false</string>
         <key>PYTHONUNBUFFERED</key>

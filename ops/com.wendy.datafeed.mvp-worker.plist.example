@@ -12,9 +12,9 @@
         <string>--manifest</string>
         <string>/Users/wendy/datafeed-runtime/configs/mvp_manifest.json</string>
         <string>--db</string>
-        <string>/Users/wendy/datafeed-runtime/data/kline.db</string>
+        <string>/Users/wendy/park-data/market/kline.db</string>
         <string>--lock</string>
-        <string>/Users/wendy/datafeed-runtime/data/mvp-worker.lock</string>
+        <string>/Users/wendy/datafeed-runtime-issue-71/data/mvp-worker.lock</string>
     </array>
     <key>WorkingDirectory</key>
     <string>/Users/wendy/datafeed-runtime</string>
