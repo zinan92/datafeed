@@ -645,6 +645,8 @@ def assess_quality(
     suspension_dates: Iterable[date] = (),
     stale_after: timedelta | None = None,
     market_open_buffer_minutes: int = 0,
+    row_issues: Iterable[AggregationIssue] = (),
+    bad_row_threshold: float = 0.05,
 ) -> QualityResult:
     """Classify closed/forming/holiday/suspension/gap/duplicate/stale input."""
 
@@ -652,9 +654,11 @@ def assess_quality(
         raise CalendarError(f"unsupported quality timeframe: {timeframe}")
     if market_open_buffer_minutes < 0:
         raise CalendarError("market_open_buffer_minutes must be non-negative")
+    if not 0 <= bad_row_threshold <= 1:
+        raise CalendarError("bad_row_threshold must be between 0 and 1")
     spec = calendar_spec(calendar_id)
     cutoff_utc = _parse_cutoff(cutoff)
-    issues = _sequence_issues(candles)
+    issues = list(row_issues) + _sequence_issues(candles)
     if not candles:
         issues.append(AggregationIssue("missing", "no candle rows were supplied"))
     closed_count = 0
@@ -736,7 +740,14 @@ def assess_quality(
                 "stale", "latest closed candle exceeded freshness window", latest_end.isoformat()
             )
         )
-    blocking = {"malformed", "duplicate", "out_of_order", "mixed_source", "missing"}
+    # A gap describes an absent row rather than a supplied bad row. It remains
+    # visible in the receipt and makes the series partial, but does not inflate
+    # the supplied-row rejection ratio.
+    row_issue_statuses = {"malformed", "duplicate", "out_of_order"}
+    bad_row_count = sum(issue.status in row_issue_statuses for issue in issues)
+    observed_row_count = len(candles) + sum(issue.status == "gap" for issue in issues)
+    bad_row_ratio = bad_row_count / max(1, observed_row_count)
+    blocking = {"mixed_source", "missing"}
     local_cutoff = cutoff_utc.astimezone(spec.zone)
     market_open_buffer_active = False
     if (
@@ -761,6 +772,8 @@ def assess_quality(
     status = (
         "fail"
         if any(issue.status in blocking for issue in issues)
+        or bad_row_ratio > bad_row_threshold
+        or "stale" in {issue.status for issue in issues}
         else "partial"
         if issues
         else "pass"

@@ -278,11 +278,10 @@ async def test_empty_provider_rows_write_missing_receipt_and_continue_other_cell
     statuses = {cell.instrument_id: cell.status for cell in receipt.requested_cells}
     assert receipt.status == "partial"
     assert statuses == {"CRYPTO.PERP.BTC": "unavailable", "CRYPTO.PERP.ETH": "ready"}
+
     assert receipt.row_counts["quality_receipts"] == 2
     assert receipt.row_counts["promoted_candles"] == 1
-    quality = {
-        item["instrument_id"]: item for item in store.latest_mvp_quality_receipts()
-    }
+    quality = {item["instrument_id"]: item for item in store.latest_mvp_quality_receipts()}
     assert quality["CRYPTO.PERP.BTC"]["status"] == "missing"
     assert quality["CRYPTO.PERP.BTC"]["blocked_cells"] == 1
     assert quality["CRYPTO.PERP.BTC"]["details"]["issues"][0]["status"] == "missing"
@@ -301,6 +300,77 @@ async def test_empty_provider_rows_write_missing_receipt_and_continue_other_cell
     }
     assert daily_cells["CRYPTO.PERP.BTC"]["status"] == "unavailable"
     assert daily_cells["CRYPTO.PERP.ETH"]["status"] in {"ready", "ready_unverified"}
+
+
+@pytest.mark.asyncio
+async def test_one_malformed_row_is_excluded_but_good_rows_are_promoted(
+    tmp_path: Path,
+) -> None:
+    manifest = apply_free_source_profile(load_manifest(MANIFEST_PATH))
+    store = KlineStore(str(tmp_path / "row-quality.db"))
+
+    class RowQualityAdapter:
+        async def fetch_candles_with_receipt(self, *_args, **_kwargs) -> FetchReceipt:
+            rows = [
+                Candle.model_construct(
+                    timestamp="2026-08-01",
+                    open="not-a-number",
+                    high=102.0,
+                    low=99.0,
+                    close=101.0,
+                    volume=10.0,
+                )
+            ]
+            rows.extend(
+                Candle(
+                    timestamp=(datetime(2026, 8, 2) + timedelta(days=index)).date().isoformat(),
+                    open=100.0,
+                    high=102.0,
+                    low=99.0,
+                    close=101.0,
+                    volume=10.0,
+                )
+                for index in range(99)
+            )
+            return FetchReceipt(
+                candles=rows,
+                timeframe_transform=None,
+                source_identity={"provider_symbol": "BTC"},
+                raw_response={"row_count": 100},
+            )
+
+    receipt = await IngestionOrchestrator(
+        store, adapter_resolver=lambda _instrument: RowQualityAdapter()
+    ).run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="run-row-quality",
+            now=datetime(2026, 12, 1, tzinfo=timezone.utc),
+            instrument_ids=("CRYPTO.PERP.BTC",),
+            timeframes=("1d",),
+        )
+    )
+
+    assert receipt.requested_cells[0].status == "partial"
+    assert receipt.requested_cells[0].candle_count == 99
+    assert receipt.row_counts["promoted_candles"] == 99
+    key = CandleSeriesKey(
+        instrument_id="CRYPTO.PERP.BTC",
+        display_symbol="BTC",
+        provider_symbol="BTC",
+        source_id="hyperliquid_perpetual_public",
+        asset_class="crypto",
+        timeframe="1d",
+        adjustment_basis="raw_unadjusted",
+        manifest_version=manifest.version,
+    )
+    rows = store.query_mvp_candles(key)
+    assert len(rows) == 99
+    quality = store.latest_mvp_quality_receipts()[0]
+    assert quality["status"] == "partial"
+    assert quality["invalid_rows"] == 1
+    assert quality["details"]["issues"][0]["timestamp"] == "2026-08-01"
+    assert quality["details"]["issues"][0]["status"] == "malformed"
 
 
 @pytest.mark.asyncio
