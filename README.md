@@ -159,6 +159,24 @@ PYTHONPATH=src python3 -m ops.mvp_reliability --once \
   --manifest configs/mvp_manifest.json --db data/kline.db --interval 14400
 ```
 
+The isolated 100+100 stock observer runs the full profile with a start-anchored
+four-hour deadline. Its next cycle is due four hours after the previous cycle
+started, so a long fetch does not add scheduler drift. The A-share opening
+buffer is configurable and defaults to 10 minutes:
+
+```bash
+PYTHONPATH=src python3 -m ops.mvp_stock_seed \
+  --manifest configs/mvp_manifest.json --db /Users/wendy/datafeed-runtime-issue-71/data/kline.db \
+  --lock /Users/wendy/datafeed-runtime-issue-71/data/mvp-worker.lock \
+  --interval 14400 --a-share-market-open-buffer-minutes 10 \
+  --phase all --include-seeded --forever
+```
+
+Only CN A-share 15m/1h quality checks use this opening buffer. Forming bars
+remain excluded from storage and produce `partial`, not `failed`, during the
+buffer; after the buffer the original fail-closed rule applies. Continuous
+24x7 calendars are unchanged.
+
 The command writes only source-bound OHLCV and receipts; it does not emit
 MACD/RSI columns, synthesize missing candles, switch to a paid source, or
 expose data publicly.
