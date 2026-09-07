@@ -543,13 +543,17 @@ consumers can use without direct exchange or private SQLite access.
 
 ## 2026-09-08 - Cut MVP worker and API over to the canonical Market Data Database (#154)
 
+- The deployed stock seed now defaults to the canonical path and remains
+  fail-closed; `DATAFEED_OBSERVER_DB` is the only explicit override. The
+  worker checkout must be detached at the exact PR commit before the plist
+  switch, otherwise the old issue-71 guard rejects the cutover.
 - The issue-71 observer database is merged into `/Users/wendy/park-data/market/kline.db` with
   `ops/merge_mvp_databases.py`. Only `mvp_candles` is copied because run/receipt tables contain
   database-local IDs; the exact candle identity is the source-aware series key plus timestamp.
   Rows at or after 2026-09-02 are considered, and issue-71 wins conflicting candle values.
 - The merge is transactional and repeatable: new rows are inserted, differing conflicts are
   replaced, identical conflicts are counted, and every invocation emits a JSON receipt. The old
-  issue-71 database is retained under `.retired-YYYYMMDD` for rollback and retention review.
+  issue-71 database is retained under `.retired-20260908` for rollback and retention review.
 - Gotchas: cutover must happen while the worker is idle between its observed cycle and the next
-  `xx:05Z` run; plist files are backed up before editing; `launchctl kickstart` is limited to the
+  `xx:05Z` run; plist files are backed up before editing; `launchctl bootout/bootstrap` is limited to the
   two named MVP jobs. The 8100 Query Service and its third database path remain unchanged.

@@ -10,13 +10,14 @@ live/real-money paths are out of scope.
 set -euo pipefail
 SOURCE=/Users/wendy/datafeed-runtime-issue-71/data/kline.db
 TARGET=/Users/wendy/park-data/market/kline.db
+export DATAFEED_OBSERVER_DB="$TARGET"
 BACKUP_DIR="$HOME/park-data/market/launchd-backup-$(date +%Y%m%d)"
 mkdir -p "$BACKUP_DIR"
 cp "$HOME/Library/LaunchAgents/com.wendy.datafeed.mvp-worker.plist" "$BACKUP_DIR/"
 cp "$HOME/Library/LaunchAgents/com.wendy.datafeed.mvp-api.plist" "$BACKUP_DIR/"
 PYTHONPATH=src python -m ops.merge_mvp_databases --source "$SOURCE" --target "$TARGET" \
   --since 2026-09-02T00:00:00+00:00 --receipt "$HOME/park-data/market/issue-154-merge.json"
-mv "$SOURCE" "$HOME/datafeed-runtime-issue-71/data/kline.db.retired-$(date +%Y%m%d)"
+mv "$SOURCE" "$HOME/datafeed-runtime-issue-71/data/kline.db.retired-20260908"
 plutil -remove ProgramArguments.6 "$HOME/Library/LaunchAgents/com.wendy.datafeed.mvp-worker.plist"
 plutil -insert ProgramArguments.6 -string "$TARGET" "$HOME/Library/LaunchAgents/com.wendy.datafeed.mvp-worker.plist"
 plutil -replace EnvironmentVariables.KLINE_DB_PATH -string "$TARGET" "$HOME/Library/LaunchAgents/com.wendy.datafeed.mvp-api.plist"
@@ -37,6 +38,8 @@ cycle. Confirm 8100 is unchanged. Re-run the merge command and retain its
 zero-insert/zero-replace receipt as the idempotency check.
 
 Rollback: restore the backed-up plists with `cp`, bootout the two named jobs,
-rename the retired database back to `kline.db` only after confirming the target
-jobs are stopped, then bootstrap the two named jobs from the restored plists.
+rename `kline.db.retired-20260908` back to `kline.db` only after confirming the
+target jobs are stopped, then bootstrap the two named jobs from the restored
+plists. If the worker environment was explicitly set, unset
+`DATAFEED_OBSERVER_DB` or restore its prior value before bootstrapping.
 Do not delete either database.
