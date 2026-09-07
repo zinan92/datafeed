@@ -52,10 +52,14 @@ returned zero changes:
 `status=ok`, `database_path=/Users/wendy/park-data/market/kline.db`, and
 `build_sha=3167f7d1bc4cb19f50089891b01b94663a6efcc2`.
 
-The 8100 `/health` path returned 404 because it is not an existing route; no
-8100 plist, process, database, or API interface was changed. Its unchanged
-state remains to be checked by the owner using the existing 8100 health/query
-route.
+While the first post-cutover cycle is running, the target has advanced to
+400,949 candles and remains `PRAGMA integrity_check=ok`; the retired source
+remains `ok` with 333,140 candles.
+
+The existing 8100 service remains running at
+`/Users/wendy/datafeed-runtime-market-cutover-107`, port 8100, with
+`KLINE_DB_PATH=/Users/wendy/datafeed/data/kline.db`; `/api/health` returned
+200. No 8100 plist, process, database, or API interface was changed.
 
 ## Validation still pending
 
