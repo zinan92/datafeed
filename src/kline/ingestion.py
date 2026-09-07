@@ -376,7 +376,11 @@ class IngestionOrchestrator:
 
     @staticmethod
     def _quality_receipt(
-        run_id: str, rows: Sequence[MvpCandle], quality: QualityResult
+        run_id: str,
+        rows: Sequence[MvpCandle],
+        quality: QualityResult,
+        *,
+        key: CandleSeriesKey,
     ) -> QualityReceiptWrite:
         counts = {
             status: sum(issue.status == status for issue in quality.issues)
@@ -390,14 +394,12 @@ class IngestionOrchestrator:
                 "partial",
             }
         }
-        key = rows[0].key if rows else None
-        if key is None:
-            raise IngestionError("quality receipt requires a series key")
+        receipt_key = rows[0].key if rows else key
         details = {"issues": [issue.__dict__ for issue in quality.issues]}
         return QualityReceiptWrite(
             run_id=run_id,
-            key=key,
-            status=quality.status,
+            key=receipt_key,
+            status="missing" if not rows else quality.status,
             gaps=counts["gap"],
             duplicates=counts["duplicate"],
             invalid_rows=counts["malformed"],
@@ -648,7 +650,9 @@ class IngestionOrchestrator:
                         market_open_buffer_minutes=plan.market_open_buffer_minutes,
                     )
                     quality_counts[quality.status] = quality_counts.get(quality.status, 0) + 1
-                    quality_receipt = self._quality_receipt(plan.run_id, mvp_rows, quality)
+                    quality_receipt = self._quality_receipt(
+                        plan.run_id, mvp_rows, quality, key=key
+                    )
                     qualities.append(quality_receipt)
                     response_hash = None
                     if fetch_receipt.raw_response is not None:
@@ -658,7 +662,7 @@ class IngestionOrchestrator:
                         SourceObservationWrite(
                             run_id=plan.run_id,
                             key=key,
-                            success=quality.status != "fail",
+                            success=quality.status != "fail" or not mvp_rows,
                             request_start=request_start,
                             request_end=end,
                             response_hash=response_hash,
@@ -736,7 +740,13 @@ class IngestionOrchestrator:
                                     ),
                                 )
                             )
-                    status = "ready" if quality.status == "pass" else quality.status
+                    status = (
+                        "ready"
+                        if quality.status == "pass"
+                        else "unavailable"
+                        if not mvp_rows
+                        else quality.status
+                    )
                     cell_error = None if quality.status != "fail" else "quality gate failed"
                     if source_attempts[-1].get("watermark_regression_suppressed"):
                         status = "partial"

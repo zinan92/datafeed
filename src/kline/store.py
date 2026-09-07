@@ -539,7 +539,7 @@ class KlineStore:
             if identity in quality_keys:
                 raise StorageError("duplicate quality receipt identity in one run")
             quality_keys.add(identity)
-            if quality.status not in {"pass", "partial", "blocked", "fail"}:
+            if quality.status not in {"pass", "partial", "blocked", "fail", "missing"}:
                 raise StorageError("quality receipt status is invalid")
             for field_name in ("gaps", "duplicates", "invalid_rows", "blocked_cells"):
                 value = getattr(quality, field_name)

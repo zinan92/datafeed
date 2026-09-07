@@ -1,5 +1,36 @@
 # Decision Log
 
+## 2026-09-07 - Empty MVP rows remain an explicit unavailable cell
+
+Objective: prevent one provider response with zero rows from terminating the
+MVP worker cycle while preserving truthful quality and health receipts.
+
+### Decisions
+
+- Reuse the already-derived `instrument + timeframe + manifest` series key at
+  the ingestion call site when `_quality_receipt` receives no rows.
+- Persist an existing `missing` quality status for an empty response, retain
+  the `missing` issue detail and blocked-cell count, and expose the cell as
+  `unavailable` in the run and health matrix. No candle or watermark is
+  promoted.
+- Treat an empty upstream response as an observed attempt for health read-model
+  purposes, so the persisted cell is `unavailable` rather than a whole-run
+  `failed` status. Other cells in the same run continue normally.
+
+### Gotchas
+
+- The real two-cycle launchd acceptance remains owner-owned: this worktree did
+  not restart or reload `com.wendy.datafeed.mvp-worker` and cannot claim fresh
+  stderr or launchd-run evidence.
+- `missing` is a quality-receipt status, while `unavailable` is the dashboard
+  cell status; they are intentionally distinct layers of the contract.
+
+### Verification
+
+- `PYTHONPATH=src uv run pytest -q tests/test_ingestion.py tests/test_mvp_storage.py tests/test_health_matrix.py` -> 38 passed.
+- See `docs/verification/issue-153-empty-rows-receipt-2026-09-07.md` for the
+  local regression evidence and owner deployment command.
+
 ## 2026-07-09 - Trading live data path
 
 Objective: make datafeed reusable as a standard market-data layer while keeping research/cache data clearly separated from trading/live data.

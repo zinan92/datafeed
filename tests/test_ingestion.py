@@ -8,6 +8,7 @@ import httpx
 import pytest
 
 from kline.free_source_profile import apply_free_source_profile
+from kline.health_matrix import build_mvp_health_matrix
 from kline.ingestion import IngestionError, IngestionOrchestrator, IngestionPlan
 from kline.models import AssetClass, Candle, Timeframe, TimeframeTransform
 from kline.mvp_manifest import load_manifest
@@ -235,6 +236,71 @@ async def test_run_once_promotes_ready_crypto_cells_and_keeps_blocked_cells_expl
         item["policy"].get("source_identity", {}).get("provider_symbol") == "BTC"
         for item in observations
     )
+
+
+@pytest.mark.asyncio
+async def test_empty_provider_rows_write_missing_receipt_and_continue_other_cells(
+    tmp_path: Path,
+) -> None:
+    manifest = apply_free_source_profile(load_manifest(MANIFEST_PATH))
+    store = KlineStore(str(tmp_path / "empty-rows.db"))
+    populated = FakeCryptoAdapter()
+
+    class EmptyRowsAdapter:
+        async def fetch_candles_with_receipt(
+            self, ticker, timeframe, *, start, end, limit
+        ) -> FetchReceipt:
+            if ticker == "BTC":
+                return FetchReceipt(
+                    candles=[],
+                    timeframe_transform=None,
+                    source_identity={"provider_symbol": ticker},
+                    raw_response={"row_count": 0},
+                )
+            return await populated.fetch_candles_with_receipt(
+                ticker, timeframe, start=start, end=end, limit=limit
+            )
+
+    receipt = await IngestionOrchestrator(
+        store,
+        adapter_resolver=lambda _instrument: EmptyRowsAdapter(),
+    ).run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="run-empty-rows",
+            now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+            instrument_ids=("CRYPTO.PERP.BTC", "CRYPTO.PERP.ETH"),
+            timeframes=("1d",),
+            fetch_limit=10,
+        )
+    )
+
+    statuses = {cell.instrument_id: cell.status for cell in receipt.requested_cells}
+    assert receipt.status == "partial"
+    assert statuses == {"CRYPTO.PERP.BTC": "unavailable", "CRYPTO.PERP.ETH": "ready"}
+    assert receipt.row_counts["quality_receipts"] == 2
+    assert receipt.row_counts["promoted_candles"] == 1
+    quality = {
+        item["instrument_id"]: item for item in store.latest_mvp_quality_receipts()
+    }
+    assert quality["CRYPTO.PERP.BTC"]["status"] == "missing"
+    assert quality["CRYPTO.PERP.BTC"]["blocked_cells"] == 1
+    assert quality["CRYPTO.PERP.BTC"]["details"]["issues"][0]["status"] == "missing"
+    assert quality["CRYPTO.PERP.ETH"]["status"] == "pass"
+    matrix = build_mvp_health_matrix(
+        manifest,
+        store,
+        now=datetime(2026, 9, 1, 12, tzinfo=timezone.utc),
+        instrument_ids=("CRYPTO.PERP.BTC", "CRYPTO.PERP.ETH"),
+        free_source_ids={"hyperliquid_perpetual_public"},
+    )
+    daily_cells = {
+        cell["instrument_id"]: cell
+        for cell in matrix["cells"]
+        if cell["timeframe"] == "1d"
+    }
+    assert daily_cells["CRYPTO.PERP.BTC"]["status"] == "unavailable"
+    assert daily_cells["CRYPTO.PERP.ETH"]["status"] in {"ready", "ready_unverified"}
 
 
 @pytest.mark.asyncio
