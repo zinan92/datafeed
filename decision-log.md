@@ -666,3 +666,17 @@ consumers can use without direct exchange or private SQLite access.
 - Gotchas: cutover must happen while the worker is idle between its observed cycle and the next
   `xx:05Z` run; plist files are backed up before editing; `launchctl bootout/bootstrap` is limited to the
   two named MVP jobs. The 8100 Query Service and its third database path remain unchanged.
+
+## 2026-09-08 - Refresh Watchlist manifest from registry before daily ingestion (#169)
+
+- The Watchlist daily job resolves `zinan92/watchlist` `--ref` to one commit, fetches that commit's
+  `watchlist.yaml`, validates it, and atomically writes the registry snapshot and generated manifest
+  before the existing daily seed is allowed to run. Fetch, parse, or validation failure writes a
+  versioned blocker receipt and stops the job with a non-zero exit.
+- `watchlist-registry-receipt-v1` records registry SHA, source SHA-256, generated manifest hash,
+  added/removed instrument IDs, `changed`, and observation time. Re-running the same revision with
+  the same generated manifest records `changed=false`; receipt output is configurable and defaults to
+  `~/park-data/market/watchlist-registry-receipt.json`.
+- Gotchas: `configs/watchlist_manifest.json` is a retained legacy consumer path and is not edited by
+  this story; the daily seed now defaults to generated `configs/watchlist_registry_manifest.json`.
+  The production plist is changed in-repository only; it is not loaded or restarted by this issue.

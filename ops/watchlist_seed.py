@@ -26,7 +26,7 @@ from ops.mvp_stock_seed import _batch_report, _batches, _classify_attempt
 
 MARKET_DATA_DB = Path("/Users/wendy/park-data/market/kline.db")
 WATCHLIST_LOCK = Path("/Users/wendy/park-data/market/watchlist-worker.lock")
-DEFAULT_MANIFEST = Path("configs/watchlist_manifest.json")
+DEFAULT_MANIFEST = Path("configs/watchlist_registry_manifest.json")
 
 
 def _exact_path(value: str | Path) -> Path:
