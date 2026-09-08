@@ -289,6 +289,54 @@ async def test_screening_derived_four_hour_rows_get_fallback_transform_receipt(
 
 
 @pytest.mark.asyncio
+async def test_screening_native_four_hour_rows_do_not_require_transform_receipt(
+    tmp_path: Path,
+) -> None:
+    manifest = apply_screening_scope(load_manifest(MANIFEST_PATH))
+    store = KlineStore(str(tmp_path / "screening-native-4h.db"))
+
+    class NativeAdapter:
+        async def fetch_candles_with_receipt(
+            self, _ticker: str, timeframe: Timeframe, **_kwargs
+        ) -> FetchReceipt:
+            return FetchReceipt(
+                candles=[
+                    Candle(
+                        timestamp="2026-09-07T01:30:00+00:00",
+                        open=100,
+                        high=102,
+                        low=99,
+                        close=101,
+                        volume=10,
+                    )
+                ],
+                timeframe_transform=TimeframeTransform(
+                    raw_timeframe=timeframe,
+                    timeframe_origin="native",
+                    aggregation={"rule": "native_passthrough"},
+                ),
+                source_identity={"selected_source": "hyperliquid"},
+                raw_response={"row_count": 1},
+            )
+
+    receipt = await IngestionOrchestrator(
+        store, adapter_resolver=lambda _instrument: NativeAdapter()
+    ).run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="screening-native-4h",
+            now=datetime(2026, 9, 8, 12, tzinfo=timezone.utc),
+            instrument_ids=("CRYPTO.PERP.BTC",),
+            timeframes=("1d", "4h"),
+        )
+    )
+
+    assert receipt.status == "success"
+    assert receipt.row_counts["transform_receipts"] == 0
+    assert store.mvp_storage_health()["candles"] == 2
+
+
+@pytest.mark.asyncio
 async def test_empty_provider_rows_write_missing_receipt_and_continue_other_cells(
     tmp_path: Path,
 ) -> None:
