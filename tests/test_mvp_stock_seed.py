@@ -11,6 +11,8 @@ from ops.mvp_stock_seed import (
     _batch_report,
     _batches,
     _classify_attempt,
+    _configured_observer_db,
+    _parser,
     remaining_stock_ids,
     stock_cycle_wait_seconds,
     stock_instrument_ids,
@@ -139,6 +141,23 @@ def test_batches_are_deterministic_and_rate_errors_are_classified() -> None:
 def test_stock_seed_refuses_non_observer_database(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="refuses non-observer database"):
         validate_seed_target(tmp_path / "unsafe.db")
+
+
+def test_stock_seed_defaults_to_canonical_market_database() -> None:
+    assert _configured_observer_db() == Path.home() / "park-data/market/kline.db"
+
+
+def test_stock_seed_allows_explicit_observer_database_override(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    override = Path.home() / "tmp/datafeed-observer.db"
+    monkeypatch.setenv("DATAFEED_OBSERVER_DB", str(override))
+
+    import ops.mvp_stock_seed as seed
+
+    assert seed._configured_observer_db() == override.resolve()
+    assert seed.validate_seed_target(override)[0] == override.resolve()
+    assert _parser().parse_args([]).db == str(override.resolve())
 
 
 def test_stock_seed_refuses_non_canonical_lock() -> None:

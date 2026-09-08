@@ -14,6 +14,7 @@ import asyncio
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 import json
+import os
 from pathlib import Path
 import re
 import signal
@@ -37,7 +38,17 @@ DEFAULT_MAX_RETRIES = 2
 DEFAULT_RETRY_BACKOFF_SECONDS = 1.0
 DEFAULT_PROVIDER_TIMEOUT_SECONDS = 45.0
 DEFAULT_A_SHARE_MARKET_OPEN_BUFFER_MINUTES = 10
-SAFE_OBSERVER_DB = Path("/Users/wendy/datafeed-runtime-issue-71/data/kline.db")
+DEFAULT_OBSERVER_DB = Path("~/park-data/market/kline.db").expanduser()
+
+
+def _configured_observer_db() -> Path:
+    """Return the one allowed observer database for this process."""
+
+    configured = os.environ.get("DATAFEED_OBSERVER_DB", str(DEFAULT_OBSERVER_DB))
+    return Path(configured).expanduser().resolve()
+
+
+SAFE_OBSERVER_DB = _configured_observer_db()
 _RATE_MARKERS = ("429", "rate limit", "too many", "throttl", "quota")
 _FORBIDDEN_MARKERS = ("403", "forbidden", "blocked")
 _SERVER_MARKERS = ("500", "502", "503", "504", "server error", "bad gateway", "service unavailable")
@@ -134,15 +145,16 @@ def validate_seed_target(
 ) -> tuple[Path, Path]:
     """Fail closed unless the seed targets the isolated observer database."""
 
+    observer_db = _configured_observer_db()
     database = Path(db_path).expanduser().resolve()
-    if database != SAFE_OBSERVER_DB.resolve():
-        raise ValueError(f"stock seed refuses non-observer database; expected {SAFE_OBSERVER_DB}")
+    if database != observer_db:
+        raise ValueError(f"stock seed refuses non-observer database; expected {observer_db}")
     lock_file = (
         Path(lock_path).expanduser().resolve()
         if lock_path
-        else SAFE_OBSERVER_DB.with_name("mvp-worker.lock").resolve()
+        else observer_db.with_name("mvp-worker.lock")
     )
-    canonical_lock = SAFE_OBSERVER_DB.with_name("mvp-worker.lock").resolve()
+    canonical_lock = observer_db.with_name("mvp-worker.lock")
     if lock_file != canonical_lock:
         raise ValueError(f"stock seed requires the canonical observer lock: {canonical_lock}")
     return database, lock_file
@@ -413,7 +425,7 @@ async def run_stock_seed_once(
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Seed remaining 100+100 MVP stock identities")
     parser.add_argument("--manifest", default="configs/mvp_manifest.json")
-    parser.add_argument("--db", default=str(SAFE_OBSERVER_DB))
+    parser.add_argument("--db", default=str(_configured_observer_db()))
     parser.add_argument("--lock", default=None)
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
     parser.add_argument("--request-interval", type=float, default=DEFAULT_REQUEST_INTERVAL_SECONDS)
