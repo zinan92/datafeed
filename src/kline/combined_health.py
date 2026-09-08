@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 from typing import Any, Mapping
 
-from kline.free_source_profile import apply_free_source_profile
+from kline.free_source_profile import apply_screening_scope
 from kline.health_matrix import (
     MATRIX_SCOPE_FULL,
     MATRIX_SCOPE_WATCHLIST,
@@ -157,7 +157,7 @@ def build_combined_health_matrix(
     """Build one read-only snapshot over the two intentionally separate stores."""
 
     root = Path(__file__).resolve().parents[2]
-    screening_manifest = apply_free_source_profile(
+    screening_manifest = apply_screening_scope(
         load_manifest(root / "configs" / "mvp_manifest.json")
     )
     watchlist_manifest = load_watchlist_manifest(

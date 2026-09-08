@@ -23,6 +23,28 @@
 - `REGISTRY.md` is intentionally not changed in this issue because the owner rule
   requires its post-merge update.
 
+## 2026-09-08 - Scope Screening health and worker to 1d + 4h (#157)
+
+### Decisions
+
+- Screening stock identities use free-source adapters only for `1d` and `4h`; `15m`, `1h`, and
+  `1w` are explicit `not_applicable` cells and are excluded from coverage ratios and aggregate
+  status. The existing `/api/candles` query path remains able to read already-persisted bars.
+- Added `--scope screening` to the existing `ops.mvp_reliability` worker. It runs the full 216
+  manifest with an explicit `1d + 4h` ingestion plan and keeps the four-hour scheduling/lock
+  behavior. Watchlist daily scheduling remains independent.
+- Corrected the retired A-share manifest identity `CN.A.601989` to `CN.A.600150` and
+  `600150.SH`; no historical data is deleted or rewritten.
+- This branch does not update `REGISTRY.md`, launchd plists, running services, or production
+  databases. Screening launch and live coverage acceptance are owner-owned after #155.
+
+### Gotchas
+
+- The local after snapshot in `docs/verification/issue-157-timeframe-scope-2026-09-08.md` is a
+  contract fixture, not proof of live 4h/1d coverage. Do not mark `last_success_at` or either
+  90% gate verified until the owner has started the canonical worker and saved its receipts.
+- Existing 15m/1h rows remain queryable; changing their health applicability does not delete them.
+
 ## 2026-09-08 - Row-level quality promotion for MVP ingestion (#156)
 
 Objective: preserve trustworthy rows when a small number of upstream bars are

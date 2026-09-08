@@ -14,6 +14,7 @@ from ops.mvp_reliability import (
     audit_reliability,
     demo_manifest,
     run_demo_once,
+    run_screening_once,
 )
 
 
@@ -97,3 +98,24 @@ def test_run_times_are_newest_first_for_the_timeline() -> None:
         datetime(2026, 9, 1, 6, tzinfo=timezone.utc),
     )
     assert [row["run_id"] for row in rows] == ["new", "old"]
+
+
+@pytest.mark.asyncio
+async def test_screening_once_requests_only_daily_and_four_hour(tmp_path: Path) -> None:
+    result = await run_screening_once(
+        db_path=tmp_path / "screening.db",
+        manifest_path=MANIFEST_PATH,
+        now=datetime(2026, 9, 8, 12, tzinfo=timezone.utc),
+        adapter_resolver=lambda _instrument: None,
+    )
+    assert result["scope"] == "screening"
+    assert result["timeframes"] == ["1d", "4h"]
+    assert result["health"]["scope"]["instrument_count"] == 216
+    assert result["health"]["coverage"]["15m"]["not_applicable"] == 208
+    assert result["health"]["coverage"]["1h"]["not_applicable"] == 207
+    assert result["health"]["coverage"]["1w"]["not_applicable"] == 200
+    assert all(
+        cell["timeframe"] in {"1d", "4h"}
+        for cell in result["receipt"]["requested_cells"]
+        if cell["status"] not in {"not_applicable", "blocked_for_entitlement"}
+    )

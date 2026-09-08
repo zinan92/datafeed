@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from kline.app import create_app
-from kline.free_source_profile import apply_free_source_profile
+from kline.free_source_profile import apply_free_source_profile, apply_screening_scope
 from kline.health_matrix import (
     MVP_DEMO_INSTRUMENT_IDS,
     _entitlement_block_reason,
@@ -207,6 +207,36 @@ def test_not_applicable_cell_keeps_the_full_null_payload_shape(tmp_path: Path) -
     assert daily["applicability"] == "applicable"
     assert daily["status"] == "blocked"
     assert daily["status_reason"] == "entitlement_unverified"
+
+
+def test_screening_free_profile_scopes_stocks_to_daily_and_four_hour(tmp_path: Path) -> None:
+    manifest = apply_screening_scope(load_manifest(MANIFEST_PATH))
+    store = KlineStore(str(tmp_path / "screening-scope.db"))
+    snapshot = build_mvp_health_matrix(
+        manifest,
+        store,
+        now=datetime(2026, 9, 8, 12, tzinfo=timezone.utc),
+    )
+
+    stock_cells = [
+        cell
+        for cell in snapshot["cells"]
+        if cell["instrument_id"].startswith(("CN.A.", "US.EQ."))
+    ]
+    assert {cell["timeframe"] for cell in stock_cells if cell["applicability"] == "applicable"} == {
+        "1d",
+        "4h",
+    }
+    assert sum(
+        cell["applicability"] == "not_applicable"
+        for cell in stock_cells
+        if cell["timeframe"] == "15m"
+    ) == 200
+    assert sum(
+        cell["applicability"] == "not_applicable"
+        for cell in stock_cells
+        if cell["timeframe"] == "1h"
+    ) == 200
 
 
 def test_full_scope_preserves_manifest_cartesian_product_and_coverage_invariants(
@@ -486,14 +516,12 @@ def test_health_matrix_api_and_ui_are_chinese_and_read_only(
         "instrument_count": 216,
         "universes": {"a_share": 100, "us_stock": 100, "cross_market": 16},
     }
-    assert (
-        next(cell for cell in payload["cells"] if cell["display_symbol"] == "AAPL")["source_id"]
-        == "yahoo_finance_free"
-    )
-    assert (
-        next(cell for cell in payload["cells"] if cell["display_symbol"] == "600519")["source_id"]
-        == "tencent_stock_free"
-    )
+    aapl = next(cell for cell in payload["cells"] if cell["display_symbol"] == "AAPL")
+    assert aapl["source_id"] is None
+    assert aapl["applicability"] == "not_applicable"
+    stock = next(cell for cell in payload["cells"] if cell["display_symbol"] == "600519")
+    assert stock["source_id"] is None
+    assert stock["applicability"] == "not_applicable"
     assert payload["refresh"]["poll_interval_seconds"] == 30
     assert payload["refresh"]["request_timeout_seconds"] == 10
     assert page.status_code == 200
