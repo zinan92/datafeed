@@ -24,7 +24,7 @@ import httpx
 
 BINANCE_URL = "https://fapi.binance.com/fapi/v1/klines"
 HYPERLIQUID_TESTNET_URL = "https://api.hyperliquid-testnet.xyz/info"
-POLL_SECONDS = 20
+POLL_SECONDS = 5
 STALE_SECONDS = 90
 
 INSTRUMENTS = {
@@ -80,6 +80,37 @@ def percentile95(values: Iterable[float]) -> float | None:
         return None
     # nearest-rank p95, deterministic and conservative for small samples
     return ordered[max(0, math.ceil(len(ordered) * 0.95) - 1)]
+
+
+def percentile50(values: Iterable[float]) -> float | None:
+    ordered = sorted(float(v) for v in values)
+    if not ordered:
+        return None
+    return ordered[max(0, math.ceil(len(ordered) * 0.50) - 1)]
+
+
+def age_stats(values: Iterable[float]) -> dict[str, float | int | None]:
+    ordered = sorted(float(v) for v in values)
+    return {
+        "p50": percentile50(ordered),
+        "p95": percentile95(ordered),
+        "max": max(ordered) if ordered else None,
+        "samples": len(ordered),
+    }
+
+
+def next_aligned_run_delay(now: datetime, interval: int = POLL_SECONDS) -> float:
+    """Return the delay to the next poll slot, starting one second after a minute."""
+    interval = max(1, int(interval))
+    epoch = now.timestamp()
+    minute_start = math.floor(epoch / 60) * 60
+    target = minute_start + 1
+    while target <= epoch + 1e-9:
+        target += interval
+        if target >= minute_start + 60:
+            target = minute_start + 61
+            break
+    return max(0.0, target - epoch)
 
 
 def _bar(instrument_id: str, item: Any, fetched: datetime) -> ExecutionBar:
@@ -138,6 +169,10 @@ class ExecutionMarketStore:
           run_id TEXT PRIMARY KEY, fetched_at TEXT NOT NULL, status TEXT NOT NULL,
           p95_age_seconds REAL, bar_count INTEGER NOT NULL, error TEXT
         );
+        CREATE TABLE IF NOT EXISTS execution_market_read_age_samples (
+          instrument_id TEXT NOT NULL, sampled_at TEXT NOT NULL,
+          age_seconds REAL NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS execution_market_events (
           id INTEGER PRIMARY KEY AUTOINCREMENT, event TEXT NOT NULL,
           instrument_id TEXT NOT NULL, occurred_at TEXT NOT NULL, detail TEXT
@@ -163,12 +198,36 @@ class ExecutionMarketStore:
         ).fetchall()
         return [ExecutionBar(*row) for row in rows]
 
-    def write(self, bars: list[ExecutionBar], *, run_id: str, fetched_at: datetime, status: str = "ok", error: str | None = None) -> dict[str, Any]:
+    def write(self, bars: list[ExecutionBar], *, run_id: str, fetched_at: datetime, sampled_at: datetime | None = None, status: str = "ok", error: str | None = None) -> dict[str, Any]:
+        sampled_at = sampled_at or fetched_at
         with self.db:
             for bar in bars:
                 self.db.execute("""INSERT INTO execution_market_candles VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
                   ON CONFLICT(instrument_id,close_time) DO UPDATE SET open_time=excluded.open_time, open=excluded.open, high=excluded.high, low=excluded.low, close=excluded.close, volume=excluded.volume, fetched_at=excluded.fetched_at""", tuple(asdict(bar).values()))
-            receipt = {"schema_version": "execution-market-lag-v1", "run_id": run_id, "fetched_at": iso(fetched_at), "status": status, "p95_age_seconds": percentile95(b.age_seconds for b in bars), "bar_count": len(bars), "error": error}
+            read_age: dict[str, dict[str, float | int | None]] = {}
+            for instrument_id in INSTRUMENTS:
+                latest = self.latest(instrument_id, limit=1)
+                if not latest:
+                    continue
+                age = (sampled_at - datetime.fromisoformat(latest[0].close_time.replace("Z", "+00:00"))).total_seconds()
+                self.db.execute(
+                    "INSERT INTO execution_market_read_age_samples VALUES (?,?,?)",
+                    (instrument_id, iso(sampled_at), age),
+                )
+                rows = self.db.execute(
+                    "SELECT age_seconds FROM execution_market_read_age_samples WHERE instrument_id=?",
+                    (instrument_id,),
+                ).fetchall()
+                read_age[instrument_id] = age_stats(row[0] for row in rows)
+            fetch_age = {
+                instrument_id: age_stats(bar.age_seconds for bar in bars if bar.instrument_id == instrument_id)
+                for instrument_id in INSTRUMENTS
+                if any(bar.instrument_id == instrument_id for bar in bars)
+            }
+            receipt = {"schema_version": "execution-market-lag-v1", "run_id": run_id, "fetched_at": iso(fetched_at), "status": status, "p95_age_seconds": percentile95(b.age_seconds for b in bars), "fetch_age_seconds": fetch_age, "bar_count": len(bars), "error": error, "read_age_seconds": read_age}
+            receipt["read_age_p50_seconds"] = {key: value["p50"] for key, value in read_age.items()}
+            receipt["read_age_p95_seconds"] = {key: value["p95"] for key, value in read_age.items()}
+            receipt["read_age_max_seconds"] = {key: value["max"] for key, value in read_age.items()}
             self.db.execute("INSERT INTO execution_market_lag_receipts VALUES (?,?,?,?,?,?)", tuple(receipt[k] for k in ("run_id", "fetched_at", "status", "p95_age_seconds", "bar_count", "error")))
         return receipt
 
@@ -230,7 +289,7 @@ def run_once(db_path: str | Path, receipt_path: str | Path, *, lock_path: str | 
                 store.mark_success(instrument_id)
             except ProviderUnavailable as exc:
                 errors.append({"instrument_id": instrument_id, "error": str(exc), "stale": str(store.mark_failure(instrument_id, fetched, str(exc))).lower()})
-        receipt = store.write(all_bars, run_id=f"execution-{uuid.uuid4().hex[:12]}", fetched_at=fetched, status="stale" if any(e["stale"] == "true" for e in errors) else ("partial" if errors else "ok"), error=json.dumps(errors) if errors else None)
+        receipt = store.write(all_bars, run_id=f"execution-{uuid.uuid4().hex[:12]}", fetched_at=fetched, sampled_at=clock(), status="stale" if any(e["stale"] == "true" for e in errors) else ("partial" if errors else "ok"), error=json.dumps(errors) if errors else None)
     finally:
         if own_client: client.close()
         store.close()
@@ -241,8 +300,8 @@ def run_once(db_path: str | Path, receipt_path: str | Path, *, lock_path: str | 
 
 async def supervise(args: argparse.Namespace) -> None:
     while True:
+        await asyncio.sleep(next_aligned_run_delay(utc_now(), args.interval))
         run_once(args.db, args.receipt, lock_path=args.lock)
-        await asyncio.sleep(args.interval)
 
 
 def main() -> int:
