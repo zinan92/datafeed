@@ -273,6 +273,15 @@ class ExecutionMarketStore:
                     (bar.instrument_id,),
                 ).fetchall()
                 last_age[bar.instrument_id] = age_stats(row[0] for row in rows)
+            for instrument_id in INSTRUMENTS:
+                if instrument_id in last_age:
+                    continue
+                rows = self.db.execute(
+                    "SELECT age_seconds FROM execution_market_last_age_samples WHERE instrument_id=?",
+                    (instrument_id,),
+                ).fetchall()
+                if rows:
+                    last_age[instrument_id] = age_stats(row[0] for row in rows)
         return last_age
 
     def mark_failure(self, instrument_id: str, now: datetime, error: str) -> bool:
