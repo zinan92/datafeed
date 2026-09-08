@@ -7,7 +7,7 @@ BACKUP_DIR="${BACKUP_DIR:-$HOME/park-data/launchd-backup-20260908}"
 RECEIPT_PATH="${RECEIPT_PATH:-$HOME/park-data/datafeed/release_receipt.json}"
 WORKER_LOG="${WORKER_LOG:-$HOME/Library/Logs/datafeed/mvp-worker.stdout.log}"
 SCRIPT_ROOT="${0:A:h}"
-JOBS=(com.wendy.datafeed com.wendy.datafeed.mvp-api com.wendy.datafeed.mvp-worker com.wendy.datafeed.watchlist-daily com.wendy.datafeed.health-dashboard)
+JOBS=(com.wendy.datafeed com.wendy.datafeed.mvp-api com.wendy.datafeed.mvp-worker com.wendy.datafeed.watchlist-daily com.wendy.datafeed.health-dashboard com.wendy.datafeed.execution-market)
 
 [[ $# -eq 1 ]] || { print -u2 "usage: $0 <sha>"; exit 2; }
 [[ -d "$CANONICAL_ROOT/.git" ]] || { print -u2 "canonical checkout missing: $CANONICAL_ROOT"; exit 1; }

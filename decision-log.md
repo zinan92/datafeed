@@ -1,5 +1,26 @@
 # Decision Log
 
+## 2026-09-08 - Isolated execution-market 1m ingestion (#171)
+
+### Decisions
+
+- Execution bars use a dedicated `execution_market_*` SQLite table set and a
+  separate lock/process; the existing 8100 database, API, and four-hour worker
+  are not changed.
+- The first two identities are fixed to `XAUUSDT.BINANCE` via public Binance
+  USD-M klines and `BTC-USD-PERP.HYPERLIQUID` via the Hyperliquid testnet
+  public candle endpoint. There is no venue fallback.
+- Bars are keyed by `(instrument_id, close_time)`, forming bars are discarded,
+  and upserts make replay/backfill idempotent. Each run writes a lag receipt;
+  an outage lasting 90 seconds writes `stale` and an
+  `execution_market_unavailable` event.
+
+### Gotchas
+
+- The 30-minute p95 acceptance window and launchd publication remain owner
+  verification items. This PR's one-shot evidence uses a temporary database
+  and receipt path; it does not touch the active paper grid or launchd.
+
 ## 2026-09-08 - Pair Screening derived 4h candles with transform receipts (#166)
 
 ### Decisions
