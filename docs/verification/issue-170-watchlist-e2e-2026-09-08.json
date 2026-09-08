@@ -1,0 +1,22 @@
+{
+  "added_count": 0,
+  "after_registry_sha": "29ce3c0ad6c6d5f822c860c42ae5ccd251c240d2",
+  "base_url": "http://127.0.0.1:8100",
+  "before_registry_sha": "30ba250fcb6fddff08eb5bbe84c895f2ce8a2ad6",
+  "instrument_delta_count": 0,
+  "legacy_manifest_audit": {
+    "not_changed": true,
+    "path": "configs/watchlist_manifest.json",
+    "reason": "#174 migrated daily seed to configs/watchlist_registry_manifest.json; market_query still loads the retained legacy path",
+    "references": [
+      "src/kline/market_query.py:323"
+    ],
+    "status": "confirmed_legacy_src_reference"
+  },
+  "observed_at": "2026-09-08T03:08:02+00:00",
+  "real_daily_verification": "owner_pending",
+  "removed_count": 0,
+  "rows": [],
+  "schema_version": "watchlist-e2e-verification-v1",
+  "status": "pass"
+}
