@@ -1,5 +1,28 @@
 # Decision Log
 
+## 2026-09-08 - Consolidate datafeed launchd jobs on one canonical checkout (#155)
+
+### Decisions
+
+- The five product runtime jobs use `/Users/wendy/park-runtime/datafeed` as their
+  single source checkout; a release is a detached, clean checkout at an explicit
+  Git SHA followed by per-job `bootout` and `bootstrap`.
+- `ops/launchd/` owns the five plist contracts. Database paths remain unchanged:
+  8100 keeps the resident database, while the MVP and dashboard paths keep their
+  existing market/observer database assignments.
+- `ops/release.sh` creates a dated launchd backup, refuses a dirty checkout, checks
+  the four-hour worker safety window, renders the exact release SHA, restarts each
+  job, and writes an external release receipt.
+
+### Gotchas
+
+- The receipt is stored outside the Git checkout so the deployed checkout remains
+  clean and can be independently verified.
+- A launchd `running` state alone is not acceptance evidence; health identity and
+  the #134 byte-level consumer comparison must be checked after restart.
+- `REGISTRY.md` is intentionally not changed in this issue because the owner rule
+  requires its post-merge update.
+
 ## 2026-09-08 - Row-level quality promotion for MVP ingestion (#156)
 
 Objective: preserve trustworthy rows when a small number of upstream bars are
