@@ -32,6 +32,18 @@ def test_forming_bar_is_excluded_and_p95_is_deterministic():
     assert age_stats([10, 20, 30, 40]) == {"p50": 20.0, "p95": 40.0, "max": 40.0, "samples": 4}
 
 
+def test_forming_price_is_stored_separately_from_completed_candles(tmp_path):
+    from kline.execution_market.worker import ExecutionBar
+    store = ExecutionMarketStore(tmp_path / "execution.db")
+    completed = ExecutionBar("XAUUSDT.BINANCE", "2026-09-08T11:59:00Z", "2026-09-08T11:59:59Z", 1, 2, 0.5, 100, 3, "binance_usdm_futures", "binance", "production", "2026-09-08T12:00:00Z")
+    forming = ExecutionBar("XAUUSDT.BINANCE", "2026-09-08T12:00:00Z", "2026-09-08T12:00:59.999Z", 1, 2, 0.5, 101, 3, "binance_usdm_futures", "binance", "production", "2026-09-08T12:00:10Z")
+    store.write([completed], run_id="r1", fetched_at=datetime(2026, 9, 8, 12, tzinfo=timezone.utc))
+    store.write_forming([forming], sampled_at=datetime(2026, 9, 8, 12, 0, 10, tzinfo=timezone.utc))
+    assert store.latest("XAUUSDT.BINANCE")[0].close == 100
+    assert store.db.execute("select price from execution_market_forming_quotes").fetchone()[0] == 101
+    store.close()
+
+
 def test_poll_slots_are_one_second_after_minute_and_interval_aligned():
     now = datetime(2026, 9, 8, 12, 0, 59, tzinfo=timezone.utc)
     assert next_aligned_run_delay(now, 5) == 2

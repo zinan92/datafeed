@@ -50,7 +50,7 @@ from kline.provenance import (
 )
 from kline.quality import QualityReport, analyze_candles
 from kline.registry import get_adapter_for_source, get_store, provider_status, runtime_status
-from kline.execution_market.worker import ExecutionBar, INSTRUMENTS, STALE_SECONDS
+from kline.execution_market.worker import ExecutionBar, INSTRUMENTS, LAST_PRICE_STALE_SECONDS, STALE_SECONDS
 
 router = APIRouter()
 _mvp_matrix_last_success_at: str | None = None
@@ -79,7 +79,7 @@ def _execution_market_payload(venue: str, instrument: str, limit: int) -> dict[s
     match = _execution_instrument(venue, instrument)
     if not match:
         return {
-            "schema_version": "execution-market-v1",
+            "schema_version": "execution-market-v2",
             "venue": venue,
             "instrument": instrument,
             "price": None,
@@ -88,6 +88,10 @@ def _execution_market_payload(venue: str, instrument: str, limit: int) -> dict[s
             "source": None,
             "observed_at": None,
             "age_seconds": None,
+            "last_price": None,
+            "price_time": None,
+            "last_age_seconds": None,
+            "last_price_fresh": False,
             "bars": [],
             "reason": "unsupported_instrument",
         }
@@ -95,6 +99,7 @@ def _execution_market_payload(venue: str, instrument: str, limit: int) -> dict[s
     db_path = _execution_market_db()
     now = datetime.now(timezone.utc)
     now_iso = now.isoformat().replace("+00:00", "Z")
+    forming = None
     if not Path(db_path).exists():
         bars = []
     else:
@@ -110,6 +115,16 @@ def _execution_market_payload(venue: str, instrument: str, limit: int) -> dict[s
                 (instrument_id, now_iso, max(1, int(limit))),
             ).fetchall()
             bars = [ExecutionBar(*row) for row in rows]
+            try:
+                quote = connection.execute(
+                    """SELECT price, price_time, provider, venue, environment
+                       FROM execution_market_forming_quotes WHERE instrument_id=?""",
+                    (instrument_id,),
+                ).fetchone()
+                forming = quote
+            except sqlite3.Error:
+                # v1 databases have no forming quote table yet.
+                forming = None
         except sqlite3.Error:
             bars = []
         finally:
@@ -125,8 +140,19 @@ def _execution_market_payload(venue: str, instrument: str, limit: int) -> dict[s
         age = max(0.0, (now - observed).total_seconds())
         fresh = age <= STALE_SECONDS
         reason = "fresh" if fresh else "stale"
+    last_price = forming[0] if forming else None
+    price_time = forming[1] if forming else None
+    last_age = None
+    if price_time:
+        last_age = max(0.0, (now - datetime.fromisoformat(price_time.replace("Z", "+00:00"))).total_seconds())
+    try:
+        last_price_stale_seconds = float(os.environ.get("KLINE_EXECUTION_MARKET_LAST_PRICE_STALE_SECONDS", LAST_PRICE_STALE_SECONDS))
+    except ValueError:
+        last_price_stale_seconds = LAST_PRICE_STALE_SECONDS
+    last_fresh = last_age is not None and last_age <= last_price_stale_seconds
+    fresh = last_fresh
     return {
-        "schema_version": "execution-market-v1",
+        "schema_version": "execution-market-v2",
         "venue": meta["venue"],
         "instrument": meta["symbol"],
         "instrument_id": instrument_id,
@@ -136,7 +162,11 @@ def _execution_market_payload(venue: str, instrument: str, limit: int) -> dict[s
         "source": latest.provider if latest else meta["provider"],
         "observed_at": latest.close_time if latest else None,
         "age_seconds": round(age, 3) if age is not None else None,
-        "reason": reason,
+        "last_price": last_price,
+        "price_time": price_time,
+        "last_age_seconds": round(last_age, 3) if last_age is not None else None,
+        "last_price_fresh": last_fresh,
+        "reason": "fresh" if last_fresh else ("stale" if last_age is not None else reason),
         "provenance": {
             "provider": latest.provider if latest else meta["provider"],
             "venue": latest.venue if latest else meta["venue"],
@@ -1333,7 +1363,7 @@ async def execution_market(
     instrument: str,
     limit: int = Query(default=240, ge=1, le=1000),
 ) -> dict[str, Any]:
-    """Return the last closed execution-market 1m snapshot, read-only."""
+    """Return completed bars plus the latest forming execution price."""
     return _execution_market_payload(venue, instrument, limit)
 
 

@@ -1,5 +1,28 @@
 # Decision Log
 
+## 2026-09-08 - Forming execution price and v2 freshness (#179)
+
+### Decisions
+
+- The worker keeps the latest forming 1m bar close in a dedicated
+  `execution_market_forming_quotes` table; it never promotes that row into
+  `execution_market_candles`. The existing `price` and `bars` fields remain
+  the last completed-bar view.
+- `last_price` is the forming close and `price_time` is the local `fetched_at`,
+  because neither configured public candle payload provides a reliable bar
+  update timestamp. `fresh` now uses only `last_age_seconds <= 30`, with the
+  threshold configurable by `KLINE_EXECUTION_MARKET_LAST_PRICE_STALE_SECONDS`.
+- The read response is `execution-market-v2`; all v1 fields are retained.
+
+### Gotchas
+
+- A v1 database without the forming quote table remains readable but reports
+  no last price and `fresh=false`; the API never treats the old closed-bar age
+  as a substitute for forming-price freshness.
+- The owner must run the 30-minute XAU/BTC runtime window and trading-system
+  dual comparison after publication; this branch uses temporary paths only and
+  does not touch the active worker, 8100, or launchd.
+
 ## 2026-09-08 - Execution-market 1m read API (#172)
 
 ### Decisions
