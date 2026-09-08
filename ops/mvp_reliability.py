@@ -18,7 +18,11 @@ import signal
 from typing import Any, Callable, Mapping, Sequence
 
 from kline.config import Settings
-from kline.free_source_profile import apply_free_source_profile
+from kline.free_source_profile import (
+    SCREENING_TIMEFRAMES,
+    apply_free_source_profile,
+    apply_screening_scope,
+)
 from kline.health_matrix import (
     MVP_DEMO_INSTRUMENT_IDS,
     _safe_run,
@@ -31,6 +35,7 @@ from kline.store import KlineStore
 
 
 DEMO_INSTRUMENT_IDS = MVP_DEMO_INSTRUMENT_IDS
+SCREENING_SCOPE = "screening"
 RELIABILITY_DAYS = 7
 MAX_SILENT_HOURS = 8
 TERMINAL_STATUSES = {"success", "partial", "failed"}
@@ -100,6 +105,52 @@ async def run_demo_once(
         "observed_at": _iso(observed_at),
         "manifest_version": manifest.version,
         "manifest_hash": manifest_digest(manifest),
+        "status": result.status,
+        "run_id": result.run_id,
+        "reason": result.reason,
+        "health": health,
+        "receipt": result.receipt.to_dict() if result.receipt is not None else None,
+    }
+
+
+async def run_screening_once(
+    *,
+    db_path: str | Path,
+    manifest_path: str | Path,
+    now: datetime | None = None,
+    interval_seconds: int = MAX_INTERVAL_SECONDS,
+    lock_path: str | Path | None = None,
+    adapter_resolver: Callable[[Any], Any] | None = None,
+) -> dict[str, Any]:
+    """Execute one full Screening run at the contracted 1d + 4h scope."""
+
+    observed_at = _parse_time(now or datetime.now(timezone.utc))
+    manifest = apply_screening_scope(load_manifest(manifest_path))
+    database = Path(db_path).expanduser()
+    init(Settings(db_path=str(database), load_entrypoint_adapters=False))
+    store = KlineStore(str(database))
+    worker = MvpWorker(
+        manifest,
+        store,
+        interval_seconds=interval_seconds,
+        lock_path=lock_path or database.with_suffix(".worker.lock"),
+        adapter_resolver=adapter_resolver,
+        clock=lambda: observed_at,
+    )
+    result = await worker.run_once(timeframes=SCREENING_TIMEFRAMES)
+    health = build_mvp_health_matrix(
+        manifest,
+        store,
+        now=observed_at,
+        interval_seconds=interval_seconds,
+        scope="full_216",
+    )
+    return {
+        "observed_at": _iso(observed_at),
+        "manifest_version": manifest.version,
+        "manifest_hash": manifest_digest(manifest),
+        "scope": SCREENING_SCOPE,
+        "timeframes": list(SCREENING_TIMEFRAMES),
         "status": result.status,
         "run_id": result.run_id,
         "reason": result.reason,
@@ -285,7 +336,8 @@ async def _run_forever(args: argparse.Namespace) -> None:
         except NotImplementedError:  # pragma: no cover - platform fallback
             signal.signal(signum, lambda *_: stop_event.set())
     while not stop_event.is_set():
-        result = await run_demo_once(
+        runner = run_screening_once if args.scope == SCREENING_SCOPE else run_demo_once
+        result = await runner(
             db_path=args.db,
             manifest_path=args.manifest,
             interval_seconds=args.interval,
@@ -319,6 +371,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--window-start", default=None)
     parser.add_argument("--window-end", default=None)
     parser.add_argument("--receipt", default=None)
+    parser.add_argument("--scope", choices=("demo_3x3", SCREENING_SCOPE), default="demo_3x3")
     return parser
 
 
@@ -343,8 +396,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0 if report["status"] == "ready" else 2
     if args.once:
+        runner = run_screening_once if args.scope == SCREENING_SCOPE else run_demo_once
         result = asyncio.run(
-            run_demo_once(
+            runner(
                 db_path=args.db,
                 manifest_path=args.manifest,
                 interval_seconds=args.interval,

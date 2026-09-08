@@ -174,7 +174,7 @@ class MvpWorker:
             return TargetGuardResult("ready", "unspecified")
         return TargetGuardResult("blocked", "unspecified", "target guard returned false")
 
-    async def run_once(self) -> WorkerRunResult:
+    async def run_once(self, *, timeframes: Sequence[str] | None = None) -> WorkerRunResult:
         started = self._clock()
         started_at = self._iso(started)
         due = next_due_at(last_started=started, now=started, interval_seconds=self.interval_seconds)
@@ -221,6 +221,7 @@ class MvpWorker:
                     now=started,
                     history_start=self.history_start,
                     instrument_ids=self.instrument_ids,
+                    timeframes=timeframes,
                 )
             )
             completed_at = self._iso(self._clock())

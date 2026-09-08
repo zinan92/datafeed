@@ -28,7 +28,7 @@ from kline.market_query import (
     get_market_query_reader,
     query_backend_status,
 )
-from kline.free_source_profile import apply_free_source_profile
+from kline.free_source_profile import apply_screening_scope
 from kline.health_matrix import (
     MATRIX_SCOPE_DEMO,
     MATRIX_SCOPE_FULL,
@@ -1373,7 +1373,7 @@ async def mvp_health_matrix(scope: str = MATRIX_SCOPE_FULL) -> dict:
             detail={"error": "unsupported_matrix_scope", "scope": scope},
         )
     try:
-        manifest = apply_free_source_profile(load_manifest(manifest_path))
+        manifest = apply_screening_scope(load_manifest(manifest_path))
         payload = build_mvp_health_matrix(
             manifest,
             get_store(),
