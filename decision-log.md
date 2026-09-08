@@ -1,5 +1,42 @@
 # Decision Log
 
+## 2026-09-08 - Row-level quality promotion for MVP ingestion (#156)
+
+Objective: preserve trustworthy rows when a small number of upstream bars are
+malformed, duplicated, gapped, or forming, instead of rejecting the entire
+series.
+
+### Decisions
+
+- MVP quality uses a configurable `bad_row_threshold`, defaulting to 5%.
+  At or below the threshold a series is `partial`; only a ratio above the
+  threshold is `fail`.
+- Ingestion isolates malformed and duplicate rows during normalization and
+  excludes malformed, duplicate, out-of-session, and forming rows from
+  promotion. Remaining closed rows are written with the normal source,
+  quality, and watermark receipts.
+- Quality receipt `details.issues[]` retains each issue's `timestamp`,
+  `status`, and reason. Empty upstream responses and provider/entitlement
+  failures remain unavailable/blocked and fail closed.
+- `/api/candles` and its response schema are unchanged; persisted bad rows are
+  never queried as candles.
+
+### Gotchas
+
+- `partial` is not proof that every upstream row is usable: consumers must
+  inspect the persisted quality receipt and its row-level issues.
+- A forming-only response remains `partial` but promotes zero rows. The
+  opening-buffer behavior from the prior contract is therefore preserved.
+- The required live confirmation for QCOM, `000660.KS`, and DHR must be
+  captured by the owner after deployment; this worktree does not restart the
+  production worker.
+
+### Verification
+
+- `PYTHONPATH=src python3 -m pytest -q tests/test_ingestion.py tests/test_market_calendar.py tests/test_mvp_storage.py tests/test_quality.py` -> 39 passed.
+- Full-suite command and owner-side live verification are recorded in
+  `docs/verification/issue-156-row-level-quality-2026-09-08.md`.
+
 ## 2026-09-07 - Empty MVP rows remain an explicit unavailable cell
 
 Objective: prevent one provider response with zero rows from terminating the

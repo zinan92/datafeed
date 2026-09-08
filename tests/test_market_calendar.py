@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from kline.market_calendar import (
+    AggregationIssue,
     CalendarError,
     aggregate_15m_to_4h,
     aggregate_daily_to_weekly,
@@ -231,6 +232,38 @@ def test_quality_distinguishes_duplicate_order_forming_gap_missing_holiday_suspe
     )
     assert holiday.status == "fail"
     assert any(issue.status == "holiday" for issue in holiday.issues)
+
+
+def test_quality_bad_row_threshold_has_explicit_boundary() -> None:
+    key = _key(timeframe="1d")
+    candles = [
+        _bar(key, datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(days=index))
+        for index in range(100)
+    ]
+
+    at_boundary = assess_quality(
+        candles,
+        timeframe="1d",
+        calendar_id="crypto_24x7",
+        cutoff="2026-06-01T00:00:00Z",
+        row_issues=tuple(
+            AggregationIssue("malformed", "bad row", candles[index].timestamp)
+            for index in range(5)
+        ),
+    )
+    over_boundary = assess_quality(
+        candles,
+        timeframe="1d",
+        calendar_id="crypto_24x7",
+        cutoff="2026-06-01T00:00:00Z",
+        row_issues=tuple(
+            AggregationIssue("malformed", "bad row", candles[index].timestamp)
+            for index in range(6)
+        ),
+    )
+
+    assert at_boundary.status == "partial"
+    assert over_boundary.status == "fail"
 
 
 def test_cn_a_market_open_buffer_only_softens_forming_15m_and_1h_bars() -> None:

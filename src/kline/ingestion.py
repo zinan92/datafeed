@@ -11,7 +11,7 @@ import json
 import time as time_module
 from typing import Any, Callable, Mapping, Protocol, Sequence
 
-from kline.market_calendar import QualityResult, assess_quality
+from kline.market_calendar import AggregationIssue, QualityResult, assess_quality
 from kline.models import AssetClass, Candle, Timeframe, TimeframeTransform
 from kline.mvp_manifest import ALLOWED_TIMEFRAMES, MvpManifest, manifest_digest
 from kline.ports import FetchReceipt, MarketDataPort
@@ -65,6 +65,7 @@ class IngestionPlan:
     request_interval_seconds: float = 0.0
     provider_timeout_seconds: float = 60.0
     market_open_buffer_minutes: int = 0
+    bad_row_threshold: float = 0.05
 
 
 @dataclass(frozen=True)
@@ -348,6 +349,7 @@ class IngestionOrchestrator:
         manifest: MvpManifest,
         *,
         timeframe_transform: TimeframeTransform | None = None,
+        row_issues: list[AggregationIssue] | None = None,
     ) -> list[MvpCandle]:
         key = self._key(instrument, timeframe, manifest)
         rows: list[MvpCandle] = []
@@ -356,12 +358,14 @@ class IngestionOrchestrator:
             and timeframe_transform is not None
             and timeframe_transform.timeframe_origin == "aggregated"
         )
+        seen_timestamps: set[str] = set()
         for candle in candles:
-            volume = None if instrument.volume_semantics == "not_applicable" else candle.volume
-            rows.append(
-                MvpCandle(
+            timestamp = getattr(candle, "timestamp", None)
+            try:
+                volume = None if instrument.volume_semantics == "not_applicable" else candle.volume
+                row = MvpCandle(
                     key=key,
-                    timestamp=candle.timestamp,
+                    timestamp=timestamp,
                     open=candle.open,
                     high=candle.high,
                     low=candle.low,
@@ -371,8 +375,32 @@ class IngestionOrchestrator:
                     volume_semantics=instrument.volume_semantics,
                     is_derived=is_derived,
                 )
-            )
+            except (StorageError, TypeError, ValueError, AttributeError) as exc:
+                if row_issues is not None:
+                    row_issues.append(
+                        AggregationIssue("malformed", str(exc), str(timestamp) if timestamp else None)
+                    )
+                continue
+            if row.timestamp in seen_timestamps:
+                if row_issues is not None:
+                    row_issues.append(
+                        AggregationIssue("duplicate", "duplicate candle timestamp", row.timestamp)
+                    )
+                continue
+            seen_timestamps.add(row.timestamp)
+            rows.append(row)
         return rows
+
+    @staticmethod
+    def _usable_rows(rows: Sequence[MvpCandle], quality: QualityResult) -> list[MvpCandle]:
+        """Keep rows that are closed and structurally valid for promotion."""
+        excluded = {
+            issue.timestamp
+            for issue in quality.issues
+            if issue.status in {"malformed", "duplicate", "forming", "out_of_session"}
+            and issue.timestamp
+        }
+        return [row for row in rows if row.timestamp not in excluded]
 
     @staticmethod
     def _quality_receipt(
@@ -434,6 +462,8 @@ class IngestionOrchestrator:
             raise IngestionError("request_interval_seconds must be non-negative")
         if plan.provider_timeout_seconds <= 0:
             raise IngestionError("provider_timeout_seconds must be positive")
+        if not 0 <= plan.bad_row_threshold <= 1:
+            raise IngestionError("bad_row_threshold must be between 0 and 1")
         if plan.force_history_start and not plan.history_start:
             raise IngestionError("force_history_start requires history_start")
         selected_ids = set(plan.instrument_ids) if plan.instrument_ids is not None else None
@@ -635,12 +665,14 @@ class IngestionOrchestrator:
                     latency_ms = round((time_module.perf_counter() - fetch_started_at) * 1000, 1)
                     provider_attempts = receipt_attempts(fetch_receipt)
                     raw_rows = fetch_receipt.candles
+                    row_issues: list[AggregationIssue] = []
                     mvp_rows = self._to_mvp_rows(
                         instrument,
                         timeframe,
                         raw_rows,
                         manifest,
                         timeframe_transform=fetch_receipt.timeframe_transform,
+                        row_issues=row_issues,
                     )
                     quality = assess_quality(
                         mvp_rows,
@@ -648,16 +680,19 @@ class IngestionOrchestrator:
                         calendar_id=instrument.calendar_id,
                         cutoff=now,
                         market_open_buffer_minutes=plan.market_open_buffer_minutes,
+                        row_issues=row_issues,
+                        bad_row_threshold=plan.bad_row_threshold,
                     )
                     quality_counts[quality.status] = quality_counts.get(quality.status, 0) + 1
                     quality_receipt = self._quality_receipt(
                         plan.run_id, mvp_rows, quality, key=key
                     )
                     qualities.append(quality_receipt)
+                    usable_rows = self._usable_rows(mvp_rows, quality)
                     response_hash = None
                     if fetch_receipt.raw_response is not None:
                         response_hash = self._hash(fetch_receipt.raw_response)
-                    latest = max((row.timestamp for row in mvp_rows), default=None)
+                    latest = max((row.timestamp for row in usable_rows), default=None)
                     observations.append(
                         SourceObservationWrite(
                             run_id=plan.run_id,
@@ -672,7 +707,7 @@ class IngestionOrchestrator:
                                 "source_identity": dict(fetch_receipt.source_identity),
                                 "provider_attempts": provider_attempts,
                             },
-                            candle_count=len(mvp_rows),
+                            candle_count=len(usable_rows),
                             latest_timestamp=latest,
                             latency_ms=latency_ms,
                             served_from="upstream",
@@ -684,7 +719,7 @@ class IngestionOrchestrator:
                             "provider_symbol": instrument.provider_symbol,
                             "timeframe": timeframe,
                             "status": quality.status,
-                            "candle_count": len(mvp_rows),
+                            "candle_count": len(usable_rows),
                             "response_hash": response_hash,
                             "latency_ms": latency_ms,
                             "http_status": (fetch_receipt.raw_response or {}).get("http_status"),
@@ -692,8 +727,8 @@ class IngestionOrchestrator:
                             "provider_attempts": provider_attempts,
                         }
                     )
-                    if quality.status == "pass" and mvp_rows:
-                        candles.extend(mvp_rows)
+                    if quality.status in {"pass", "partial"} and usable_rows:
+                        candles.extend(usable_rows)
                         existing_watermark = self._storage.get_mvp_watermark(key)
                         if (
                             existing_watermark is not None
@@ -713,7 +748,7 @@ class IngestionOrchestrator:
                                     run_id=plan.run_id,
                                 )
                             )
-                    if fetch_receipt.timeframe_transform is not None and mvp_rows:
+                    if fetch_receipt.timeframe_transform is not None and usable_rows:
                         transform = fetch_receipt.timeframe_transform
                         if transform.timeframe_origin == "aggregated":
                             transforms.append(
@@ -727,10 +762,10 @@ class IngestionOrchestrator:
                                     aggregation_rule_version=str(
                                         transform.aggregation.get("rule", "provider_derived")
                                     ),
-                                    input_start=request_start or mvp_rows[0].timestamp,
+                                    input_start=request_start or usable_rows[0].timestamp,
                                     input_end=end,
                                     input_hash=response_hash or self._hash(raw_rows),
-                                    output_hash=self._hash([row.timestamp for row in mvp_rows]),
+                                    output_hash=self._hash([row.timestamp for row in usable_rows]),
                                     bucket_anchor=transform.aggregation.get("bucket_anchor"),
                                     partial_bucket_policy=transform.aggregation.get(
                                         "partial_bucket_policy"
@@ -760,7 +795,7 @@ class IngestionOrchestrator:
                         status,
                         request_start,
                         end,
-                        len(mvp_rows) if quality.status != "fail" else 0,
+                        len(usable_rows) if quality.status != "fail" else 0,
                         tuple(issue.status for issue in quality.issues),
                         cell_error,
                     )
