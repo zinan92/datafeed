@@ -18,21 +18,28 @@ def _bar(close_time: datetime, close: float = 2400.0) -> ExecutionBar:
 def _client(tmp_path, monkeypatch, bars: list[ExecutionBar]) -> TestClient:
     path = tmp_path / "execution-market.db"
     store = ExecutionMarketStore(path)
-    store.write(bars, run_id="test", fetched_at=datetime.now(timezone.utc))
+    now = datetime.now(timezone.utc)
+    completed = [bar for bar in bars if datetime.fromisoformat(bar.close_time.replace("Z", "+00:00")) <= now]
+    forming = [bar for bar in bars if datetime.fromisoformat(bar.close_time.replace("Z", "+00:00")) > now]
+    store.write(completed, run_id="test", fetched_at=now)
+    store.write_forming(forming[-1:], sampled_at=now)
     store.close()
     monkeypatch.setenv("KLINE_EXECUTION_MARKET_DB", str(path))
     return TestClient(create_app())
 
 
-def test_fresh_response_maps_execution_reader_fields_and_excludes_forming(tmp_path, monkeypatch):
+def test_fresh_response_maps_execution_reader_fields_and_separates_forming(tmp_path, monkeypatch):
     now = datetime.now(timezone.utc)
     with _client(tmp_path, monkeypatch, [_bar(now - timedelta(seconds=30)), _bar(now + timedelta(seconds=30), 2500)]) as client:
         response = client.get("/api/execution-market/binance/XAUUSDT", params={"limit": 240})
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["schema_version"] == "execution-market-v1"
+    assert payload["schema_version"] == "execution-market-v2"
     assert payload["price"] == 2400.0
+    assert payload["last_price"] == 2500.0
+    assert payload["price_time"] is not None
+    assert payload["last_age_seconds"] < 5
     assert payload["trusted"] is True
     assert payload["fresh"] is True
     assert payload["source"] == "binance_usdm_futures"
@@ -45,6 +52,7 @@ def test_stale_response_is_present_but_not_fresh(tmp_path, monkeypatch):
         payload = client.get("/api/execution-market/binance/XAUUSDT").json()
 
     assert payload["price"] == 2400.0
+    assert payload["last_price"] is None
     assert payload["trusted"] is True
     assert payload["fresh"] is False
     assert payload["reason"] == "stale"
@@ -57,12 +65,15 @@ def test_missing_response_is_explicit(tmp_path, monkeypatch):
 
     assert payload == {
         **payload,
-        "schema_version": "execution-market-v1",
+        "schema_version": "execution-market-v2",
         "price": None,
         "trusted": False,
         "fresh": False,
         "observed_at": None,
         "age_seconds": None,
+        "last_price": None,
+        "price_time": None,
+        "last_age_seconds": None,
         "reason": "missing",
         "bars": [],
     }

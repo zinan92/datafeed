@@ -26,6 +26,7 @@ BINANCE_URL = "https://fapi.binance.com/fapi/v1/klines"
 HYPERLIQUID_TESTNET_URL = "https://api.hyperliquid-testnet.xyz/info"
 POLL_SECONDS = 5
 STALE_SECONDS = 90
+LAST_PRICE_STALE_SECONDS = 30
 
 INSTRUMENTS = {
     "XAUUSDT.BINANCE": {"provider": "binance_usdm_futures", "venue": "binance", "environment": "production", "symbol": "XAUUSDT"},
@@ -64,6 +65,11 @@ class ExecutionBar:
     def age_seconds(self) -> float:
         return (datetime.fromisoformat(self.fetched_at.replace("Z", "+00:00")) -
                 datetime.fromisoformat(self.close_time.replace("Z", "+00:00"))).total_seconds()
+
+    @property
+    def price_time(self) -> str:
+        """The local fetch time is the quote timestamp for this provider."""
+        return self.fetched_at
 
 
 class ProviderUnavailable(RuntimeError):
@@ -165,11 +171,20 @@ class ExecutionMarketStore:
           volume REAL NOT NULL, provider TEXT NOT NULL, venue TEXT NOT NULL,
           environment TEXT NOT NULL, fetched_at TEXT NOT NULL, PRIMARY KEY(instrument_id, close_time)
         );
+        CREATE TABLE IF NOT EXISTS execution_market_forming_quotes (
+          instrument_id TEXT PRIMARY KEY, price REAL NOT NULL, price_time TEXT NOT NULL,
+          bar_open_time TEXT NOT NULL, bar_close_time TEXT NOT NULL,
+          provider TEXT NOT NULL, venue TEXT NOT NULL, environment TEXT NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS execution_market_lag_receipts (
           run_id TEXT PRIMARY KEY, fetched_at TEXT NOT NULL, status TEXT NOT NULL,
           p95_age_seconds REAL, bar_count INTEGER NOT NULL, error TEXT
         );
         CREATE TABLE IF NOT EXISTS execution_market_read_age_samples (
+          instrument_id TEXT NOT NULL, sampled_at TEXT NOT NULL,
+          age_seconds REAL NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS execution_market_last_age_samples (
           instrument_id TEXT NOT NULL, sampled_at TEXT NOT NULL,
           age_seconds REAL NOT NULL
         );
@@ -231,6 +246,44 @@ class ExecutionMarketStore:
             self.db.execute("INSERT INTO execution_market_lag_receipts VALUES (?,?,?,?,?,?)", tuple(receipt[k] for k in ("run_id", "fetched_at", "status", "p95_age_seconds", "bar_count", "error")))
         return receipt
 
+    def write_forming(self, bars: list[ExecutionBar], *, sampled_at: datetime | None = None) -> dict[str, dict[str, float | int | None]]:
+        """Persist the latest forming close separately from completed candles."""
+        sampled_at = sampled_at or utc_now()
+        last_age: dict[str, dict[str, float | int | None]] = {}
+        with self.db:
+            for bar in bars:
+                self.db.execute(
+                    """INSERT INTO execution_market_forming_quotes
+                       VALUES (?,?,?,?,?,?,?,?)
+                       ON CONFLICT(instrument_id) DO UPDATE SET
+                       price=excluded.price, price_time=excluded.price_time,
+                       bar_open_time=excluded.bar_open_time, bar_close_time=excluded.bar_close_time,
+                       provider=excluded.provider, venue=excluded.venue,
+                       environment=excluded.environment""",
+                    (bar.instrument_id, bar.close, bar.price_time, bar.open_time,
+                     bar.close_time, bar.provider, bar.venue, bar.environment),
+                )
+                age = max(0.0, (sampled_at - datetime.fromisoformat(bar.price_time.replace("Z", "+00:00"))).total_seconds())
+                self.db.execute(
+                    "INSERT INTO execution_market_last_age_samples VALUES (?,?,?)",
+                    (bar.instrument_id, iso(sampled_at), age),
+                )
+                rows = self.db.execute(
+                    "SELECT age_seconds FROM execution_market_last_age_samples WHERE instrument_id=?",
+                    (bar.instrument_id,),
+                ).fetchall()
+                last_age[bar.instrument_id] = age_stats(row[0] for row in rows)
+            for instrument_id in INSTRUMENTS:
+                if instrument_id in last_age:
+                    continue
+                rows = self.db.execute(
+                    "SELECT age_seconds FROM execution_market_last_age_samples WHERE instrument_id=?",
+                    (instrument_id,),
+                ).fetchall()
+                if rows:
+                    last_age[instrument_id] = age_stats(row[0] for row in rows)
+        return last_age
+
     def mark_failure(self, instrument_id: str, now: datetime, error: str) -> bool:
         row = self.db.execute("SELECT unavailable_since FROM execution_market_provider_state WHERE instrument_id=?", (instrument_id,)).fetchone()
         since = row[0] if row and row[0] else iso(now)
@@ -279,17 +332,24 @@ def run_once(db_path: str | Path, receipt_path: str | Path, *, lock_path: str | 
     own_client = client is None
     client = client or httpx.Client(timeout=15)
     all_bars: list[ExecutionBar] = []
+    last_age: dict[str, dict[str, float | int | None]] = {}
     errors: list[dict[str, str]] = []
     try:
         for instrument_id in INSTRUMENTS:
             try:
                 bars = fetch_binance(instrument_id, fetched, client) if instrument_id.startswith("XAU") else fetch_hyperliquid(instrument_id, fetched, client)
                 completed = [bar for bar in bars if is_completed_bar(datetime.fromisoformat(bar.close_time.replace("Z", "+00:00")), fetched)]
+                forming = [bar for bar in bars if not is_completed_bar(datetime.fromisoformat(bar.close_time.replace("Z", "+00:00")), fetched)]
+                last_age.update(store.write_forming(forming[-1:], sampled_at=fetched))
                 all_bars.extend(completed)
                 store.mark_success(instrument_id)
             except ProviderUnavailable as exc:
                 errors.append({"instrument_id": instrument_id, "error": str(exc), "stale": str(store.mark_failure(instrument_id, fetched, str(exc))).lower()})
         receipt = store.write(all_bars, run_id=f"execution-{uuid.uuid4().hex[:12]}", fetched_at=fetched, sampled_at=clock(), status="stale" if any(e["stale"] == "true" for e in errors) else ("partial" if errors else "ok"), error=json.dumps(errors) if errors else None)
+        receipt["last_age_seconds"] = last_age
+        receipt["last_age_p50_seconds"] = {key: value["p50"] for key, value in last_age.items()}
+        receipt["last_age_p95_seconds"] = {key: value["p95"] for key, value in last_age.items()}
+        receipt["last_age_max_seconds"] = {key: value["max"] for key, value in last_age.items()}
     finally:
         if own_client: client.close()
         store.close()
