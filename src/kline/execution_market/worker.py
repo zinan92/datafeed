@@ -151,6 +151,18 @@ class ExecutionMarketStore:
     def close(self) -> None:
         self.db.close()
 
+    def latest(self, instrument_id: str, *, limit: int = 240) -> list[ExecutionBar]:
+        """Read only completed bars, newest first, for the execution API."""
+        rows = self.db.execute(
+            """SELECT instrument_id, open_time, close_time, open, high, low, close,
+                      volume, provider, venue, environment, fetched_at
+                 FROM execution_market_candles
+                WHERE instrument_id=?
+                ORDER BY close_time DESC LIMIT ?""",
+            (instrument_id, max(1, int(limit))),
+        ).fetchall()
+        return [ExecutionBar(*row) for row in rows]
+
     def write(self, bars: list[ExecutionBar], *, run_id: str, fetched_at: datetime, status: str = "ok", error: str | None = None) -> dict[str, Any]:
         with self.db:
             for bar in bars:
