@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
+import os
 from pathlib import Path
+import sqlite3
 from time import monotonic
 from typing import Any, Mapping
 
@@ -47,10 +50,106 @@ from kline.provenance import (
 )
 from kline.quality import QualityReport, analyze_candles
 from kline.registry import get_adapter_for_source, get_store, provider_status, runtime_status
+from kline.execution_market.worker import ExecutionBar, INSTRUMENTS, STALE_SECONDS
 
 router = APIRouter()
 _mvp_matrix_last_success_at: str | None = None
 _combined_matrix_last_success_at: str | None = None
+
+
+def _execution_market_db() -> str:
+    return os.environ.get(
+        "KLINE_EXECUTION_MARKET_DB",
+        str(Path("~/park-data/market/execution_market.db").expanduser()),
+    )
+
+
+def _execution_instrument(venue: str, instrument: str) -> tuple[str, dict[str, str]] | None:
+    wanted_venue = venue.strip().lower()
+    wanted_instrument = instrument.strip().upper()
+    for instrument_id, meta in INSTRUMENTS.items():
+        if meta["venue"] == wanted_venue and (
+            meta["symbol"].upper() == wanted_instrument or instrument_id.upper() == wanted_instrument
+        ):
+            return instrument_id, meta
+    return None
+
+
+def _execution_market_payload(venue: str, instrument: str, limit: int) -> dict[str, Any]:
+    match = _execution_instrument(venue, instrument)
+    if not match:
+        return {
+            "schema_version": "execution-market-v1",
+            "venue": venue,
+            "instrument": instrument,
+            "price": None,
+            "trusted": False,
+            "fresh": False,
+            "source": None,
+            "observed_at": None,
+            "age_seconds": None,
+            "bars": [],
+            "reason": "unsupported_instrument",
+        }
+    instrument_id, meta = match
+    db_path = _execution_market_db()
+    now = datetime.now(timezone.utc)
+    now_iso = now.isoformat().replace("+00:00", "Z")
+    if not Path(db_path).exists():
+        bars = []
+    else:
+        connection = None
+        try:
+            connection = sqlite3.connect(f"file:{Path(db_path).resolve()}?mode=ro", uri=True)
+            rows = connection.execute(
+                """SELECT instrument_id, open_time, close_time, open, high, low, close,
+                          volume, provider, venue, environment, fetched_at
+                    FROM execution_market_candles
+                    WHERE instrument_id=? AND close_time<=?
+                    ORDER BY close_time DESC LIMIT ?""",
+                (instrument_id, now_iso, max(1, int(limit))),
+            ).fetchall()
+            bars = [ExecutionBar(*row) for row in rows]
+        except sqlite3.Error:
+            bars = []
+        finally:
+            if connection is not None:
+                connection.close()
+
+    latest = bars[0] if bars else None
+    age = None
+    fresh = False
+    reason = "missing"
+    if latest:
+        observed = datetime.fromisoformat(latest.close_time.replace("Z", "+00:00"))
+        age = max(0.0, (now - observed).total_seconds())
+        fresh = age <= STALE_SECONDS
+        reason = "fresh" if fresh else "stale"
+    return {
+        "schema_version": "execution-market-v1",
+        "venue": meta["venue"],
+        "instrument": meta["symbol"],
+        "instrument_id": instrument_id,
+        "price": latest.close if latest else None,
+        "trusted": bool(latest and latest.provider and latest.venue == meta["venue"] and latest.environment),
+        "fresh": fresh,
+        "source": latest.provider if latest else meta["provider"],
+        "observed_at": latest.close_time if latest else None,
+        "age_seconds": round(age, 3) if age is not None else None,
+        "reason": reason,
+        "provenance": {
+            "provider": latest.provider if latest else meta["provider"],
+            "venue": latest.venue if latest else meta["venue"],
+            "environment": latest.environment if latest else meta["environment"],
+            "instrument_id": instrument_id,
+        },
+        "bars": [
+            {"open_time": bar.open_time, "close_time": bar.close_time, "open": bar.open,
+             "high": bar.high, "low": bar.low, "close": bar.close, "volume": bar.volume,
+             "provider": bar.provider, "venue": bar.venue, "environment": bar.environment}
+            for bar in reversed(bars)
+        ],
+    }
 
 
 @dataclass(frozen=True)
@@ -1226,6 +1325,16 @@ async def get_instrument_definition(
             },
         ) from e
     return definition
+
+
+@router.get("/execution-market/{venue}/{instrument}")
+async def execution_market(
+    venue: str,
+    instrument: str,
+    limit: int = Query(default=240, ge=1, le=1000),
+) -> dict[str, Any]:
+    """Return the last closed execution-market 1m snapshot, read-only."""
+    return _execution_market_payload(venue, instrument, limit)
 
 
 @router.get("/tickers")

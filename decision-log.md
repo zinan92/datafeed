@@ -1,5 +1,23 @@
 # Decision Log
 
+## 2026-09-08 - Execution-market 1m read API (#172)
+
+### Decisions
+
+- 8100 exposes a read-only `GET /api/execution-market/{venue}/{instrument}`
+  response with schema `execution-market-v1`, the last closed 1m price, a
+  bounded recent-bar series, freshness, trust, source, observation time, and
+  provenance.
+- The API reads only the dedicated execution-market database and requires an
+  exact venue/instrument identity. It never falls back across venues, serves a
+  forming bar, or changes the existing `/api/candles` and `/api/health` paths.
+
+### Gotchas
+
+- A stale or missing bar remains an explicit response with `fresh=false` and a
+  reason; HTTP 200 is not execution evidence. Live ten-sample freshness remains
+  an owner/runtime acceptance gate and is not proved by fixture tests.
+
 ## 2026-09-08 - Isolated execution-market 1m ingestion (#171)
 
 ### Decisions
