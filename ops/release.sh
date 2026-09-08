@@ -47,7 +47,13 @@ done
 for job in $JOBS; do
   domain="gui/$(id -u)/$job"
   launchctl bootout "$domain"
-  launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENTS/$job.plist"
+  for attempt in 1 2 3; do
+    if launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENTS/$job.plist"; then
+      break
+    fi
+    [[ $attempt -lt 3 ]] || exit 1
+    sleep 1
+  done
 done
 
 python3 - "$RECEIPT_PATH" "$CANONICAL_ROOT" "$SHA" "${JOBS[@]}" <<'PY'
