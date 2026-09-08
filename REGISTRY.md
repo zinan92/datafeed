@@ -1,38 +1,23 @@
 # datafeed
 
 ## 要去哪里
-多资产 K 线数据服务:ticker+timeframe → 标准化 OHLCV + provenance(provider/fresh/synthetic 标记),A股/美股/加密/商品全覆盖;近期喂养 trading-system 与 tokenpulse,远期可作为独立 API 产品外卖。
 
-## 现在在哪里(2026-09-01)
-- V1 运行中:tushare/yahoo/binance 多源,ports-and-adapters,realtime strict 失败即显式报错、永不隐藏降级。
-- `main@1699575` 的 K 线 envelope 会同时返回 requested/selected source、provider、source mode、execution-venue、fresh 与 synthetic 身份；严格消费者不再从模糊 provider 名称推断来源。
-- Alibaba Cloud 上的 trading-system Paper 通过 loopback datafeed 消费 Binance USD-M Futures 的 GOLD 最新/历史 K 线；Cloud preflight 已验证 execution-venue 身份、SQLite quick-check 与新鲜度。datafeed 只拥有行情合同，不拥有 scheduler、StrategyPlan 或交易命令权限。
-- Park 2026-07-21 裁定为产品(非基础设施),上 Portfolio 板。
-- `main@bbd93a9` 已合并 MVP #44–#52、#66、#68、#69、#70、#71 runner、#77 audit 修复、#79 状态文案修复、#81 免费源路由、#83 混合状态文案修复、#85 剩余 97+97 批处理/限流观测、#87 美股粗粒度源调整、#89 分阶段恢复、#91 Yahoo 点号 ticker 兼容、#93 空响应终止重试、#95 fallback 404 终止重试、#97 水位倒退保护、#99 provider 硬超时、#101 免费源 HTTP 超时上限、#103 Yahoo 历史请求线程化、#105 Yahoo 修复请求线程化、#107 Yahoo ISO intraday 窗口兼容、#111 Yahoo 美股全时间级别主源：216 instrument manifest、独立 `mvp_*` storage/receipt/watermark schema、15m/1h/4h/1d/1w 时间级别、calendar/1h/4H/weekly quality seam、TuShare/授权 US gate、个人无会员运行 profile（A 股 Tencent→Tonghuashun、美国 Yahoo 全时间级别；不调用新浪；Alpaca 仅待显式凭证/权限）、Yahoo 点号代码（BRK.B→BRK-B）、空响应 fail-closed、水位不倒退、provider 硬超时/15 秒源超时上限、Yahoo 同步请求线程化、16 cross-market mapping、resumable run_once、独立 ≤4h worker/health、SSD/NAS backup/restore safeguards、只读 provider preflight receipts、中文 3+3×5 到全量 216×5 Health Matrix/API/UI、3+3 四小时可靠性 runner/audit、隔离 observer DB 批量 seeder 与 rate-limit/P95 receipts、按周期阶段恢复已就绪；首轮完整 100+100 周期已真实落库，Yahoo-only 首轮 40/40 已真实运行，美股 15m/1h/4h 100/100、1d/1w 99/100（DHR 非法 OHLC 明确失败），Sina attempts=0；免费源技术数据已真实落库但 entitlement 仍显式 `partial/unverified`，七天可靠性门槛尚未完成，resident DB/NAS 尚未切换。证据见 `docs/verification/us-yahoo-primary-2026-09-02.md`。
-- #66 preflight 真实证据：easy_tdx MacClient 的 3 个 A 股样本在 15m/1h/1d/1w 返回非零成交量；4h 因会话输入不完整明确 blocked。Yahoo 美股样本技术可取但持久化/派生/展示权利未核实，仍为 partial。证据见 `docs/research/provider-preflight-2026-09-01.*` 和 `provider-preflight-easy-tdx-2026-09-01.*`。
-- 当前工作 frontier：#71 七天可靠性与 worker/备份运行证据（Yahoo-only 首轮已完成，尚未通过七天门槛；DHR 两个粗粒度格需保留 fail-closed；承接 #70 全量矩阵）。全红问题的根因和修复见 `docs/verification/health-matrix-debug-2026-09-01.md`，免费源复验见 `docs/verification/free-source-3x3-runtime-2026-09-01.md`；历史 100+100 seed 证据见 `docs/verification/full-stock-seed-rate-limit-2026-09-01.md`，Yahoo-only 当前证据见 `docs/verification/us-yahoo-primary-2026-09-02.md`；随后回到 #54 真实 30-day database acceptance。#70 的全量运行证据见 `docs/verification/health-matrix-full-runtime-2026-09-01.md`，#71 启动证据见 `docs/verification/health-matrix-reliability-2026-09-01.md`。
-- 观察服务：`http://127.0.0.1:18171/health-ui` 由 `com.wendy.datafeed.mvp-api` KeepAlive 托管；`com.wendy.datafeed.mvp-worker` 每 4 小时写入 `/Users/wendy/datafeed-runtime-issue-71/data/kline.db`。这是隔离的可靠性观察库，不替换现有 8100 服务、resident DB、SSD 或 NAS。
-- #118 已把 Yahoo 免费源的质量闸改为逐行隔离：单个历史坏行不再拒绝整支标的，排除数量、时间戳和原因进入 API/错误 envelope、返回 candle、raw/source identity 与 operator observation；全坏窗口仍 fail-closed，且不修正、插值或伪造 OHLC。真实探针已恢复 QCOM 与 000660.KS 当前日线，证据见 `docs/verification/yahoo-row-quality-exclusion-2026-09-02.md`。
-- #120 已建立独立的 42 项 Watchlist Universe：4 个 A 股 ETF、16 个 A 股个股、21 个美股和 000660.KS，全部使用 `WATCH.*` 身份和 `1d` 周期。真实全轮已写入 `/Users/wendy/park-data/market/kline.db`，42/42 有 candle、watermark 和 receipt；A 股侧 429/403/5xx/timeout 均为 0。Screening manifest/worker、issue-71 observer 和 resident 8100 未切换。证据见 `docs/verification/watchlist-ingestion-2026-09-02.md`。
-- #124 修正 Yahoo 已收盘日线在 source 本地午夜前被误裁掉的问题：纽约/首尔等 source 在本地 18:00 后允许上游已发布的当前交易日，带时区 timestamp `end` 按 source timezone 解释，date-only end 继续排他。QCOM、AAPL、000660.KS 的 production-shaped 实测均返回 2026-09-02；resident 8100/#115 尚未部署此修复。证据见 `docs/verification/yahoo-post-close-daily-2026-09-03.md`。
-- #122 已将 Watchlist runner 接入独立 launchd 日历任务：工作日北京时间 07:15、无 RunAtLoad/KeepAlive、独立 runtime/lock/receipt。#124 合入后 catch-up 已实测 exit 0、42/42 current-ready，A 股/ETF 20 cells 20 次 Tencent HTTP 200、429/403/5xx/timeout 均为 0；证据见 `docs/verification/watchlist-daily-schedule-2026-09-03.md`。
-- #126 已将 #49 的 16 个非国债跨市场资产追加到 Watchlist manifest，Watchlist 现为 58 个日线成员；SPX/NDX 使用显式 SPY/QQQ proxy、DXY 使用 UUP、VIX 使用 `^VIX`，其余沿用已审定 source mapping。真实运行已将 58/58 写入 Market Data Database，限流/403/5xx/timeout 均为 0；证据见 `docs/verification/watchlist-cross-market-ingestion-2026-09-03.md`。
-- #128 已上线独立双库只读健康面板：`http://127.0.0.1:18172/health-ui?view=combined&dataset=watchlist`。Watchlist 视图真实显示 58 个资产/290 个 cell、日线 58/58 有技术数据、跨市场 16/16；Screening/Market Data 两库使用 `mode=ro + query_only`，请求前后 SHA-256 不变。18171/#115 与 resident 8100 未重启或改配置；证据见 `docs/verification/combined-health-dashboard-2026-09-03.md`。
-- #132 已统一 Watchlist proxy metadata：SPX/SPY、NDX/QQQ、DXY/UUP 均使用 `identity_role=proxy + proxy_for`；VIX/^VIX 保持真实指数身份。只改 manifest/validator/test，不改历史 K 线、source 路由、provider 或 runner。
-- #133 已新增 `ready_unverified`，把“数据/质量/水位正常但免费源商业授权未认证”与真实 `partial/stale/failed/blocked` 分开。该状态计入数据健康覆盖但不冒充已认证 ready；真实质量闸和错误强度未放松。
-- #134 已为 8100 增加 Watchlist-only 的 identity-aware 双库查询层：旧 `klines` 继续承担显式 legacy/upstream，已验证且历史充分的 Watchlist 日线从只读 Market Data Database 提供，响应和 `/api/health` 明确标记真实后端。10 条日线已回填 14,603 根；实际 Newsletter 31/31 ready（9 market/22 legacy），Human Review 的主请求为 6 market/28 legacy。切换→回滚→再切换已真实演练，未改消费者、Screening、#115、18171 或 18172。Market 命中 15/15 byte-identical；全 69 实时重复请求因 Yahoo/Tencent 上游自身变化只能得到 61/69，未伪报为全量逐字节通过，详见 `docs/verification/consumer-market-database-cutover-2026-09-03.md`。
-- #139 已将 `zinan92/watchlist` 的 pinned snapshot（commit `29ce3c0`）编译为离线、可复现的 107 项 Price Universe：16 个 assets + 91 家 listed company（CN38/US48/HK4/KR1）。多赛道重复只保留一次采集身份但保留 registry provenance；已有 16 个 cross-market identity/source/proxy 字段逐项保持。#139 只建立编译/校验合同，尚未切换当前 58 项运行 manifest、provider、调度或面板；下一步按依赖进入 #140。
-- #140 已为 4 个港股注册 truthful `hk_stock` Yahoo 日线 source：`00100→0100.HK`、`02513→2513.HK`、`00700→0700.HK`、`09988→9988.HK`，使用香港时区和 HKEX provenance。四个 symbol 的真实 Yahoo preflight 均返回 3 根已闭合日线；#140 未切换当前 58 项 manifest、调度、面板或 8100。下一步进入 #141。
-- #141 已将 pinned registry 的 107 项日线全部写入 Market Data Database：11/11 批次成功、107/107 current-ready、107 receipt/quality/watermark、1,630 promoted candles、P95 1,854.8ms，429/403/5xx/timeout/unclassified 均为 0。首轮暴露并修正 `hk_equities` calendar，四个港股最终全部成功；13 个旧本地 Watchlist identity 历史行保留但退出当前分母。调度、面板和 8100 仍由 #142 激活。
-- #142 已激活 107 项 Watchlist 健康和 8100 查询：Watchlist 535 cells（107 daily applicable + 428 not-applicable），日线 107/107 `ready_unverified`，HK/KR 分组和 registry provenance 可见；8100 实测 HK `00100` 与 A 股 `600900` 均从 Market Data Database 返回。候选→回滚→候选已用独立 plist、备份和 `bootout → bootstrap` 实演；Screening/#115/消费者未动。合并后的 canonical plist 收口已完成，综合总状态仍可能被 Screening 独立阻塞影响，Watchlist 过滤视图健康。
+多资产 K 线数据服务：`ticker + timeframe → 标准化 OHLCV + provenance`，覆盖 A 股、美股、加密和商品；近期喂养 trading-system 与 tokenpulse，远期可作为独立 API 产品外卖。
+
+## 现在在哪里（截至 2026-09-08）
+
+- #117 已合并：股票 worker 的四小时周期锚定到周期开始，并加入 A 股 15m/1h 开盘缓冲；forming bar 在缓冲期不持久化并保持 partial。PR 验证为全套 373 tests passed；24 小时真实运行证据仍待验收。
+- #158 已合并：MVP 空 rows 保存为 `missing` quality receipt，并在 health matrix 中显式为 `unavailable`，单个空响应不会终止整轮；PR 验证为 38 个聚焦测试通过，完整套件为 373 passed、1 个既有日期敏感失败。真实两轮 worker 证据仍由 owner 补齐。
+- #159 已合并：MVP stock seed、MVP API/worker 使用 canonical Market Data Database `/Users/wendy/park-data/market/kline.db`；issue-71 数据库保留为 retired 来源。PR 记录了切换前后数据库检查、幂等复跑和 18171 HTTP 200；首个完整切换后 worker cycle 当时仍待 owner 验证。
+- #160 已合并：坏行按行隔离并记录 timestamp/reason，默认 5% threshold；可用 closed rows 继续 promotion，`/api/candles` schema 不变。PR 验证为 39 个聚焦测试通过，完整套件为 375 passed、1 个既有日期敏感失败；QCOM、`000660.KS`、DHR 的 live next-cycle 仍待 owner 验证。
+- #162 已合并：五个 managed launchd job 收敛到 `/Users/wendy/park-runtime/datafeed` canonical checkout；PR 验证为 plist lint、release script syntax、3 个 canonical launchd tests 通过，完整套件为 382 passed、1 个既有 watchlist 环境失败。PR 明确未改变 health-dashboard DB path。
+- #161 已合并：Screening ingestion/health scope 收敛为 `1d + 4h`，其余股票周期为 `not_applicable`，并修正 `CN.A.601989` 为 `CN.A.600150`；PR rebase 后完整套件为 384 passed、1 个既有 watchlist 环境失败。live Screening 启动与 90% coverage gate 仍待 owner 启动。
+- owner 在 issue #163 报告的线上实测（截至 2026-09-08）：8100、18171、18172 均 HTTP 200；worker 01:06Z 周期 `status=success`、无 crash。health-dashboard 的 `KLINE_DB_PATH` 已由 owner 指向 `/Users/wendy/park-data/market/kline.db`，本仓 canonical plist 已同步这一事实；本票不重启服务。
 
 ## 下一步
-- #69 中文 3+3 Health Matrix、#70 全量 216×5 矩阵和交互、#71 可靠性 runner、#81 免费 source 路由、#83 混合状态文案、#85 剩余 97+97 批处理器、#87 美股粗粒度源调整、#89 分阶段恢复、#91 Yahoo 点号 ticker 兼容、#93 空响应终止重试、#95 fallback 404 终止重试、#97 水位倒退保护、#99 provider 硬超时、#101 免费源 HTTP 超时上限、#103 Yahoo 历史请求线程化、#105 Yahoo 修复请求线程化、#107 Yahoo ISO intraday 窗口兼容、#111 Yahoo 美股全时间级别主源已合并；真实全量股票 seed 首轮已完成，Yahoo-only 首轮已验证 100 只美股五级别，DHR 两个粗粒度格按 fail-closed 记录，A 股开盘 forming-bar partial 按规则记录，601989 仍是已知缺口；全量常驻 worker 已切换为 100+100、4 小时刷新并保持 running。美股五级别统一 Yahoo，A 股继续 Tencent→Tonghuashun；日/周优先、日内失败降级、请求间隔/重试退避、P95/限流统计、水位不倒退、provider 超时和同步请求可取消已锁定。#71 七天验收仍开放且 blocked，#54 真实 30-day database acceptance 仍未开始。
-- 继续保持 provider/entitlement/quality 状态显式；不要把 preflight technical availability 当成持久化授权或 verified。
-- 保持 canonical envelope 向后兼容并持续验证 Binance execution-venue 新鲜度；若走 API 外卖路线,先立商业化合同(对外发布风险轴归 Park)。
-- 完成 #115 的 24 小时调度锚点/开盘缓冲真实验收后，再按已批准顺序实施 #116；#118 不切换当前 #115 observer build，也不启动 #71 正式计时。
-- Watchlist 数据和独立双库健康面板已上线；下一步是重新设计消费者切换 spec，先纠正 ADR 0004 的“只换 db_path”错误假设，再做 Newsletter/Human Review 的逐字节切换验收。未经新 issue 批准不实施切换。
-- 当前 Watchlist registry 主线（#139→#142）已完成：107 项名单、HK source、日线持久化、健康面板和 8100 双源运行均已落地；后续增量应以新的 registry pin/独立 issue 推进，不扩大本里程碑。
-- Sonnet review 后的 #147 hardening 已补上 HK provider 并发状态回归和 HK/KR 健康分组断言；KR 保留 `us_stock` API 兼容身份，面板以 `WATCH.KR.*`/registry metadata 单独显示韩股。
-- #149 已将 Watchlist 工作日 daily trigger 从 07:15 调整到 08:15 北京时间，并完成 Gold/Silver/WTI 定向补采：3/3 quality pass、receipt/watermark 齐全、429/403/5xx/timeout/unclassified 均为 0。07:15 旧任务形成状态被保留为证据，后续自动轮次使用 08:15。
-- #151 已显式声明中国日线时间戳约定：A 股个股按本地午夜映射交易日，三个腾讯中国指数按 UTC 午夜直接表示交易日；runner 与 Health 统一按最新已闭合场次判 freshness。真实全轮已补齐 SHCOMP/STAR50/DIVIDEND 的 2026-09-03 日线（SHCOMP=3942.09）及 observation/quality/watermark；午间仍形成中的 4 个 A 股行保持 fail-closed，未改写历史时间戳或放宽质量闸。
+
+- #138：采用 pinned Park Exposure Registry 作为 107-member daily K-line Watchlist。
+- #43：Market Data Database MVP v1 合同的整体收口。
+- #54：真实 100×100、30-day acceptance、restore verification 与最终 Registry 回执。
+- #67：中文 asset × timeframe health dashboard 的完整产品合同。
+- #71：七天 dashboard reliability gate；仍需自然七天运行和浏览器故障/恢复/过期证据，且被 #70 阻塞。
