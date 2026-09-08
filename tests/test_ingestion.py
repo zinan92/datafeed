@@ -7,7 +7,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from kline.free_source_profile import apply_free_source_profile
+from kline.free_source_profile import apply_free_source_profile, apply_screening_scope
 from kline.health_matrix import build_mvp_health_matrix
 from kline.ingestion import IngestionError, IngestionOrchestrator, IngestionPlan
 from kline.models import AssetClass, Candle, Timeframe, TimeframeTransform
@@ -236,6 +236,56 @@ async def test_run_once_promotes_ready_crypto_cells_and_keeps_blocked_cells_expl
         item["policy"].get("source_identity", {}).get("provider_symbol") == "BTC"
         for item in observations
     )
+
+
+@pytest.mark.asyncio
+async def test_screening_derived_four_hour_rows_get_fallback_transform_receipt(
+    tmp_path: Path,
+) -> None:
+    manifest = apply_screening_scope(load_manifest(MANIFEST_PATH))
+    store = KlineStore(str(tmp_path / "screening-derived-receipt.db"))
+
+    class ScreeningAdapter:
+        async def fetch_candles_with_receipt(
+            self, _ticker: str, timeframe: Timeframe, **_kwargs
+        ) -> FetchReceipt:
+            timestamp = (
+                "2026-09-07T01:30:00+00:00"
+                if timeframe == Timeframe.HOUR_4
+                else "2026-09-07T00:00:00+00:00"
+            )
+            return FetchReceipt(
+                candles=[
+                    Candle(
+                        timestamp=timestamp,
+                        open=100,
+                        high=102,
+                        low=99,
+                        close=101,
+                        volume=10,
+                    )
+                ],
+                timeframe_transform=None,
+                source_identity={"selected_source": "screening-test"},
+                raw_response={"row_count": 1},
+            )
+
+    receipt = await IngestionOrchestrator(
+        store, adapter_resolver=lambda _instrument: ScreeningAdapter()
+    ).run_once(
+        IngestionPlan(
+            manifest=manifest,
+            run_id="screening-derived-receipt",
+            now=datetime(2026, 9, 8, 12, tzinfo=timezone.utc),
+            instrument_ids=("CN.A.600519",),
+            timeframes=("1d", "4h"),
+        )
+    )
+
+    assert receipt.status == "success"
+    assert receipt.row_counts["transform_receipts"] == 1
+    assert store.mvp_storage_health()["transform_receipts"] == 1
+    assert store.mvp_storage_health()["candles"] == 2
 
 
 @pytest.mark.asyncio
