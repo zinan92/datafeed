@@ -41,3 +41,10 @@ def test_worker_keeps_current_stock_seed_contract() -> None:
     assert arguments[2] == "ops.mvp_stock_seed"
     assert arguments[arguments.index("--lock") + 1] == "/Users/wendy/park-data/market/mvp-worker.lock"
     assert arguments[-1] == "--forever"
+
+
+def test_health_dashboard_uses_canonical_market_database() -> None:
+    with (ROOT / "ops" / "launchd" / "com.wendy.datafeed.health-dashboard.plist").open("rb") as handle:
+        payload = plistlib.load(handle)
+
+    assert payload["EnvironmentVariables"]["KLINE_DB_PATH"] == "/Users/wendy/park-data/market/kline.db"
