@@ -86,8 +86,9 @@ def test_watchlist_target_is_exact_and_rejects_screening_database() -> None:
         MARKET_DATA_DB,
         WATCHLIST_LOCK,
     )
+    observer_db = SAFE_OBSERVER_DB.with_name("screening-observer.db")
     with pytest.raises(ValueError, match="persistent Market Data Database"):
-        validate_watchlist_target(SAFE_OBSERVER_DB, WATCHLIST_LOCK)
+        validate_watchlist_target(observer_db, WATCHLIST_LOCK)
     with pytest.raises(ValueError, match="dedicated Watchlist lock"):
         validate_watchlist_target(MARKET_DATA_DB, SAFE_OBSERVER_DB.with_name("mvp-worker.lock"))
 
