@@ -353,9 +353,8 @@ class IngestionOrchestrator:
     ) -> list[MvpCandle]:
         key = self._key(instrument, timeframe, manifest)
         rows: list[MvpCandle] = []
-        is_derived = timeframe in {"4h", "1w"} or (
-            timeframe == "1h"
-            and timeframe_transform is not None
+        is_derived = (
+            timeframe_transform is not None
             and timeframe_transform.timeframe_origin == "aggregated"
         )
         seen_timestamps: set[str] = set()
@@ -665,13 +664,40 @@ class IngestionOrchestrator:
                     latency_ms = round((time_module.perf_counter() - fetch_started_at) * 1000, 1)
                     provider_attempts = receipt_attempts(fetch_receipt)
                     raw_rows = fetch_receipt.candles
+                    transform = fetch_receipt.timeframe_transform
+                    # Some Screening free-source adapters return already
+                    # aggregated 4h rows without exposing their optional
+                    # transform metadata.  Reconstruct that metadata before
+                    # normalizing rows so the derived flag and receipt use
+                    # the same provenance decision.
+                    if (
+                        transform is None
+                        and timeframe == "4h"
+                        and instrument.source_id
+                        in {"tencent_stock_free", "yahoo_finance_free"}
+                        and tuple(instrument.required_timeframes) == ("1d", "4h")
+                    ):
+                        transform = TimeframeTransform(
+                            raw_timeframe=Timeframe.MIN_15,
+                            timeframe_origin="aggregated",
+                            aggregation={
+                                "rule": (
+                                    "cn_a_session_4h_v1"
+                                    if instrument.source_id == "tencent_stock_free"
+                                    else "us_regular_fixed_4h_v1"
+                                ),
+                                "bucket_anchor": "09:30",
+                                "partial_bucket_policy": "drop_and_record",
+                                "partial_bucket_count": 0,
+                            },
+                        )
                     row_issues: list[AggregationIssue] = []
                     mvp_rows = self._to_mvp_rows(
                         instrument,
                         timeframe,
                         raw_rows,
                         manifest,
-                        timeframe_transform=fetch_receipt.timeframe_transform,
+                        timeframe_transform=transform,
                         row_issues=row_issues,
                     )
                     quality = assess_quality(
@@ -749,34 +775,6 @@ class IngestionOrchestrator:
                                 )
                             )
                     if usable_rows:
-                        transform = fetch_receipt.timeframe_transform
-                        # Screening's free-source 4h adapters aggregate 15m
-                        # rows.  Keep the storage contract fail-closed while
-                        # tolerating adapters that return the derived candles
-                        # but omit the optional transform metadata in their
-                        # FetchReceipt.
-                        if (
-                            transform is None
-                            and timeframe == "4h"
-                            and instrument.source_id
-                            in {"tencent_stock_free", "yahoo_finance_free"}
-                            and tuple(instrument.required_timeframes)
-                            == ("1d", "4h")
-                        ):
-                            transform = TimeframeTransform(
-                                raw_timeframe=Timeframe.MIN_15,
-                                timeframe_origin="aggregated",
-                                aggregation={
-                                    "rule": (
-                                        "cn_a_session_4h_v1"
-                                        if instrument.source_id == "tencent_stock_free"
-                                        else "us_regular_fixed_4h_v1"
-                                    ),
-                                    "bucket_anchor": "09:30",
-                                    "partial_bucket_policy": "drop_and_record",
-                                    "partial_bucket_count": 0,
-                                },
-                            )
                         if transform is not None and transform.timeframe_origin == "aggregated":
                             transforms.append(
                                 TransformReceiptWrite(

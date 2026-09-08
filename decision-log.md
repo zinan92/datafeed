@@ -11,12 +11,18 @@
 - The fallback is limited to those two Screening sources and `4h`; native
   timeframes and other worker/source paths retain their existing provenance
   behavior.
+- Native `4h` providers such as Hyperliquid must remain `is_derived=false`;
+  timeframe alone is not evidence of aggregation. The ingestion boundary now
+  derives that flag from `TimeframeTransform.timeframe_origin`.
 
 ### Gotchas
 
 - The storage layer intentionally remains fail-closed: every derived candle
   still needs a same-run transform receipt. This fix repairs the missing
   receipt at the ingestion boundary rather than weakening that invariant.
+- A full Screening manifest includes cross-market native `4h` cells; testing
+  only the 200 stock cells can miss this failure even when their receipts are
+  correct.
 - The owner must rerun the canonical Screening command for live
   `last_success_at` and combined-matrix evidence; this branch does not touch
   launchd, plist files, services, or production databases.
