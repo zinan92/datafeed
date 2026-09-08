@@ -748,9 +748,36 @@ class IngestionOrchestrator:
                                     run_id=plan.run_id,
                                 )
                             )
-                    if fetch_receipt.timeframe_transform is not None and usable_rows:
+                    if usable_rows:
                         transform = fetch_receipt.timeframe_transform
-                        if transform.timeframe_origin == "aggregated":
+                        # Screening's free-source 4h adapters aggregate 15m
+                        # rows.  Keep the storage contract fail-closed while
+                        # tolerating adapters that return the derived candles
+                        # but omit the optional transform metadata in their
+                        # FetchReceipt.
+                        if (
+                            transform is None
+                            and timeframe == "4h"
+                            and instrument.source_id
+                            in {"tencent_stock_free", "yahoo_finance_free"}
+                            and tuple(instrument.required_timeframes)
+                            == ("1d", "4h")
+                        ):
+                            transform = TimeframeTransform(
+                                raw_timeframe=Timeframe.MIN_15,
+                                timeframe_origin="aggregated",
+                                aggregation={
+                                    "rule": (
+                                        "cn_a_session_4h_v1"
+                                        if instrument.source_id == "tencent_stock_free"
+                                        else "us_regular_fixed_4h_v1"
+                                    ),
+                                    "bucket_anchor": "09:30",
+                                    "partial_bucket_policy": "drop_and_record",
+                                    "partial_bucket_count": 0,
+                                },
+                            )
+                        if transform is not None and transform.timeframe_origin == "aggregated":
                             transforms.append(
                                 TransformReceiptWrite(
                                     run_id=plan.run_id,

@@ -1,5 +1,26 @@
 # Decision Log
 
+## 2026-09-08 - Pair Screening derived 4h candles with transform receipts (#166)
+
+### Decisions
+
+- Screening's Tencent and Yahoo free-source `4h` paths are known 15m-to-4h
+  aggregations. If a provider returns usable derived rows without the optional
+  transform metadata, ingestion reconstructs the bounded transform receipt
+  from the source identity and fixed calendar contract before atomic promotion.
+- The fallback is limited to those two Screening sources and `4h`; native
+  timeframes and other worker/source paths retain their existing provenance
+  behavior.
+
+### Gotchas
+
+- The storage layer intentionally remains fail-closed: every derived candle
+  still needs a same-run transform receipt. This fix repairs the missing
+  receipt at the ingestion boundary rather than weakening that invariant.
+- The owner must rerun the canonical Screening command for live
+  `last_success_at` and combined-matrix evidence; this branch does not touch
+  launchd, plist files, services, or production databases.
+
 ## 2026-09-08 - Consolidate datafeed launchd jobs on one canonical checkout (#155)
 
 ### Decisions
