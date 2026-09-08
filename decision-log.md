@@ -719,3 +719,16 @@ consumers can use without direct exchange or private SQLite access.
 - Gotchas: `configs/watchlist_manifest.json` is a retained legacy consumer path and is not edited by
   this story; the daily seed now defaults to generated `configs/watchlist_registry_manifest.json`.
   The production plist is changed in-repository only; it is not loaded or restarted by this issue.
+
+## 2026-09-08 - Align execution-market polling and record read-time freshness (#177)
+
+- The execution-market worker defaults to a 5-second poll interval and schedules each poll on a
+  close-aligned phase, one second after the UTC minute boundary. The repository plist records the
+  same interval; the owner-controlled online worker was not restarted or modified here.
+- Each receipt preserves the existing fetch-age p95 and adds per-instrument fetch-age statistics,
+  plus cumulative per-instrument read-age p50/p95/max samples calculated as `now - last_closed_close_time`.
+  Samples are stored in the worker-owned SQLite database so a 30-minute process receipt represents
+  the complete observation window rather than only the latest cycle.
+- Gotchas: the 30-minute acceptance must use temporary DB, receipt, and lock paths because the
+  production lock is outside this worktree; read-age acceptance is separate from API schema and
+  does not require changing the 8100 endpoint.

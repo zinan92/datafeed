@@ -10,6 +10,8 @@ from kline.execution_market.worker import (
     fetch_binance,
     is_completed_bar,
     percentile95,
+    age_stats,
+    next_aligned_run_delay,
     run_once,
 )
 
@@ -27,6 +29,14 @@ def test_forming_bar_is_excluded_and_p95_is_deterministic():
     assert is_completed_bar(now - timedelta(seconds=1), now)
     assert not is_completed_bar(now + timedelta(seconds=1), now)
     assert percentile95([10, 20, 30, 40]) == 40
+    assert age_stats([10, 20, 30, 40]) == {"p50": 20.0, "p95": 40.0, "max": 40.0, "samples": 4}
+
+
+def test_poll_slots_are_one_second_after_minute_and_interval_aligned():
+    now = datetime(2026, 9, 8, 12, 0, 59, tzinfo=timezone.utc)
+    assert next_aligned_run_delay(now, 5) == 2
+    now = datetime(2026, 9, 8, 12, 1, 1, tzinfo=timezone.utc)
+    assert next_aligned_run_delay(now, 5) == 5
 
 
 def test_store_upsert_is_idempotent_and_close_time_is_keyed(tmp_path):
@@ -83,3 +93,15 @@ def test_run_once_writes_receipt_and_does_not_need_default_paths(tmp_path, monke
     receipt = run_once(tmp_path / "execution.db", receipt_path, clock=lambda: datetime(2026, 9, 8, 12, tzinfo=timezone.utc))
     assert receipt["status"] == "ok"
     assert json.loads(receipt_path.read_text())["schema_version"] == "execution-market-lag-v1"
+
+
+def test_read_age_histogram_is_per_instrument_and_accumulates(tmp_path):
+    from kline.execution_market.worker import ExecutionBar
+    store = ExecutionMarketStore(tmp_path / "execution.db")
+    bar = ExecutionBar("XAUUSDT.BINANCE", "2026-09-08T11:59:00Z", "2026-09-08T11:59:59Z", 1, 2, 0.5, 1.5, 3, "binance_usdm_futures", "binance", "production", "2026-09-08T12:00:00Z")
+    store.write([bar], run_id="r1", fetched_at=datetime(2026, 9, 8, 12, 0, 1, tzinfo=timezone.utc))
+    receipt = store.write([], run_id="r2", fetched_at=datetime(2026, 9, 8, 12, 0, 6, tzinfo=timezone.utc))
+    assert receipt["read_age_seconds"]["XAUUSDT.BINANCE"]["samples"] == 2
+    assert receipt["read_age_p50_seconds"]["XAUUSDT.BINANCE"] == 2.0
+    assert receipt["read_age_max_seconds"]["XAUUSDT.BINANCE"] == 7.0
+    store.close()
