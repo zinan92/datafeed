@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import tempfile
 from datetime import datetime, timezone
@@ -143,8 +144,33 @@ def _write_json(path: str | Path, payload: Mapping[str, Any]) -> None:
     temporary.replace(target)
 
 
+def _github_token() -> str | None:
+    """Optional token so the ref lookup uses the 5,000/h authenticated limit.
+
+    Read from GITHUB_TOKEN or GH_TOKEN, or from the file named by
+    GITHUB_TOKEN_FILE. Anonymous lookups share a 60/h per-IP budget with
+    everything else on the machine and blocked the daily seed on 2026-09-09.
+    """
+    for name in ("GITHUB_TOKEN", "GH_TOKEN"):
+        value = os.environ.get(name, "").strip()
+        if value:
+            return value
+    path = os.environ.get("GITHUB_TOKEN_FILE", "").strip()
+    if path:
+        try:
+            value = Path(path).expanduser().read_text(encoding="utf-8").strip()
+        except OSError:
+            return None
+        return value or None
+    return None
+
+
 def _fetch_json(url: str) -> Mapping[str, Any]:
-    request = Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": "datafeed-watchlist-sync"})
+    headers = {"Accept": "application/vnd.github+json", "User-Agent": "datafeed-watchlist-sync"}
+    token = _github_token()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    request = Request(url, headers=headers)
     try:
         with urlopen(request, timeout=30) as response:
             payload = json.loads(response.read().decode("utf-8"))
@@ -207,7 +233,48 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--manifest-output", default=str(DEFAULT_MANIFEST_OUTPUT))
     parser.add_argument("--receipt", default=str(DEFAULT_RECEIPT))
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--reuse-manifest-on-lookup-failure",
+        action="store_true",
+        help=(
+            "If the upstream ref lookup fails (network, rate limit) and a manifest already exists, "
+            "keep that manifest and exit 0 so the daily seed still runs. Content or validation "
+            "errors still block."
+        ),
+    )
     return parser
+
+
+def _reuse_existing_manifest(args: argparse.Namespace, observed_at: str, error: Exception) -> dict[str, Any] | None:
+    """Receipt for running on the previously synced manifest, or None if we must block."""
+    if not getattr(args, "reuse_manifest_on_lookup_failure", False):
+        return None
+    if "ref lookup failed" not in str(error):
+        return None
+    manifest_path = Path(args.manifest_output).expanduser().resolve()
+    if not manifest_path.exists():
+        return None
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        validate_watchlist_manifest(manifest)
+    except Exception:  # noqa: BLE001 — an unreadable manifest is not something to build on
+        return None
+    pinned = None
+    for item in manifest.get("instruments", []):
+        pinned = (item.get("metadata") or {}).get("registry_commit")
+        if pinned:
+            break
+    return {
+        "schema_version": RECEIPT_SCHEMA,
+        "observed_at": observed_at,
+        "status": "lookup_failed_manifest_reused",
+        "changed": False,
+        "registry_repository": REGISTRY_REPOSITORY,
+        "registry_ref": args.ref,
+        "registry_sha": pinned,
+        "manifest_path": str(manifest_path),
+        "lookup_error": f"{type(error).__name__}: {error}",
+    }
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -219,7 +286,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             commit = args.commit or APPROVED_WATCHLIST_COMMIT
             snapshot_payload = build_snapshot(args.source, commit=commit)
         else:
-            commit, raw_bytes = fetch_registry(args.ref)
+            try:
+                commit, raw_bytes = fetch_registry(args.ref)
+            except RuntimeError as lookup_error:
+                reused = _reuse_existing_manifest(args, observed_at, lookup_error)
+                if reused is not None:
+                    if not args.dry_run:
+                        _write_json(receipt_path, reused)
+                    print(json.dumps(reused, ensure_ascii=False, sort_keys=True))
+                    return 0
+                raise
             snapshot_payload = build_snapshot_from_bytes(raw_bytes, commit=commit)
         snapshot_path = Path(args.snapshot_output).expanduser().resolve()
         manifest_path = Path(args.manifest_output).expanduser().resolve()
