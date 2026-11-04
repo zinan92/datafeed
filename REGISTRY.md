@@ -4,6 +4,15 @@
 
 多资产 K 线数据服务：`ticker + timeframe → 标准化 OHLCV + provenance`，覆盖 A 股、美股、加密和商品；近期喂养 trading-system 与 tokenpulse，远期可作为独立 API 产品外卖。
 
+## 现在在哪里（2026-11-05，OKX 黄金进入 execution-market worker）
+
+- Park 2026-11-05 选定 Paper 黄金用 OKX `XAU-USDT-SWAP`。
+- execution-market worker 新增 `XAU-USDT-SWAP.OKX`（venue `okx`，provider `okx_swap_public`），API 走 `/api/execution-market/okx/XAU-USDT-SWAP`。
+- 分派与解析改按 venue，不再按 `XAU` 前缀（否则 OKX 黄金会被送去 Binance）；OKX 未 `confirm` 的已过分钟 bar 不入库。
+- 一个 venue 失败不影响另一个：本机实测 Binance 451、OKX 正常写入（4068.0）。
+- 修了 `test_timeframe_contract` 三处用本地日期的测试（上海 00:00–08:00 必挂）。
+- 未部署：生产 `~/park-runtime/datafeed` 仍在 `4a2f0cf`，部署要 Park 点头。
+
 ## 现在在哪里（2026-11-05，OKX 第二个执行行情源）
 
 - 2026-11-04 起 Binance 对本机返回 HTTP 451（地区限制），`fapi` 和 `api` 都是，黄金唯一的执行行情源断了；trading-system 的 `/trade` 因此一直“读取中”，按设计拒绝新开仓。

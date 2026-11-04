@@ -24,6 +24,7 @@ import httpx
 
 BINANCE_URL = "https://fapi.binance.com/fapi/v1/klines"
 HYPERLIQUID_TESTNET_URL = "https://api.hyperliquid-testnet.xyz/info"
+OKX_CANDLES_URL = "https://www.okx.com/api/v5/market/candles"
 POLL_SECONDS = 5
 STALE_SECONDS = 90
 LAST_PRICE_STALE_SECONDS = 30
@@ -31,6 +32,7 @@ LAST_PRICE_STALE_SECONDS = 30
 INSTRUMENTS = {
     "XAUUSDT.BINANCE": {"provider": "binance_usdm_futures", "venue": "binance", "environment": "production", "symbol": "XAUUSDT"},
     "BTC-USD-PERP.HYPERLIQUID": {"provider": "hyperliquid_perpetual", "venue": "hyperliquid", "environment": "testnet", "symbol": "BTC"},
+    "XAU-USDT-SWAP.OKX": {"provider": "okx_swap_public", "venue": "okx", "environment": "production", "symbol": "XAU-USDT-SWAP"},
 }
 
 
@@ -124,9 +126,16 @@ def _bar(instrument_id: str, item: Any, fetched: datetime) -> ExecutionBar:
     if meta["venue"] == "binance":
         open_ms, close_ms = item[0], item[6]
         values = (item[1], item[2], item[3], item[4], item[5])
-    else:
+    elif meta["venue"] == "okx":
+        # [ts, o, h, l, c, vol(contracts), volCcy(base), volCcyQuote, confirm]
+        open_ms = int(item[0])
+        close_ms = open_ms + 59_999
+        values = (item[1], item[2], item[3], item[4], item[6])
+    elif meta["venue"] == "hyperliquid":
         open_ms, close_ms = item["t"], item.get("T", item["t"] + 59999)
         values = (item["o"], item["h"], item["l"], item["c"], item["v"])
+    else:
+        raise ProviderUnavailable(f"no parser for venue {meta['venue']}")
     numbers = tuple(float(v) for v in values)
     if not all(math.isfinite(v) for v in numbers) or numbers[4] < 0:
         raise ProviderUnavailable("upstream returned invalid OHLCV")
@@ -323,6 +332,44 @@ class ExecutionMarketLock:
             self.fd = None
 
 
+def fetch_okx(instrument_id: str, fetched: datetime, client: httpx.Client) -> list[ExecutionBar]:
+    """OKX public 1m candles. A bar OKX has not confirmed is never promoted.
+
+    Rows come newest first. A row whose minute has passed but whose ``confirm``
+    flag is still ``0`` is dropped; the next poll sees it confirmed.
+    """
+
+    symbol = INSTRUMENTS[instrument_id]["symbol"]
+    try:
+        response = client.get(OKX_CANDLES_URL, params={"instId": symbol, "bar": "1m", "limit": 3})
+        response.raise_for_status()
+        payload = response.json()
+    except (httpx.HTTPError, ValueError) as exc:
+        raise ProviderUnavailable(str(exc)) from exc
+    if not isinstance(payload, dict) or str(payload.get("code")) != "0" or not isinstance(payload.get("data"), list):
+        message = payload.get("msg") if isinstance(payload, dict) else "non-object payload"
+        raise ProviderUnavailable(f"OKX error: {message or 'unexpected payload'}")
+    fetched_ms = int(fetched.timestamp() * 1000)
+    bars = []
+    for row in reversed(payload["data"]):
+        if not isinstance(row, list) or len(row) < 9:
+            raise ProviderUnavailable("OKX returned a malformed candle row")
+        closes_after_fetch = int(row[0]) + 59_999 > fetched_ms
+        if str(row[8]) == "1" or closes_after_fetch:
+            bars.append(_bar(instrument_id, row, fetched))
+    return bars
+
+
+def _fetch(instrument_id: str, fetched: datetime, client: httpx.Client) -> list[ExecutionBar]:
+    """Dispatch on the instrument's venue; never on its symbol."""
+
+    fetchers = {"binance": fetch_binance, "hyperliquid": fetch_hyperliquid, "okx": fetch_okx}
+    venue = INSTRUMENTS[instrument_id]["venue"]
+    if venue not in fetchers:
+        raise ProviderUnavailable(f"no fetcher for venue {venue}")
+    return fetchers[venue](instrument_id, fetched, client)
+
+
 def run_once(db_path: str | Path, receipt_path: str | Path, *, lock_path: str | Path | None = None, client: httpx.Client | None = None, clock: Callable[[], datetime] = utc_now) -> dict[str, Any]:
     lock = ExecutionMarketLock(lock_path) if lock_path else None
     if lock:
@@ -337,7 +384,7 @@ def run_once(db_path: str | Path, receipt_path: str | Path, *, lock_path: str | 
     try:
         for instrument_id in INSTRUMENTS:
             try:
-                bars = fetch_binance(instrument_id, fetched, client) if instrument_id.startswith("XAU") else fetch_hyperliquid(instrument_id, fetched, client)
+                bars = _fetch(instrument_id, fetched, client)
                 completed = [bar for bar in bars if is_completed_bar(datetime.fromisoformat(bar.close_time.replace("Z", "+00:00")), fetched)]
                 forming = [bar for bar in bars if not is_completed_bar(datetime.fromisoformat(bar.close_time.replace("Z", "+00:00")), fetched)]
                 last_age.update(store.write_forming(forming[-1:], sampled_at=fetched))
