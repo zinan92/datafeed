@@ -116,6 +116,17 @@ BINANCE_USDM_FUTURES_META = ProviderMeta(
     supported_symbols=("XAUUSDT",),
 )
 
+OKX_SWAP_META = ProviderMeta(
+    name="okx",
+    source_mode="okx_swap_public",
+    quality_flags=("public_api", "usdt_perpetual_swap", "live", "execution_venue"),
+    continuous=True,
+    execution_venue=True,
+    realtime_supported=False,
+    market_type="usdt_perpetual_swap",
+    supported_symbols=("XAU-USDT-SWAP",),
+)
+
 FRED_META = ProviderMeta(
     name="fred",
     source_mode="fred_public_csv",
@@ -136,6 +147,9 @@ _SOURCE_ALIASES = {
     "binance_usdm_futures_research": "binance_usdm_futures_research",
     "binance_futures_research": "binance_usdm_futures_research",
     "hyperliquid_perpetual_public": "hyperliquid_perpetual_public",
+    "okx": "okx_swap_public",
+    "okx_swap": "okx_swap_public",
+    "okx_swap_public": "okx_swap_public",
     "tencent_stock_free": "tencent_stock_free",
     "tencent_etf_free": "tencent_etf_free",
     "yahoo_finance_free": "yahoo_finance_free",
@@ -167,6 +181,7 @@ _SOURCE_ASSET_CLASSES = {
     "binance_usdm_futures": AssetClass.COMMODITY,
     "binance_usdm_futures_research": AssetClass.CRYPTO,
     "hyperliquid_perpetual_public": AssetClass.CRYPTO,
+    "okx_swap_public": AssetClass.COMMODITY,
     "yahoo_finance": AssetClass.US_STOCK,
     "yahoo_finance_hk": AssetClass.HK_STOCK,
     "yahoo_finance_free": AssetClass.US_STOCK,
@@ -191,6 +206,7 @@ _SOURCE_META = {
     "binance_usdm_futures": BINANCE_USDM_FUTURES_META,
     "binance_usdm_futures_research": BINANCE_USDM_RESEARCH_META,
     "hyperliquid_perpetual_public": HYPERLIQUID_PERP_META,
+    "okx_swap_public": OKX_SWAP_META,
     "yahoo_finance": _PROVIDER_META[AssetClass.US_STOCK],
     "yahoo_finance_hk": _PROVIDER_META[AssetClass.HK_STOCK],
     "yahoo_finance_futures": _PROVIDER_META[AssetClass.COMMODITY],
@@ -354,6 +370,26 @@ _SOURCE_MANIFESTS: dict[str, SourceManifest] = {
             "ETHUSDT": (Timeframe.HOUR_4, Timeframe.DAY, Timeframe.WEEK),
         },
         enforce_symbol_allowlist=True,
+    ),
+    "okx_swap_public": SourceManifest(
+        source_id="okx_swap_public",
+        asset_class=AssetClass.COMMODITY,
+        meta=OKX_SWAP_META,
+        ticker_aliases={
+            "GOLD": "XAU-USDT-SWAP",
+            "XAU": "XAU-USDT-SWAP",
+            "XAUUSD": "XAU-USDT-SWAP",
+            "XAUUSDT": "XAU-USDT-SWAP",
+            "XAU-USDT-SWAP": "XAU-USDT-SWAP",
+        },
+        canonical_instrument_ids={
+            "GOLD": "GOLD",
+            "XAU": "GOLD",
+            "XAUUSD": "GOLD",
+            "XAUUSDT": "GOLD",
+            "XAU-USDT-SWAP": "GOLD",
+        },
+        enforce_symbol_allowlist=False,
     ),
     "hyperliquid_perpetual_public": SourceManifest(
         source_id="hyperliquid_perpetual_public",

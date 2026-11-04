@@ -20,6 +20,7 @@ from kline.providers.free_ashare import AShareFreeProvider
 from kline.providers.free_ashare_etf import TencentEtfFreeProvider
 from kline.providers.free_us import USFreeProvider
 from kline.providers.hyperliquid import HyperliquidPerpetualProvider
+from kline.providers.okx_swap import OkxSwapProvider
 from kline.providers.hk import HKStockProvider
 from kline.providers.sina import SinaIndexProvider
 from kline.providers.treasury import TreasuryCsvProvider
@@ -64,6 +65,7 @@ def init(settings: Settings | None = None) -> None:
     _providers[AssetClass.CRYPTO] = CryptoProvider(timeout=s.request_timeout)
     _providers[AssetClass.COMMODITY] = CommodityProvider()
     _live_providers["binance_usdm_futures"] = BinanceUsdmFuturesProvider(timeout=s.request_timeout)
+    _live_providers["okx_swap_public"] = OkxSwapProvider(timeout=s.request_timeout)
 
     register_adapter(
         ProviderBackedMarketDataAdapter(
@@ -160,6 +162,12 @@ def init(settings: Settings | None = None) -> None:
         ProviderBackedMarketDataAdapter(
             source_manifest("binance_usdm_futures", AssetClass.COMMODITY),
             _live_providers["binance_usdm_futures"],
+        )
+    )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
+            source_manifest("okx_swap_public", AssetClass.COMMODITY),
+            _live_providers["okx_swap_public"],
         )
     )
     register_adapter(
@@ -266,7 +274,7 @@ def get_adapter_for_source(source: str, asset_class: AssetClass) -> MarketDataPo
                 "sina_index, "
                 "treasury_official_csv_derived, binance_spot_public, "
                 "binance_usdm_futures, binance_usdm_futures_research, "
-                "hyperliquid_perpetual_public, yahoo_finance, yahoo_finance_futures, "
+                "hyperliquid_perpetual_public, okx_swap_public, yahoo_finance, yahoo_finance_futures, "
                 "tushare_pro, or a registered adapter source"
             ],
         ) from e

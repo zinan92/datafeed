@@ -1,5 +1,55 @@
 # Decision Log
 
+## 2026-11-05 - OKX swaps as a second execution-live venue
+
+### Decisions
+
+- Add `okx_swap_public` (`OkxSwapProvider`): OKX public USDT-margined
+  perpetual swaps, starting with `XAU-USDT-SWAP`. It is registered as an
+  `execution_venue=True` COMMODITY source beside `binance_usdm_futures`, with
+  its own `ProviderMeta`, manifest, aliases (`okx`, `okx_swap`) and
+  instrument definition (`XAU-USDT-SWAP.OKX`).
+- Selection is explicit. `profile=execution_live` with `source=auto` still
+  resolves to Binance; nothing fails over to OKX by itself. A consumer asks
+  for `source=okx_swap_public`, and every response says `provider=okx`.
+- Why now: on 2026-11-04 Binance started answering HTTP 451 ("restricted
+  location") to this machine for both `fapi` and `api`, so the only gold
+  execution source went dark. OKX, Bitget, Kraken and Hyperliquid answered
+  200 from the same machine; Bybit answered 403 (CloudFront geo-block).
+
+### Gotchas
+
+- OKX returns candles newest first; the provider reverses them.
+- `/market/candles` only covers the most recent 1,440 bars; older bars come
+  from `/market/history-candles` (100 per page). Both page backwards with
+  `after=<ts>`.
+- Daily bars default to Hong Kong midnight. The provider asks for `1Dutc` /
+  `1Wutc` so a day is a UTC day like every other source here.
+- Swap volume `vol` is in contracts. The provider uses `volCcy` (base units,
+  XAU) so volume means the same as Binance base volume; `amount` is
+  `volCcyQuote`.
+- Sizes are in contracts (`ctVal` = 0.001 XAU). The instrument definition
+  converts lot, min and max sizes to base units so `price × quantity` is the
+  USDT notional. Fees, maintenance margin, `max_price` and `min_notional` are
+  listed in `missing_fields`, never invented.
+- OKX `XAU-USDT-SWAP` is not the same contract as Binance `XAUUSDT`: prices
+  differ by a few dollars and tick size is 0.1, not 0.01. Switching a Paper
+  track between them is a strategy-level decision, not a data-layer one.
+
+### Verification
+
+- `tests/test_okx_swap.py`: 9 passed (ordering, UTC days, history paging,
+  error codes, 451, allowlist, contract-to-base conversion, inverse refused,
+  registry identity).
+- Full suite: 420 passed, 1 failed. The failure is
+  `test_binance_daily_excludes_current_active_bar_and_validates_ohlc`, which
+  fails the same way on `main` without this change (date-sensitive).
+- Live smoke from this machine (isolated instance on :18100, temp DB):
+  600 × 30m bars across both endpoints, 400 daily bars, instrument
+  `XAU-USDT-SWAP.OKX` TRADING. The default Binance path still returned 451
+  with no fallback.
+- Production `~/park-runtime/datafeed` and `:8100` were not touched.
+
 ## 2026-09-08 - Forming execution price and v2 freshness (#179)
 
 ### Decisions
