@@ -210,3 +210,38 @@ def test_okx_is_a_registered_execution_source_with_its_own_identity() -> None:
     assert manifest.canonical_instrument_id("GOLD") == "GOLD"
     # Binance stays the default for execution_live; OKX is only used when asked for.
     assert source_meta("binance_usdm_futures", AssetClass.COMMODITY).name == "binance_usdm_futures"
+
+
+@pytest.mark.asyncio
+async def test_requests_reuse_one_kept_alive_client_per_event_loop() -> None:
+    """A new TLS handshake per request (~1.3s from this Mac) misses the Dashboard's 2s bound."""
+
+    newest_first = [_row(_ms(5, 1, 0), "4037.0"), _row(_ms(5, 0, 30), "4020.0")]
+    provider = OkxSwapProvider(transport=httpx.MockTransport(lambda _request: _ok(newest_first)))
+    created: list[httpx.AsyncClient] = []
+    original = provider._new_client
+
+    def counting() -> httpx.AsyncClient:
+        client = original()
+        created.append(client)
+        return client
+
+    provider._new_client = counting  # type: ignore[method-assign]
+    await provider.fetch("GOLD", Timeframe.MIN_30, limit=2)
+    await provider.fetch("GOLD", Timeframe.MIN_30, limit=2)
+
+    assert len(created) == 1
+    assert not created[0].is_closed
+    await provider.aclose()
+    assert created[0].is_closed
+
+
+def test_a_new_event_loop_gets_a_new_client() -> None:
+    import asyncio
+
+    newest_first = [_row(_ms(5, 1, 0), "4037.0")]
+    provider = OkxSwapProvider(transport=httpx.MockTransport(lambda _request: _ok(newest_first)))
+    asyncio.run(provider.fetch("GOLD", Timeframe.MIN_30, limit=1))
+    first = provider._shared_client
+    asyncio.run(provider.fetch("GOLD", Timeframe.MIN_30, limit=1))
+    assert provider._shared_client is not first

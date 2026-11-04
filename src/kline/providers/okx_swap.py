@@ -19,10 +19,12 @@ OKX differences the adapter hides from callers:
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import logging
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any
+from typing import Any, AsyncIterator
 
 import httpx
 
@@ -137,17 +139,43 @@ class OkxSwapProvider:
         self._allowed_symbols = frozenset(allowed_symbols or DEFAULT_ALLOWED_SYMBOLS)
         self._base_url = base_url.rstrip("/")
         self.last_raw_response: dict[str, Any] | None = None
+        # One kept-alive client per event loop. From this Mac the OKX TLS handshake
+        # alone takes ~1.3s and a reused connection answers in ~0.5s; the Dashboard
+        # bounds chart reads at 2s, so a fresh connection per request misses it.
+        self._shared_client: httpx.AsyncClient | None = None
+        self._shared_loop: asyncio.AbstractEventLoop | None = None
         self.timeframe_transform: TimeframeTransform | None = None
         self.source_identity: dict[str, Any] = {}
 
     def supported_timeframes(self) -> list[Timeframe]:
         return list(_TF_MAP.keys())
 
-    def _client(self) -> httpx.AsyncClient:
-        kwargs: dict[str, Any] = {"timeout": self._timeout, "base_url": self._base_url}
+    def _new_client(self) -> httpx.AsyncClient:
+        kwargs: dict[str, Any] = {
+            "timeout": self._timeout,
+            "base_url": self._base_url,
+            "limits": httpx.Limits(max_keepalive_connections=4, keepalive_expiry=60),
+        }
         if self._transport is not None:
             kwargs["transport"] = self._transport
         return httpx.AsyncClient(**kwargs)
+
+    @contextlib.asynccontextmanager
+    async def _client(self) -> AsyncIterator[httpx.AsyncClient]:
+        """Yield the shared client for the running loop; never close it per request."""
+
+        loop = asyncio.get_running_loop()
+        client = self._shared_client
+        if client is None or client.is_closed or self._shared_loop is not loop:
+            client = self._new_client()
+            self._shared_client, self._shared_loop = client, loop
+        yield client
+
+    async def aclose(self) -> None:
+        if self._shared_client is not None and not self._shared_client.is_closed:
+            await self._shared_client.aclose()
+        self._shared_client = None
+        self._shared_loop = None
 
     async def _get(self, client: httpx.AsyncClient, path: str, params: dict[str, Any]) -> list[Any]:
         try:
