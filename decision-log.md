@@ -11,6 +11,11 @@
   `ProviderUnavailable`, recorded per instrument.
 - OKX bars: volume is `volCcy` (XAU), not contracts. A bar whose minute ended
   but which OKX has not confirmed (`confirm=0`) is dropped, not promoted.
+- The OKX instrument definition now reads `upstream_server_time` from
+  `/public/time` and `margin_maint_rate` from `/public/position-tiers` tier 1
+  (cross). Limits OKX does not have (`min_notional`, `max_price`) are `null`
+  and listed in the new `not_applicable_fields` with a reason. They are never a
+  fake `"0"`. `missing_fields` keeps meaning "the venue has it, we did not read it".
 
 ### Gotchas
 

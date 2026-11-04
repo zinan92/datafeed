@@ -140,14 +140,28 @@ async def test_symbols_outside_the_allowlist_are_rejected_before_any_request() -
         await provider.fetch("BTC", Timeframe.MIN_30, limit=5)
 
 
+def _public_handler(instrument: dict | None = None, tiers: list | None = None):
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/v5/public/instruments":
+            assert request.url.params["instType"] == "SWAP"
+            return _ok([instrument or _instrument()])
+        if request.url.path == "/api/v5/public/position-tiers":
+            assert request.url.params["instFamily"] == "XAU-USDT"
+            assert request.url.params["tdMode"] == "cross"
+            return _ok(tiers if tiers is not None else [
+                {"tier": "1", "mmr": "0.004", "imr": "0.01", "maxLever": "100"},
+                {"tier": "2", "mmr": "0.005", "imr": "0.015", "maxLever": "66.66"},
+            ])
+        if request.url.path == "/api/v5/public/time":
+            return _ok([{"ts": "1793828110746"}])
+        raise AssertionError(f"unexpected request {request.url.path}")
+
+    return handler
+
+
 @pytest.mark.asyncio
 async def test_instrument_definition_converts_contracts_to_base_units() -> None:
-    def handler(request: httpx.Request) -> httpx.Response:
-        assert request.url.path == "/api/v5/public/instruments"
-        assert request.url.params["instType"] == "SWAP"
-        return _ok([_instrument()])
-
-    provider = OkxSwapProvider(transport=httpx.MockTransport(handler))
+    provider = OkxSwapProvider(transport=httpx.MockTransport(_public_handler()))
     definition = await provider.fetch_instrument_definition("GOLD")
 
     assert definition.instrument_id == "XAU-USDT-SWAP.OKX"
@@ -160,17 +174,28 @@ async def test_instrument_definition_converts_contracts_to_base_units() -> None:
     assert definition.min_quantity == "0.001"
     assert definition.market_max_quantity == "640"
     assert definition.margin_init_rate == "0.01"
+    assert definition.margin_maint_rate == "0.004"  # tier 1, read from upstream
+    assert definition.upstream_server_time == 1793828110746
     assert definition.execution_venue is True
     assert definition.source_mode == "okx_swap_public"
-    assert "maker_fee_rate" in definition.missing_fields
+    assert definition.derived_fields["contract_multiplier"] == "usd_m_notional_equals_price_times_quantity"
+    # Values OKX has but we do not read stay "missing"; limits OKX does not have
+    # are "not applicable", with a reason, and are null rather than a fake "0".
+    assert definition.missing_fields == ["maker_fee_rate", "taker_fee_rate"]
+    assert definition.min_notional is None and definition.max_price is None
+    assert set(definition.not_applicable_fields) == {"min_notional", "max_price"}
+
+
+@pytest.mark.asyncio
+async def test_missing_position_tier_fails_visibly() -> None:
+    provider = OkxSwapProvider(transport=httpx.MockTransport(_public_handler(tiers=[])))
+    with pytest.raises(ProviderError, match="tier 1"):
+        await provider.fetch_instrument_definition("GOLD")
 
 
 @pytest.mark.asyncio
 async def test_inverse_contracts_are_refused() -> None:
-    def handler(_request: httpx.Request) -> httpx.Response:
-        return _ok([{**_instrument(), "ctType": "inverse"}])
-
-    provider = OkxSwapProvider(transport=httpx.MockTransport(handler))
+    provider = OkxSwapProvider(transport=httpx.MockTransport(_public_handler({**_instrument(), "ctType": "inverse"})))
     with pytest.raises(ProviderError, match="linear"):
         await provider.fetch_instrument_definition("GOLD")
 
