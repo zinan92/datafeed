@@ -17,6 +17,7 @@ from kline.models import (
     AssetClass,
     Base,
     Candle,
+    FundingRateRow,
     KlineRow,
     RawUpstreamResponse,
     SourceObservation,
@@ -219,6 +220,71 @@ class KlineStore:
                 affected += session.execute(stmt).rowcount
             session.commit()
             return affected
+
+    def candle_timestamps(
+        self,
+        ticker: str,
+        asset_class: AssetClass,
+        timeframe: Timeframe,
+        *,
+        source_id: str,
+        start: str,
+        end: str,
+    ) -> list[str]:
+        """Stored bar times in [start, end), oldest first."""
+        with self._session_factory() as session:
+            stmt = (
+                select(KlineRow.timestamp)
+                .where(
+                    KlineRow.source_id == source_id,
+                    KlineRow.ticker == ticker,
+                    KlineRow.asset_class == asset_class.value,
+                    KlineRow.timeframe == timeframe.value,
+                    KlineRow.timestamp >= start,
+                    KlineRow.timestamp < end,
+                )
+                .order_by(KlineRow.timestamp)
+            )
+            return list(session.execute(stmt).scalars())
+
+    def save_funding(self, source_id: str, instrument: str, rows: list[dict[str, Any]]) -> int:
+        """Upsert funding settlements. Each row needs funding_time, funding_rate, realized_rate, raw."""
+        if not rows:
+            return 0
+        records = [{"source_id": source_id, "instrument": instrument, **row} for row in rows]
+        with self._session_factory() as session:
+            for offset in range(0, len(records), 500):
+                stmt = sqlite_insert(FundingRateRow).values(records[offset : offset + 500])
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=["source_id", "instrument", "funding_time"],
+                    set_={
+                        "funding_rate": stmt.excluded.funding_rate,
+                        "realized_rate": stmt.excluded.realized_rate,
+                        "raw": stmt.excluded.raw,
+                    },
+                )
+                session.execute(stmt)
+            session.commit()
+        return len(records)
+
+    def query_funding(
+        self, source_id: str, instrument: str, *, start: str | None = None, end: str | None = None
+    ) -> list[dict[str, Any]]:
+        """Funding settlements oldest first."""
+        with self._session_factory() as session:
+            stmt = (
+                select(FundingRateRow)
+                .where(FundingRateRow.source_id == source_id, FundingRateRow.instrument == instrument)
+                .order_by(FundingRateRow.funding_time)
+            )
+            if start:
+                stmt = stmt.where(FundingRateRow.funding_time >= start)
+            if end:
+                stmt = stmt.where(FundingRateRow.funding_time <= end)
+            return [
+                {"funding_time": row.funding_time, "funding_rate": row.funding_rate, "realized_rate": row.realized_rate}
+                for row in session.execute(stmt).scalars()
+            ]
 
     def save_raw_response(
         self,

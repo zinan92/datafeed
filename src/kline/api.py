@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import json
 import os
 from pathlib import Path
 import sqlite3
@@ -24,7 +25,9 @@ from kline.models import (
     TimeframeTransform,
     InstrumentDefinition,
 )
+from kline import okx_history
 from kline.combined_health import build_combined_health_matrix
+from kline.config import get_settings
 from kline.market_query import (
     MarketQueryReader,
     MarketQueryResult,
@@ -1365,6 +1368,33 @@ async def execution_market(
 ) -> dict[str, Any]:
     """Return completed bars plus the latest forming execution price."""
     return _execution_market_payload(venue, instrument, limit)
+
+
+def _history_series(source: str, instrument: str) -> None:
+    if source != okx_history.SOURCE_MODE or instrument != okx_history.INSTRUMENT:
+        raise HTTPException(status_code=404, detail="no history kept for this series")
+
+
+@router.get("/history/{source}/{instrument}/report")
+async def history_report(source: str, instrument: str) -> dict[str, Any]:
+    """Coverage of the stored history: what exists, and what is missing and why."""
+    _history_series(source, instrument)
+    path = okx_history.report_path(get_settings().db_path, instrument)
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="history has not been fetched yet")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@router.get("/history/{source}/{instrument}/funding")
+async def history_funding(
+    source: str,
+    instrument: str,
+    start: str | None = Query(default=None),
+    end: str | None = Query(default=None),
+) -> dict[str, Any]:
+    """Funding settlements the venue reported, oldest first."""
+    _history_series(source, instrument)
+    return {"source": source, "instrument": instrument, "funding": get_store().query_funding(source, instrument, start=start, end=end)}
 
 
 @router.get("/tickers")
