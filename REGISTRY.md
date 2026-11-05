@@ -4,6 +4,16 @@
 
 多资产 K 线数据服务：`ticker + timeframe → 标准化 OHLCV + provenance`，覆盖 A 股、美股、加密和商品；近期喂养 trading-system 与 tokenpulse，远期可作为独立 API 产品外卖。
 
+## 现在在哪里（2026-11-05，OKX BTC 历史 · #186）
+
+- 新数据源 `okx_swap_crypto_public`：OKX 公开 USDT 永续，资产类别 crypto，允许 `BTC-USDT-SWAP`、`ETH-USDT-SWAP`。研究用，不是执行行情源。
+  - 一个数据源只属于一个资产类别，跟 `binance_usdm_futures` / `binance_usdm_futures_research` 一样；黄金仍是 `okx_swap_public`（commodity），没有改动。
+- `okx_history.SERIES` 列出存哪些历史：黄金 → `okx_swap_public`，BTC → `okx_swap_crypto_public`。
+  - 每个系列单独写覆盖报告。黄金的文件名不变。
+- 每天 08:40 的回填任务补所有系列；`--instrument` 可以只补一个。任何一个系列失败，任务以非 0 退出，其余系列照常补完。
+- `/api/history/okx_swap_crypto_public/BTC-USDT-SWAP/report|funding` 可读；源和品种对不上一律 404。
+- 用途：trading-system 回测工作台（trading-system#1334）的 BTC 回测。
+
 ## 现在在哪里（2026-11-05，OKX 黄金历史回补 · #184）
 
 - `ops/okx_history_backfill.py` 把 `XAU-USDT-SWAP` 180 天 1 分钟线写进 8100 读的库（`okx_swap_public`），只用 OKX，不补不算。

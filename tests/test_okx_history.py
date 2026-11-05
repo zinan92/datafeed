@@ -192,3 +192,66 @@ def test_routes_serve_the_report_and_funding_and_refuse_anything_else(store: Kli
     assert client.get(f"{base}/funding").json()["funding"][0]["funding_rate"] == 0.1
     assert client.get("/api/history/binance_usdm_futures/XAU-USDT-SWAP/report").status_code == 404
     assert client.get("/api/history/okx_swap_public/BTC-USDT-SWAP/funding").status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_btc_is_kept_under_the_crypto_source_with_its_own_report(store: KlineStore, tmp_path: Path) -> None:
+    from kline.okx_history import CRYPTO_SOURCE
+
+    okx = FakeOkx()
+    provider = OkxSwapProvider(transport=httpx.MockTransport(okx.handler), allowed_symbols={"XAU-USDT-SWAP", "BTC-USDT-SWAP"})
+    btc_path = report_path(tmp_path / "kline.db", "BTC-USDT-SWAP")
+    try:
+        report = await backfill(provider, store, path=btc_path, instrument="BTC-USDT-SWAP", days=2, now=NOW, sleep=no_wait)
+    finally:
+        await provider.aclose()
+    assert btc_path.name == "okx_swap_crypto_public_BTC-USDT-SWAP.json" and json.loads(btc_path.read_text())["source"] == CRYPTO_SOURCE
+    assert report["missing_minutes"] == 0 and report["funding"]["count"] == 250
+    assert store.count("BTC-USDT-SWAP", AssetClass.CRYPTO, Timeframe.MIN_1, source_id=CRYPTO_SOURCE) == 2880
+    assert store.count("BTC-USDT-SWAP", AssetClass.COMMODITY, Timeframe.MIN_1, source_id=SOURCE_MODE) == 0
+    assert len(store.query_funding(CRYPTO_SOURCE, "BTC-USDT-SWAP")) == 250 and store.query_funding(SOURCE_MODE, "BTC-USDT-SWAP") == []
+    assert report_path(tmp_path / "kline.db").name == "okx_swap_public_XAU-USDT-SWAP.json"  # gold's file did not move
+    with pytest.raises(ValueError):
+        report_path(tmp_path / "kline.db", "SOL-USDT-SWAP")
+
+
+def test_btc_routes_answer_only_under_the_crypto_source(store: KlineStore, tmp_path: Path, monkeypatch) -> None:
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from kline import api
+
+    monkeypatch.setenv("KLINE_DB_PATH", str(tmp_path / "kline.db"))
+    monkeypatch.setattr(api, "get_store", lambda: store)
+    app = FastAPI()
+    app.include_router(api.router, prefix="/api")
+    client = TestClient(app)
+    path = report_path(tmp_path / "kline.db", "BTC-USDT-SWAP")
+    path.parent.mkdir()
+    path.write_text('{"instrument": "BTC-USDT-SWAP"}')
+    assert client.get("/api/history/okx_swap_crypto_public/BTC-USDT-SWAP/report").json() == {"instrument": "BTC-USDT-SWAP"}
+    assert client.get("/api/history/okx_swap_public/BTC-USDT-SWAP/report").status_code == 404
+    assert client.get("/api/history/okx_swap_crypto_public/XAU-USDT-SWAP/report").status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_stored_btc_bars_are_served_the_way_the_backtest_reads_them(store: KlineStore, tmp_path: Path, monkeypatch) -> None:
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from kline import api
+
+    provider = OkxSwapProvider(transport=httpx.MockTransport(FakeOkx().handler), allowed_symbols={"BTC-USDT-SWAP"})
+    try:
+        await backfill(provider, store, path=report_path(tmp_path / "kline.db", "BTC-USDT-SWAP"), instrument="BTC-USDT-SWAP", days=2, now=NOW, sleep=no_wait)
+    finally:
+        await provider.aclose()
+    monkeypatch.setattr(api, "get_store", lambda: store)
+    app = FastAPI()
+    app.include_router(api.router, prefix="/api")
+    response = TestClient(app).get("/api/candles/crypto/BTC-USDT-SWAP", params={
+        "timeframe": "1m", "limit": 20000, "source": "okx_swap_crypto_public", "cache_policy": "require", "quality": "standard",
+        "fallback_policy": "none", "start": (END - timedelta(hours=1)).isoformat(), "end": (END - timedelta(seconds=1)).isoformat()})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert len(body["candles"]) == 60

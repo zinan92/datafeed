@@ -1371,7 +1371,7 @@ async def execution_market(
 
 
 def _history_series(source: str, instrument: str) -> None:
-    if source != okx_history.SOURCE_MODE or instrument != okx_history.INSTRUMENT:
+    if okx_history.SERIES.get(instrument, ("",))[0] != source:
         raise HTTPException(status_code=404, detail="no history kept for this series")
 
 

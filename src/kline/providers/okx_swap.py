@@ -139,8 +139,10 @@ class OkxSwapProvider:
         transport: httpx.AsyncBaseTransport | None = None,
         allowed_symbols: set[str] | frozenset[str] | None = None,
         base_url: str = OKX_BASE_URL,
+        source_mode: str = SOURCE_MODE,
     ) -> None:
         self._timeout = timeout
+        self._source_mode = source_mode
         self._transport = transport
         self._allowed_symbols = frozenset(allowed_symbols or DEFAULT_ALLOWED_SYMBOLS)
         self._base_url = base_url.rstrip("/")
@@ -378,8 +380,8 @@ class OkxSwapProvider:
             contract_multiplier="1",
             order_types=["LIMIT", "MARKET", "POST_ONLY", "IOC", "FOK"],
             time_in_force=["GTC", "IOC", "FOK"],
-            provider=SOURCE_MODE,
-            source_mode=SOURCE_MODE,
+            provider=self._source_mode,
+            source_mode=self._source_mode,
             execution_venue=True,
             observed_at=datetime.now(timezone.utc).isoformat(),
             upstream_server_time=upstream_ms,

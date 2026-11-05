@@ -66,6 +66,11 @@ def init(settings: Settings | None = None) -> None:
     _providers[AssetClass.COMMODITY] = CommodityProvider()
     _live_providers["binance_usdm_futures"] = BinanceUsdmFuturesProvider(timeout=s.request_timeout)
     _live_providers["okx_swap_public"] = OkxSwapProvider(timeout=s.request_timeout)
+    _live_providers["okx_swap_crypto_public"] = OkxSwapProvider(
+        timeout=s.request_timeout,
+        allowed_symbols={"BTC-USDT-SWAP", "ETH-USDT-SWAP"},
+        source_mode="okx_swap_crypto_public",
+    )
 
     register_adapter(
         ProviderBackedMarketDataAdapter(
@@ -172,6 +177,12 @@ def init(settings: Settings | None = None) -> None:
     )
     register_adapter(
         ProviderBackedMarketDataAdapter(
+            source_manifest("okx_swap_crypto_public", AssetClass.CRYPTO),
+            _live_providers["okx_swap_crypto_public"],
+        )
+    )
+    register_adapter(
+        ProviderBackedMarketDataAdapter(
             source_manifest("binance_usdm_futures_research", AssetClass.CRYPTO),
             BinanceUsdmFuturesProvider(
                 timeout=s.request_timeout, allowed_symbols={"BTCUSDT", "ETHUSDT"}
@@ -274,7 +285,7 @@ def get_adapter_for_source(source: str, asset_class: AssetClass) -> MarketDataPo
                 "sina_index, "
                 "treasury_official_csv_derived, binance_spot_public, "
                 "binance_usdm_futures, binance_usdm_futures_research, "
-                "hyperliquid_perpetual_public, okx_swap_public, yahoo_finance, yahoo_finance_futures, "
+                "hyperliquid_perpetual_public, okx_swap_public, okx_swap_crypto_public, yahoo_finance, yahoo_finance_futures, "
                 "tushare_pro, or a registered adapter source"
             ],
         ) from e
