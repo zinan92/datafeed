@@ -1,5 +1,35 @@
 # Decision Log
 
+## 2026-11-05 - OKX BTC history under a crypto source (#186)
+
+Decision
+
+- A new source, `okx_swap_crypto_public` (crypto, BTC/ETH USDT swaps), rather
+  than widening `okx_swap_public`.
+  - The source model has one asset class per source: `_SOURCE_ASSET_CLASSES`
+    and one manifest per source.
+  - Gold stays `okx_swap_public` (commodity), byte for byte.
+- `okx_history.SERIES` maps instrument to `(source id, asset class)`. Bars,
+  funding, the report path and the report's `source` all come from it.
+- The daily job runs every series in turn with one provider and one lock. It
+  exits 1 if any series failed, after finishing the others.
+
+Gotchas
+
+- `OkxSwapProvider` hard-coded `okx_swap_public` as the source mode on its
+  instrument specs. It now takes `source_mode`, so specs fetched through the
+  crypto source carry the crypto source id.
+- `report_path` raises for an instrument that is not in `SERIES`. A typo
+  cannot write a report nobody serves.
+
+Verification
+
+- `tests/test_okx_history.py`: BTC lands under crypto with its own report and
+  funding; gold's report path is unchanged; routes refuse a crossed
+  source/instrument; `/api/candles/crypto/BTC-USDT-SWAP` serves stored bars
+  with the backtest's exact parameters.
+- Full suite: 442 passed.
+
 ## 2026-11-05 - OKX gold history for the pre-start backtest (#184)
 
 Decision

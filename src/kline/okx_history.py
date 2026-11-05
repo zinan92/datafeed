@@ -25,6 +25,13 @@ from kline.store import KlineStore
 
 SCHEMA = "okx-history-report-v1"
 INSTRUMENT = "XAU-USDT-SWAP"
+CRYPTO_SOURCE = "okx_swap_crypto_public"
+# Every series kept: instrument -> (source id it is stored and served under, asset class).
+# One source per asset class, as with binance_usdm_futures / binance_usdm_futures_research.
+SERIES: dict[str, tuple[str, AssetClass]] = {
+    "XAU-USDT-SWAP": (SOURCE_MODE, AssetClass.COMMODITY),
+    "BTC-USDT-SWAP": (CRYPTO_SOURCE, AssetClass.CRYPTO),
+}
 DEFAULT_DAYS = 180
 ATTEMPTS = 5
 MINUTE = timedelta(minutes=1)
@@ -34,8 +41,16 @@ T = TypeVar("T")
 Sleep = Callable[[float], Awaitable[None]]
 
 
+def series(instrument: str) -> tuple[str, AssetClass]:
+    try:
+        return SERIES[instrument]
+    except KeyError:
+        raise ValueError(f"no history kept for {instrument}") from None
+
+
 def report_path(db_path: str | Path, instrument: str = INSTRUMENT) -> Path:
-    return Path(db_path).parent / "history_reports" / f"{SOURCE_MODE}_{instrument}.json"
+    source, _ = series(instrument)
+    return Path(db_path).parent / "history_reports" / f"{source}_{instrument}.json"
 
 
 def _ms(moment: datetime) -> int:
@@ -91,7 +106,8 @@ async def _fetch_window(
             break  # OKX did not move backwards; stop instead of looping.
         cursor = oldest
     candles = confirmed_candles([rows[key] for key in sorted(rows)], Timeframe.MIN_1)
-    store.save(instrument, AssetClass.COMMODITY, Timeframe.MIN_1, candles, source_id=SOURCE_MODE)
+    source, asset_class = series(instrument)
+    store.save(instrument, asset_class, Timeframe.MIN_1, candles, source_id=source)
     return len(candles)
 
 
@@ -103,7 +119,7 @@ async def _fetch_funding(provider: OkxSwapProvider, store: KlineStore, instrumen
         if not page:
             return saved
         saved += store.save_funding(
-            SOURCE_MODE,
+            series(instrument)[0],
             instrument,
             [
                 {
@@ -154,18 +170,19 @@ def build_report(
     failures: dict[str, str],
     funding_error: str | None,
 ) -> dict[str, Any]:
+    source, asset_class = series(instrument)
     stamps = store.candle_timestamps(
-        instrument, AssetClass.COMMODITY, Timeframe.MIN_1, source_id=SOURCE_MODE, start=_iso(start), end=_iso(end)
+        instrument, asset_class, Timeframe.MIN_1, source_id=source, start=_iso(start), end=_iso(end)
     )
     present = {_parse(stamp) for stamp in stamps}
     gaps: list[dict[str, Any]] = []
     for window_start, window_end in day_windows(start, end)[::-1]:
         cause = "fetch_failed" if _iso(window_start) in failures else "venue_no_bar"
         gaps.extend(_missing_runs(present, window_start, window_end, cause))
-    funding = store.query_funding(SOURCE_MODE, instrument)
+    funding = store.query_funding(source, instrument)
     return {
         "schema_version": SCHEMA,
-        "source": SOURCE_MODE,
+        "source": source,
         "instrument": instrument,
         "timeframe": Timeframe.MIN_1.value,
         "generated_at": _iso(now),
@@ -209,9 +226,10 @@ async def backfill(
     end = moment.replace(second=0, microsecond=0)  # the forming minute is not history
     start = end - timedelta(days=days)
     failures: dict[str, str] = {}
+    source, asset_class = series(instrument)
     for window_start, window_end in day_windows(start, end):
         have = store.candle_timestamps(
-            instrument, AssetClass.COMMODITY, Timeframe.MIN_1, source_id=SOURCE_MODE,
+            instrument, asset_class, Timeframe.MIN_1, source_id=source,
             start=_iso(window_start), end=_iso(window_end),
         )
         if len(have) >= int((window_end - window_start) / MINUTE):
