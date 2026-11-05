@@ -101,6 +101,7 @@ def test_run_once_writes_receipt_and_does_not_need_default_paths(tmp_path, monke
     from kline.execution_market import worker
     monkeypatch.setattr(worker, "fetch_binance", lambda *_: [])
     monkeypatch.setattr(worker, "fetch_hyperliquid", lambda *_: [])
+    monkeypatch.setattr(worker, "fetch_okx", lambda *_: [])
     receipt_path = tmp_path / "receipt.json"
     receipt = run_once(tmp_path / "execution.db", receipt_path, clock=lambda: datetime(2026, 9, 8, 12, tzinfo=timezone.utc))
     assert receipt["status"] == "ok"
@@ -117,3 +118,94 @@ def test_read_age_histogram_is_per_instrument_and_accumulates(tmp_path):
     assert receipt["read_age_p50_seconds"]["XAUUSDT.BINANCE"] == 2.0
     assert receipt["read_age_max_seconds"]["XAUUSDT.BINANCE"] == 7.0
     store.close()
+
+
+def _okx_row(open_ms: int, close: str, confirm: str) -> list[str]:
+    # [ts, o, h, l, c, vol(contracts), volCcy(base), volCcyQuote, confirm]
+    return [str(open_ms), "4000.0", "4010.0", "3990.0", close, "1500", "1.5", "6000.0", confirm]
+
+
+def _okx_client(rows: list[list[str]], seen: list | None = None) -> httpx.Client:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if seen is not None:
+            seen.append(request)
+        return httpx.Response(200, json={"code": "0", "msg": "", "data": rows})
+
+    return httpx.Client(transport=httpx.MockTransport(handler))
+
+
+def test_okx_is_its_own_venue_and_identity():
+    assert INSTRUMENTS["XAU-USDT-SWAP.OKX"] == {
+        "provider": "okx_swap_public", "venue": "okx", "environment": "production", "symbol": "XAU-USDT-SWAP"
+    }
+
+
+def test_okx_rows_are_oldest_first_use_base_volume_and_never_promote_unconfirmed_bars():
+    from kline.execution_market.worker import fetch_okx
+
+    fetched = datetime(2026, 11, 5, 8, 0, 3, tzinfo=timezone.utc)
+    minute = 60_000
+    forming_open = int(datetime(2026, 11, 5, 8, 0, tzinfo=timezone.utc).timestamp() * 1000)
+    rows = [  # newest first, as OKX returns them
+        _okx_row(forming_open, "4003.0", "0"),            # current minute: forming quote
+        _okx_row(forming_open - minute, "4002.0", "0"),   # ended, not yet confirmed: dropped
+        _okx_row(forming_open - 2 * minute, "4001.0", "1"),
+    ]
+    seen: list = []
+    client = _okx_client(rows, seen)
+    bars = fetch_okx("XAU-USDT-SWAP.OKX", fetched, client)
+    client.close()
+
+    assert [bar.close for bar in bars] == [4001.0, 4003.0]
+    assert bars[0].volume == 1.5
+    assert {bar.venue for bar in bars} == {"okx"}
+    assert {bar.provider for bar in bars} == {"okx_swap_public"}
+    assert seen[0].url.params["instId"] == "XAU-USDT-SWAP"
+    assert seen[0].url.params["bar"] == "1m"
+    assert not is_completed_bar(datetime.fromisoformat(bars[-1].close_time.replace("Z", "+00:00")), fetched)
+
+
+def test_okx_error_code_is_provider_unavailable():
+    from kline.execution_market.worker import fetch_okx
+
+    client = httpx.Client(transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, json={"code": "51001", "msg": "Instrument ID does not exist", "data": []})
+    ))
+    try:
+        fetch_okx("XAU-USDT-SWAP.OKX", datetime(2026, 11, 5, tzinfo=timezone.utc), client)
+    except ProviderUnavailable as exc:
+        assert "Instrument ID does not exist" in str(exc)
+    else:  # pragma: no cover
+        raise AssertionError("OKX error code must fail visibly")
+    finally:
+        client.close()
+
+
+def test_okx_gold_is_dispatched_by_venue_not_by_its_xau_prefix(tmp_path, monkeypatch):
+    from kline.execution_market import worker
+
+    calls: list[str] = []
+
+    def binance_blocked(instrument_id, *_):
+        calls.append(instrument_id)
+        raise ProviderUnavailable("HTTP 451 restricted location")
+
+    fetched = datetime(2026, 11, 5, 8, 0, 3, tzinfo=timezone.utc)
+    done_open = int(datetime(2026, 11, 5, 7, 59, tzinfo=timezone.utc).timestamp() * 1000)
+    monkeypatch.setattr(worker, "fetch_binance", binance_blocked)
+    monkeypatch.setattr(worker, "fetch_hyperliquid", lambda *_: [])
+    client = _okx_client([_okx_row(done_open, "4001.0", "1")])
+
+    receipt = run_once(tmp_path / "execution.db", tmp_path / "receipt.json", client=client, clock=lambda: fetched)
+    client.close()
+
+    assert calls == ["XAUUSDT.BINANCE"]  # OKX gold never went to the Binance fetcher
+    assert receipt["status"] == "partial"
+    errors = json.loads(receipt["error"])
+    assert [row["instrument_id"] for row in errors] == ["XAUUSDT.BINANCE"]
+    store = ExecutionMarketStore(tmp_path / "execution.db")
+    try:
+        latest = store.latest("XAU-USDT-SWAP.OKX", limit=1)
+    finally:
+        store.close()
+    assert latest[0].close == 4001.0 and latest[0].venue == "okx"

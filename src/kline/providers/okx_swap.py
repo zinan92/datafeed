@@ -19,10 +19,12 @@ OKX differences the adapter hides from callers:
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import logging
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any
+from typing import Any, AsyncIterator
 
 import httpx
 
@@ -35,6 +37,8 @@ OKX_BASE_URL = "https://www.okx.com"
 OKX_CANDLES_PATH = "/api/v5/market/candles"
 OKX_HISTORY_CANDLES_PATH = "/api/v5/market/history-candles"
 OKX_INSTRUMENTS_PATH = "/api/v5/public/instruments"
+OKX_TIME_PATH = "/api/v5/public/time"
+OKX_POSITION_TIERS_PATH = "/api/v5/public/position-tiers"
 
 SOURCE_MODE = "okx_swap_public"
 
@@ -135,17 +139,43 @@ class OkxSwapProvider:
         self._allowed_symbols = frozenset(allowed_symbols or DEFAULT_ALLOWED_SYMBOLS)
         self._base_url = base_url.rstrip("/")
         self.last_raw_response: dict[str, Any] | None = None
+        # One kept-alive client per event loop. From this Mac the OKX TLS handshake
+        # alone takes ~1.3s and a reused connection answers in ~0.5s; the Dashboard
+        # bounds chart reads at 2s, so a fresh connection per request misses it.
+        self._shared_client: httpx.AsyncClient | None = None
+        self._shared_loop: asyncio.AbstractEventLoop | None = None
         self.timeframe_transform: TimeframeTransform | None = None
         self.source_identity: dict[str, Any] = {}
 
     def supported_timeframes(self) -> list[Timeframe]:
         return list(_TF_MAP.keys())
 
-    def _client(self) -> httpx.AsyncClient:
-        kwargs: dict[str, Any] = {"timeout": self._timeout, "base_url": self._base_url}
+    def _new_client(self) -> httpx.AsyncClient:
+        kwargs: dict[str, Any] = {
+            "timeout": self._timeout,
+            "base_url": self._base_url,
+            "limits": httpx.Limits(max_keepalive_connections=4, keepalive_expiry=60),
+        }
         if self._transport is not None:
             kwargs["transport"] = self._transport
         return httpx.AsyncClient(**kwargs)
+
+    @contextlib.asynccontextmanager
+    async def _client(self) -> AsyncIterator[httpx.AsyncClient]:
+        """Yield the shared client for the running loop; never close it per request."""
+
+        loop = asyncio.get_running_loop()
+        client = self._shared_client
+        if client is None or client.is_closed or self._shared_loop is not loop:
+            client = self._new_client()
+            self._shared_client, self._shared_loop = client, loop
+        yield client
+
+    async def aclose(self) -> None:
+        if self._shared_client is not None and not self._shared_client.is_closed:
+            await self._shared_client.aclose()
+        self._shared_client = None
+        self._shared_loop = None
 
     async def _get(self, client: httpx.AsyncClient, path: str, params: dict[str, Any]) -> list[Any]:
         try:
@@ -258,8 +288,12 @@ class OkxSwapProvider:
     async def fetch_instrument_definition(self, ticker: str) -> InstrumentDefinition:
         symbol = normalize_okx_symbol(ticker, self._allowed_symbols)
         params = {"instType": "SWAP", "instId": symbol}
+        family = str(symbol).removesuffix("-SWAP")
+        tier_params = {"instType": "SWAP", "tdMode": "cross", "instFamily": family}
         async with self._client() as client:
             data = await self._get(client, OKX_INSTRUMENTS_PATH, params)
+            tiers = await self._get(client, OKX_POSITION_TIERS_PATH, tier_params)
+            server_time = await self._get(client, OKX_TIME_PATH, {})
         self.last_raw_response = {
             "request_params": params,
             "response_body": data,
@@ -283,6 +317,14 @@ class OkxSwapProvider:
         settle = str(item.get("settleCcy") or "USDT")
         leverage = Decimal(str(item.get("lever") or "0"))
         init_rate = _decimal_text(Decimal(1) / leverage) if leverage > 0 else "0"
+        first_tier = next((row for row in tiers if str(row.get("tier")) == "1"), None)
+        if first_tier is None or not str(first_tier.get("mmr") or "").strip():
+            raise ProviderError(f"OKX position tiers did not include tier 1 for {family}")
+        maint_rate = _decimal_text(Decimal(str(first_tier["mmr"])))
+        try:
+            upstream_ms = int(str(server_time[0]["ts"]))
+        except (IndexError, KeyError, TypeError, ValueError) as error:
+            raise ProviderError("OKX public time returned no timestamp") from error
 
         return InstrumentDefinition(
             instrument_id=f"{symbol}.OKX",
@@ -300,7 +342,7 @@ class OkxSwapProvider:
             price_precision=_precision(tick),
             price_increment=tick,
             min_price=tick,
-            max_price="0",
+            max_price=None,
             size_precision=_precision(_decimal_text(size_increment)),
             size_increment=_decimal_text(size_increment),
             min_quantity=_decimal_text(min_quantity),
@@ -308,9 +350,9 @@ class OkxSwapProvider:
             market_size_increment=_decimal_text(size_increment),
             market_min_quantity=_decimal_text(min_quantity),
             market_max_quantity=_decimal_text(max_market),
-            min_notional="0",
+            min_notional=None,
             margin_init_rate=init_rate,
-            margin_maint_rate="0",
+            margin_maint_rate=maint_rate,
             contract_multiplier="1",
             order_types=["LIMIT", "MARKET", "POST_ONLY", "IOC", "FOK"],
             time_in_force=["GTC", "IOC", "FOK"],
@@ -318,12 +360,20 @@ class OkxSwapProvider:
             source_mode=SOURCE_MODE,
             execution_venue=True,
             observed_at=datetime.now(timezone.utc).isoformat(),
-            missing_fields=["maker_fee_rate", "taker_fee_rate", "margin_maint_rate", "max_price", "min_notional"],
+            upstream_server_time=upstream_ms,
+            missing_fields=["maker_fee_rate", "taker_fee_rate"],
             derived_fields={
                 "size_increment": "lotSz * ctVal * ctMult (contracts converted to base units)",
                 "min_quantity": "minSz * ctVal * ctMult",
                 "max_quantity": "maxLmtSz * ctVal * ctMult",
                 "margin_init_rate": "1 / max leverage",
-                "contract_multiplier": "linear swap: notional equals price times base quantity",
+                "margin_maint_rate": "position-tiers tier 1 mmr (cross)",
+                # Same meaning as Binance USD-M: quantity is in base units, so
+                # notional = price * quantity.
+                "contract_multiplier": "usd_m_notional_equals_price_times_quantity",
+            },
+            not_applicable_fields={
+                "min_notional": "OKX has no minimum notional; the minimum order is minSz contracts (min_quantity)",
+                "max_price": "OKX has no static maximum price; its price limit is a moving band",
             },
         )

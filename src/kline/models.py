@@ -192,7 +192,8 @@ class InstrumentDefinition(BaseModel):
     price_precision: int
     price_increment: str
     min_price: str
-    max_price: str
+    # None only when the venue has no such limit; then listed in not_applicable_fields.
+    max_price: Optional[str]
     size_precision: int
     size_increment: str
     min_quantity: str
@@ -200,7 +201,7 @@ class InstrumentDefinition(BaseModel):
     market_size_increment: str
     market_min_quantity: str
     market_max_quantity: str
-    min_notional: str
+    min_notional: Optional[str]
     margin_init_rate: str
     margin_maint_rate: str
     maker_fee_rate: Optional[str] = None
@@ -217,6 +218,9 @@ class InstrumentDefinition(BaseModel):
     observed_at: str
     missing_fields: list[str] = Field(default_factory=list)
     derived_fields: dict[str, str] = Field(default_factory=dict)
+    # A limit the venue does not have, with the reason. Distinct from
+    # missing_fields, which are values the venue has but we did not read.
+    not_applicable_fields: dict[str, str] = Field(default_factory=dict)
 
 
 # ── SQLAlchemy ORM (storage layer) ─────────────────────────

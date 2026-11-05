@@ -77,3 +77,23 @@ def test_missing_response_is_explicit(tmp_path, monkeypatch):
         "reason": "missing",
         "bars": [],
     }
+
+
+def test_okx_gold_is_served_under_its_own_venue(tmp_path, monkeypatch):
+    now = datetime.now(timezone.utc)
+    close_text = (now - timedelta(seconds=30)).isoformat().replace("+00:00", "Z")
+    open_text = (now - timedelta(seconds=89)).isoformat().replace("+00:00", "Z")
+    okx = ExecutionBar(
+        "XAU-USDT-SWAP.OKX", open_text, close_text, 4000.0, 4001.0, 3999.0,
+        4000.5, 1.5, "okx_swap_public", "okx", "production", close_text,
+    )
+    with _client(tmp_path, monkeypatch, [okx]) as client:
+        payload = client.get("/api/execution-market/okx/XAU-USDT-SWAP").json()
+        binance = client.get("/api/execution-market/binance/XAUUSDT").json()
+
+    assert payload["instrument_id"] == "XAU-USDT-SWAP.OKX"
+    assert payload["source"] == "okx_swap_public"
+    assert payload["price"] == 4000.5
+    assert payload["trusted"] is True
+    # No borrowing across venues: Binance stays empty.
+    assert binance["price"] is None

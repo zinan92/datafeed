@@ -1,5 +1,35 @@
 # Decision Log
 
+## 2026-11-05 - OKX gold in the execution-market worker
+
+### Decisions
+
+- `INSTRUMENTS` gains `XAU-USDT-SWAP.OKX` (`okx_swap_public`, venue `okx`,
+  production). It is served under its own venue; Binance and OKX never borrow
+  each other's bars.
+- The worker dispatches and parses on `meta["venue"]`. An unknown venue raises
+  `ProviderUnavailable`, recorded per instrument.
+- OKX bars: volume is `volCcy` (XAU), not contracts. A bar whose minute ended
+  but which OKX has not confirmed (`confirm=0`) is dropped, not promoted.
+- The OKX instrument definition now reads `upstream_server_time` from
+  `/public/time` and `margin_maint_rate` from `/public/position-tiers` tier 1
+  (cross). Limits OKX does not have (`min_notional`, `max_price`) are `null`
+  and listed in the new `not_applicable_fields` with a reason. They are never a
+  fake `"0"`. `missing_fields` keeps meaning "the venue has it, we did not read it".
+
+### Gotchas
+
+- The old dispatch `startswith("XAU")` would have sent OKX gold to the Binance
+  fetcher. A test pins this.
+- Tests that build "today" from `date.today()` fail between 00:00 and 08:00
+  Asia/Shanghai, because bars are cut by UTC day. Use
+  `datetime.now(timezone.utc).date()`.
+
+### Verification
+
+- 426 passed. A live run into a scratch DB: Binance 451 isolated, OKX
+  `XAU-USDT-SWAP` written.
+
 ## 2026-11-05 - OKX swaps as a second execution-live venue
 
 ### Decisions

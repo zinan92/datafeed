@@ -739,7 +739,7 @@ def test_health_exposes_effective_symbol_matrix(tmp_path):
 
 
 def test_weekly_does_not_promote_monday_to_thursday_as_a_closed_friday_week():
-    next_monday = date.today() + timedelta(days=7 - date.today().weekday())
+    next_monday = datetime.now(timezone.utc).date() + timedelta(days=7 - datetime.now(timezone.utc).date().weekday())
     candles = [
         Candle(
             timestamp=(next_monday + timedelta(days=offset)).isoformat(),
@@ -756,7 +756,7 @@ def test_weekly_does_not_promote_monday_to_thursday_as_a_closed_friday_week():
 
 
 def test_weekly_accepts_a_completed_holiday_week_using_last_trading_session():
-    previous_monday = date.today() - timedelta(days=date.today().weekday() + 7)
+    previous_monday = datetime.now(timezone.utc).date() - timedelta(days=datetime.now(timezone.utc).date().weekday() + 7)
     candles = [
         Candle(
             timestamp=(previous_monday + timedelta(days=offset)).isoformat(),
@@ -804,7 +804,7 @@ async def test_binance_native_4h_requests_native_interval_and_keeps_receipt():
 
 @pytest.mark.asyncio
 async def test_binance_daily_excludes_current_active_bar_and_validates_ohlc():
-    today = datetime.combine(date.today(), datetime.min.time(), tzinfo=timezone.utc)
+    today = datetime.combine(datetime.now(timezone.utc).date(), datetime.min.time(), tzinfo=timezone.utc)
     yesterday = today - timedelta(days=1)
 
     def handler(request: httpx.Request) -> httpx.Response:
