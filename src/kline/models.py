@@ -277,6 +277,19 @@ class KlineRow(Base):
         )
 
 
+class FundingRateRow(Base):
+    """One funding settlement as a venue reported it."""
+
+    __tablename__ = "funding_rates"
+
+    source_id = Column(String, primary_key=True)
+    instrument = Column(String, primary_key=True)
+    funding_time = Column(String, primary_key=True)  # ISO 8601 UTC
+    funding_rate = Column(Float, nullable=False)
+    realized_rate = Column(Float, nullable=True)
+    raw = Column(Text, nullable=False)  # the venue's row, verbatim
+
+
 class RawUpstreamResponse(Base):
     """Raw upstream payload captured for debugging provider behavior."""
 

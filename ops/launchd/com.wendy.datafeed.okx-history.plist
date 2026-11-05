@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>com.wendy.datafeed.okx-history</string>
+<key>ProgramArguments</key><array><string>/usr/local/bin/python3</string><string>-m</string><string>ops.okx_history_backfill</string><string>--db</string><string>/Users/wendy/datafeed/data/kline.db</string></array>
+<key>WorkingDirectory</key><string>/Users/wendy/park-runtime/datafeed</string>
+<key>EnvironmentVariables</key><dict><key>PYTHONPATH</key><string>/Users/wendy/park-runtime/datafeed/src</string><key>PYTHONUNBUFFERED</key><string>1</string><key>KLINE_RUNTIME_ROOT</key><string>/Users/wendy/park-runtime/datafeed</string><key>KLINE_BUILD_SHA</key><string>__KLINE_BUILD_SHA__</string></dict>
+<key>StartCalendarInterval</key><dict><key>Hour</key><integer>8</integer><key>Minute</key><integer>40</integer></dict>
+<key>ProcessType</key><string>Background</string>
+<key>StandardOutPath</key><string>/Users/wendy/Library/Logs/datafeed/okx-history.stdout.log</string>
+<key>StandardErrorPath</key><string>/Users/wendy/Library/Logs/datafeed/okx-history.stderr.log</string>
+</dict></plist>

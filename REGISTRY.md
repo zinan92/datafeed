@@ -4,6 +4,15 @@
 
 多资产 K 线数据服务：`ticker + timeframe → 标准化 OHLCV + provenance`，覆盖 A 股、美股、加密和商品；近期喂养 trading-system 与 tokenpulse，远期可作为独立 API 产品外卖。
 
+## 现在在哪里（2026-11-05，OKX 黄金历史回补 · #184）
+
+- `ops/okx_history_backfill.py` 把 `XAU-USDT-SWAP` 180 天 1 分钟线写进 8100 读的库（`okx_swap_public`），只用 OKX，不补不算。
+- 按 UTC 天取，一天一提交；已完整的天跳过，所以中断后重跑即可。launchd `com.wendy.datafeed.okx-history` 每天 08:40 补最新。
+- 覆盖报告在库文件同目录的 `history_reports/`，经 `/api/history/okx_swap_public/XAU-USDT-SWAP/report` 读；资金费走 `.../funding`。
+- 实测：259,200 根全到，0 缺口。资金费 281 条，只回到 2026-08-03（约 94 天），更早接口不给，报告里写明起点，之后每天累积。
+
+_下一步_：trading-system #1308 用这份数据做开仓前回测。
+
 ## 现在在哪里（2026-11-05，OKX 黄金进入 execution-market worker）
 
 - Park 2026-11-05 选定 Paper 黄金用 OKX `XAU-USDT-SWAP`。

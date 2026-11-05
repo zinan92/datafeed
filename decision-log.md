@@ -1,5 +1,35 @@
 # Decision Log
 
+## 2026-11-05 - OKX gold history for the pre-start backtest (#184)
+
+Decision
+
+- Bars go into the `klines` table of the database port 8100 reads, under
+  `okx_swap_public` only, so `/api/candles` serves them with
+  `cache_policy=require` and no second read path exists.
+- Work is one UTC day at a time, each committed on its own. A complete day is
+  skipped, which makes resume and the daily top-up the same code path.
+- The report separates `venue_no_bar` from `fetch_failed`. Nothing is filled.
+- New table `funding_rates` keeps the rate, the realized rate and OKX's raw row.
+
+Gotchas
+
+- OKX `funding-rate-history` stops at about 94 days. 180 days of funding cannot
+  be fetched, so the report states where coverage starts.
+- `OkxSwapProvider.fetch` caps at 60 pages, about 6,000 bars. The backfill pages
+  itself with `history_page`.
+- Port 8100 uses `~/datafeed/data/kline.db`, not `~/park-data/market/kline.db`.
+  An OKX read asks for an execution venue, so it skips the market database.
+- `ops/release.sh` could not install a new job: `cp` of a missing plist and
+  `bootout` of an unloaded job both stopped it under `set -e`.
+
+Verification
+
+- `tests/test_okx_history.py`: paging, the forming minute, resume, retry,
+  gaps across midnight, funding, routes.
+- Real run on the dev store: 259,200 of 259,200 bars, no gaps, 281 funding rows
+  from 2026-08-03.
+
 ## 2026-11-05 - OKX gold in the execution-market worker
 
 ### Decisions

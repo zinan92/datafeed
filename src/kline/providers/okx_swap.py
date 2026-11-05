@@ -39,6 +39,7 @@ OKX_HISTORY_CANDLES_PATH = "/api/v5/market/history-candles"
 OKX_INSTRUMENTS_PATH = "/api/v5/public/instruments"
 OKX_TIME_PATH = "/api/v5/public/time"
 OKX_POSITION_TIERS_PATH = "/api/v5/public/position-tiers"
+OKX_FUNDING_HISTORY_PATH = "/api/v5/public/funding-rate-history"
 
 SOURCE_MODE = "okx_swap_public"
 
@@ -112,6 +113,11 @@ def _candle(row: list[Any], timeframe: Timeframe) -> Candle:
         volume=float(row[6]),
         amount=float(row[7]),
     )
+
+
+def confirmed_candles(rows: list[list[Any]], timeframe: Timeframe) -> list[Candle]:
+    """Completed bars only; ``confirm`` is "0" while a bar is still forming."""
+    return [_candle(row, timeframe) for row in rows if str(row[8]) == "1"]
 
 
 def _decimal_text(value: Decimal) -> str:
@@ -284,6 +290,22 @@ class OkxSwapProvider:
         candles = [_candle(row, timeframe) for row in ordered]
         logger.info("Fetched %s OKX swap candles for %s", len(candles), symbol)
         return candles
+
+    async def history_page(self, ticker: str, timeframe: Timeframe, *, after_ms: int) -> list[list[Any]]:
+        """One page of history candles older than ``after_ms``, newest first, as OKX sent it."""
+        symbol = normalize_okx_symbol(ticker, self._allowed_symbols)
+        params = {"instId": symbol, "bar": _TF_MAP[timeframe], "limit": _HISTORY_PAGE, "after": after_ms}
+        async with self._client() as client:
+            return await self._get(client, OKX_HISTORY_CANDLES_PATH, params)
+
+    async def funding_page(self, ticker: str, *, after_ms: int | None = None) -> list[dict[str, Any]]:
+        """One page of funding settlements older than ``after_ms``, newest first, as OKX sent it."""
+        symbol = normalize_okx_symbol(ticker, self._allowed_symbols)
+        params: dict[str, Any] = {"instId": symbol, "limit": _HISTORY_PAGE}
+        if after_ms is not None:
+            params["after"] = after_ms
+        async with self._client() as client:
+            return await self._get(client, OKX_FUNDING_HISTORY_PATH, params)
 
     async def fetch_instrument_definition(self, ticker: str) -> InstrumentDefinition:
         symbol = normalize_okx_symbol(ticker, self._allowed_symbols)

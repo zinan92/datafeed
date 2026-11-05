@@ -7,7 +7,7 @@ BACKUP_DIR="${BACKUP_DIR:-$HOME/park-data/launchd-backup-20260908}"
 RECEIPT_PATH="${RECEIPT_PATH:-$HOME/park-data/datafeed/release_receipt.json}"
 WORKER_LOG="${WORKER_LOG:-$HOME/Library/Logs/datafeed/mvp-worker.stdout.log}"
 SCRIPT_ROOT="${0:A:h}"
-JOBS=(com.wendy.datafeed com.wendy.datafeed.mvp-api com.wendy.datafeed.mvp-worker com.wendy.datafeed.watchlist-daily com.wendy.datafeed.health-dashboard com.wendy.datafeed.execution-market)
+JOBS=(com.wendy.datafeed com.wendy.datafeed.mvp-api com.wendy.datafeed.mvp-worker com.wendy.datafeed.watchlist-daily com.wendy.datafeed.health-dashboard com.wendy.datafeed.execution-market com.wendy.datafeed.okx-history)
 
 [[ $# -eq 1 ]] || { print -u2 "usage: $0 <sha>"; exit 2; }
 [[ -d "$CANONICAL_ROOT/.git" ]] || { print -u2 "canonical checkout missing: $CANONICAL_ROOT"; exit 1; }
@@ -39,14 +39,14 @@ mkdir -p "$BACKUP_DIR" "${RECEIPT_PATH:h}"
 for job in $JOBS; do
   source="$SCRIPT_ROOT/launchd/$job.plist"
   rendered="$LAUNCH_AGENTS/$job.plist"
-  cp -p "$rendered" "$BACKUP_DIR/$job.plist"
+  [[ ! -e "$rendered" ]] || cp -p "$rendered" "$BACKUP_DIR/$job.plist"
   sed "s/__KLINE_BUILD_SHA__/$SHA/g" "$source" > "$rendered"
   plutil -lint "$rendered"
 done
 
 for job in $JOBS; do
   domain="gui/$(id -u)/$job"
-  launchctl bootout "$domain"
+  launchctl bootout "$domain" || true  # a new job is not loaded yet
   for attempt in 1 2 3; do
     if launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENTS/$job.plist"; then
       break

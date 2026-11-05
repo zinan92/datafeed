@@ -10,6 +10,7 @@ JOBS = (
     "com.wendy.datafeed.mvp-worker",
     "com.wendy.datafeed.watchlist-daily",
     "com.wendy.datafeed.health-dashboard",
+    "com.wendy.datafeed.okx-history",
 )
 
 
@@ -32,6 +33,16 @@ def test_release_script_has_worker_gate_and_reversible_install() -> None:
     assert "mvp-worker restart is inside the 20-minute safety window" in script
     assert "launchctl bootout" in script and "launchctl bootstrap" in script
     assert "cp -p \"$rendered\" \"$BACKUP_DIR/$job.plist\"" in script
+
+
+def test_okx_history_writes_the_store_port_8100_reads() -> None:
+    with (ROOT / "ops" / "launchd" / "com.wendy.datafeed.okx-history.plist").open("rb") as handle:
+        job = plistlib.load(handle)
+    with (ROOT / "ops" / "launchd" / "com.wendy.datafeed.plist").open("rb") as handle:
+        api = plistlib.load(handle)
+    arguments = job["ProgramArguments"]
+    assert arguments[arguments.index("--db") + 1] == api["EnvironmentVariables"]["KLINE_DB_PATH"]
+    assert "KeepAlive" not in job
 
 
 def test_worker_keeps_current_stock_seed_contract() -> None:
