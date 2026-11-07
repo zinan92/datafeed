@@ -1,5 +1,40 @@
 # Decision Log
 
+## 2026-11-07 - OKX silver and crude under the commodity source (#188)
+
+Decision
+
+- `okx_swap_public` now allows `XAG-USDT-SWAP` (silver), `CL-USDT-SWAP` (WTI)
+  and `BZ-USDT-SWAP` (Brent) beside gold. They are commodities, so they join
+  the commodity source; no new source.
+  - Aliases: SILVER/XAG/XAGUSDT, WTI/CL, BRENT/BZ. Canonical ids SILVER, WTI,
+    BRENT, matching the Yahoo commodity manifest.
+  - Crypto symbols stay outside this source (still rejected before any
+    request).
+- The three are in `okx_history.SERIES`, so the daily 08:40 job backfills
+  them too, each with its own report file.
+- Feeds trading-system#1361: silver and crude on the desk from public data.
+  No accounts, no keys.
+
+Gotchas
+
+- These swaps are young: XAG listed 2026-01-28, CL 2026-03-05, BZ
+  2026-03-24 (OKX `listTime`). 180 days of history fits inside all three
+  today; a longer window would hit the listing date.
+- Fees are still not read from OKX (`maker_fee_rate`, `taker_fee_rate` stay
+  in `missing_fields`). Downstream must show fees as unverified.
+- The provider allow-list and the provenance manifest are kept in step by
+  hand; a test checks the manifest names all three.
+
+Verification
+
+- `tests/test_okx_swap.py`: each alias resolves to its instId; silver's
+  instrument definition reads ctVal 0.01 and the `XAG-USDT` tier family;
+  the manifest names silver and crude and not BTC.
+- `tests/test_okx_history.py`: the three series sit under the commodity
+  source with their own report paths.
+- The 9 new tests fail without the change. Full suite: 452 passed.
+
 ## 2026-11-05 - OKX BTC history under a crypto source (#186)
 
 Decision

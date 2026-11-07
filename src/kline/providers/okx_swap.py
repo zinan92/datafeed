@@ -64,13 +64,21 @@ _ALIASES = {
     "XAU": "XAU-USDT-SWAP",
     "XAUUSD": "XAU-USDT-SWAP",
     "XAUUSDT": "XAU-USDT-SWAP",
+    # Silver and crude (datafeed#188): listed on OKX in 2026, so their history is short.
+    "SILVER": "XAG-USDT-SWAP",
+    "XAG": "XAG-USDT-SWAP",
+    "XAGUSDT": "XAG-USDT-SWAP",
+    "WTI": "CL-USDT-SWAP",
+    "CL": "CL-USDT-SWAP",
+    "BRENT": "BZ-USDT-SWAP",
+    "BZ": "BZ-USDT-SWAP",
     "BTC": "BTC-USDT-SWAP",
     "BTCUSDT": "BTC-USDT-SWAP",
     "ETH": "ETH-USDT-SWAP",
     "ETHUSDT": "ETH-USDT-SWAP",
 }
 
-DEFAULT_ALLOWED_SYMBOLS = frozenset({"XAU-USDT-SWAP"})
+DEFAULT_ALLOWED_SYMBOLS = frozenset({"XAU-USDT-SWAP", "XAG-USDT-SWAP", "CL-USDT-SWAP", "BZ-USDT-SWAP"})
 
 
 def normalize_okx_symbol(ticker: str, allowed_symbols: set[str] | frozenset[str]) -> str:

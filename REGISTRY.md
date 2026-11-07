@@ -4,6 +4,15 @@
 
 多资产 K 线数据服务：`ticker + timeframe → 标准化 OHLCV + provenance`，覆盖 A 股、美股、加密和商品；近期喂养 trading-system 与 tokenpulse，远期可作为独立 API 产品外卖。
 
+## 现在在哪里（2026-11-07，OKX 白银和原油 · #188）
+
+- `okx_swap_public`（commodity）在黄金之外放开白银 `XAG-USDT-SWAP`、WTI 原油 `CL-USDT-SWAP`、布伦特 `BZ-USDT-SWAP`。
+  - 别名：SILVER/XAG、WTI/CL、BRENT/BZ。加密币仍不走这个源。
+- 三个都进 `okx_history.SERIES`，每天 08:40 一起回填，各自一份覆盖报告。
+- 这三个合约 2026 年才上线（白银 1 月、原油 3 月），180 天历史够用，再长就超过上市日。
+- 手续费仍不从 OKX 读，下游要显示「未核实」。
+- 用途：trading-system#1361，交易台用公开数据看白银和原油，不需要账户。
+
 ## 现在在哪里（2026-11-05，OKX BTC 历史 · #186）
 
 - 新数据源 `okx_swap_crypto_public`：OKX 公开 USDT 永续，资产类别 crypto，允许 `BTC-USDT-SWAP`、`ETH-USDT-SWAP`。研究用，不是执行行情源。

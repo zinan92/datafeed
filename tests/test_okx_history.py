@@ -255,3 +255,12 @@ async def test_stored_btc_bars_are_served_the_way_the_backtest_reads_them(store:
     assert response.status_code == 200, response.text
     body = response.json()
     assert len(body["candles"]) == 60
+
+
+def test_silver_and_crude_have_their_own_commodity_history_series(tmp_path: Path) -> None:
+    from kline.okx_history import SERIES
+
+    for instrument in ("XAG-USDT-SWAP", "CL-USDT-SWAP", "BZ-USDT-SWAP"):
+        assert SERIES[instrument] == (SOURCE_MODE, AssetClass.COMMODITY)
+        assert report_path(tmp_path / "kline.db", instrument).name == f"okx_swap_public_{instrument}.json"
+    assert report_path(tmp_path / "kline.db").name == "okx_swap_public_XAU-USDT-SWAP.json"
