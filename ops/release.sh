@@ -47,12 +47,20 @@ done
 for job in $JOBS; do
   domain="gui/$(id -u)/$job"
   launchctl bootout "$domain" || true  # a new job is not loaded yet
-  for attempt in 1 2 3; do
-    if launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENTS/$job.plist"; then
+  # bootout returns before a slow job has exited; loading it again too soon fails with an I/O error.
+  for attempt in {1..30}; do
+    launchctl print "$domain" >/dev/null 2>&1 || break
+    sleep 1
+  done
+  for attempt in 1 2 3 4 5; do
+    if launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENTS/$job.plist" 2>/dev/null; then
       break
     fi
-    [[ $attempt -lt 3 ]] || exit 1
-    sleep 1
+    if [[ $attempt -eq 5 ]]; then
+      print -u2 "$job did not load; check it before retrying"
+      exit 1
+    fi
+    sleep 2
   done
 done
 
