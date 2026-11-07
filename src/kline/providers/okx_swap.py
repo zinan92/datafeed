@@ -59,6 +59,8 @@ _RECENT_PAGE = 300
 _HISTORY_PAGE = 100
 _MAX_PAGES = 60
 
+_COMMODITY_BASES = frozenset({"XAU", "XAG", "CL", "BZ"})
+
 _ALIASES = {
     "GOLD": "XAU-USDT-SWAP",
     "XAU": "XAU-USDT-SWAP",
@@ -362,7 +364,7 @@ class OkxSwapProvider:
             instrument_id=f"{symbol}.OKX",
             venue="OKX",
             symbol=symbol,
-            asset_class=AssetClass.COMMODITY if base in {"XAU", "XAG"} else AssetClass.CRYPTO,
+            asset_class=AssetClass.COMMODITY if base in _COMMODITY_BASES else AssetClass.CRYPTO,
             market_type="usdt_perpetual_swap",
             contract_type="PERPETUAL",
             status="TRADING" if str(item.get("state")) == "live" else str(item.get("state") or "UNKNOWN").upper(),
