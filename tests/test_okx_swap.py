@@ -245,3 +245,58 @@ def test_a_new_event_loop_gets_a_new_client() -> None:
     first = provider._shared_client
     asyncio.run(provider.fetch("GOLD", Timeframe.MIN_30, limit=1))
     assert provider._shared_client is not first
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("alias", "inst_id"),
+    [("SILVER", "XAG-USDT-SWAP"), ("XAG", "XAG-USDT-SWAP"), ("WTI", "CL-USDT-SWAP"), ("CL", "CL-USDT-SWAP"), ("BRENT", "BZ-USDT-SWAP"), ("BZ-USDT-SWAP", "BZ-USDT-SWAP")],
+)
+async def test_silver_and_crude_are_enabled_under_the_commodity_source(alias: str, inst_id: str) -> None:
+    """datafeed#188: silver and crude come from OKX public data like gold; BTC stays outside this source."""
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return _ok([_row(_ms(5, 1))])
+
+    provider = OkxSwapProvider(transport=httpx.MockTransport(handler))
+    candles = await provider.fetch(alias, Timeframe.HOUR_1, limit=1)
+    assert len(candles) == 1
+    assert seen[0].url.params["instId"] == inst_id
+    assert provider.source_identity["provider_symbol"] == inst_id
+
+
+@pytest.mark.asyncio
+async def test_silver_instrument_definition_reads_its_own_contract_and_tiers() -> None:
+    silver = {**_instrument(), "instId": "XAG-USDT-SWAP", "ctVal": "0.01", "ctValCcy": "XAG", "tickSz": "0.01", "maxMktSz": "100000"}
+    seen_families: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/v5/public/instruments":
+            return _ok([silver])
+        if request.url.path == "/api/v5/public/position-tiers":
+            seen_families.append(request.url.params["instFamily"])
+            return _ok([{"tier": "1", "mmr": "0.01", "imr": "0.02", "maxLever": "50"}])
+        if request.url.path == "/api/v5/public/time":
+            return _ok([{"ts": "1793828110746"}])
+        raise AssertionError(f"unexpected request {request.url.path}")
+
+    provider = OkxSwapProvider(transport=httpx.MockTransport(handler))
+    definition = await provider.fetch_instrument_definition("SILVER")
+    assert definition.instrument_id == "XAG-USDT-SWAP.OKX"
+    assert definition.asset_class == AssetClass.COMMODITY
+    assert definition.price_increment == "0.01"
+    assert definition.size_increment == "0.01"  # 1 contract × 0.01 XAG
+    assert definition.margin_maint_rate == "0.01"
+    assert seen_families == ["XAG-USDT"]
+    assert definition.missing_fields == ["maker_fee_rate", "taker_fee_rate"]  # fees stay unverified, never a guess
+
+
+def test_the_commodity_manifest_names_silver_and_crude() -> None:
+    manifest = source_manifest("okx_swap_public", AssetClass.COMMODITY)
+    assert manifest.ticker_aliases["SILVER"] == "XAG-USDT-SWAP"
+    assert manifest.ticker_aliases["WTI"] == "CL-USDT-SWAP"
+    assert manifest.ticker_aliases["BRENT"] == "BZ-USDT-SWAP"
+    assert manifest.canonical_instrument_ids["XAG-USDT-SWAP"] == "SILVER"
+    assert "BTC" not in manifest.ticker_aliases

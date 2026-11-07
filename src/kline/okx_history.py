@@ -30,6 +30,9 @@ CRYPTO_SOURCE = "okx_swap_crypto_public"
 # One source per asset class, as with binance_usdm_futures / binance_usdm_futures_research.
 SERIES: dict[str, tuple[str, AssetClass]] = {
     "XAU-USDT-SWAP": (SOURCE_MODE, AssetClass.COMMODITY),
+    "XAG-USDT-SWAP": (SOURCE_MODE, AssetClass.COMMODITY),  # silver, listed 2026-01 (#188)
+    "CL-USDT-SWAP": (SOURCE_MODE, AssetClass.COMMODITY),  # WTI crude, listed 2026-03
+    "BZ-USDT-SWAP": (SOURCE_MODE, AssetClass.COMMODITY),  # Brent crude
     "BTC-USDT-SWAP": (CRYPTO_SOURCE, AssetClass.CRYPTO),
 }
 DEFAULT_DAYS = 180
