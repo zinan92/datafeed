@@ -293,6 +293,24 @@ async def test_silver_instrument_definition_reads_its_own_contract_and_tiers() -
     assert definition.missing_fields == ["maker_fee_rate", "taker_fee_rate"]  # fees stay unverified, never a guess
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("ticker", "symbol", "base"), [("WTI", "CL-USDT-SWAP", "CL"), ("BRENT", "BZ-USDT-SWAP", "BZ")])
+async def test_crude_is_a_commodity_not_a_crypto_asset(ticker: str, symbol: str, base: str) -> None:
+    row = {**_instrument(), "instId": symbol, "ctVal": "0.1", "ctValCcy": base, "tickSz": "0.01"}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/v5/public/instruments":
+            return _ok([row])
+        if request.url.path == "/api/v5/public/position-tiers":
+            return _ok([{"tier": "1", "mmr": "0.01", "imr": "0.02", "maxLever": "50"}])
+        if request.url.path == "/api/v5/public/time":
+            return _ok([{"ts": "1793828110746"}])
+        raise AssertionError(f"unexpected request {request.url.path}")
+
+    definition = await OkxSwapProvider(transport=httpx.MockTransport(handler)).fetch_instrument_definition(ticker)
+    assert definition.asset_class == AssetClass.COMMODITY
+
+
 def test_the_commodity_manifest_names_silver_and_crude() -> None:
     manifest = source_manifest("okx_swap_public", AssetClass.COMMODITY)
     assert manifest.ticker_aliases["SILVER"] == "XAG-USDT-SWAP"
