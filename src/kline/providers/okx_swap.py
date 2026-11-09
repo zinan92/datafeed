@@ -325,9 +325,12 @@ class OkxSwapProvider:
         family = str(symbol).removesuffix("-SWAP")
         tier_params = {"instType": "SWAP", "tdMode": "cross", "instFamily": family}
         async with self._client() as client:
-            data = await self._get(client, OKX_INSTRUMENTS_PATH, params)
-            tiers = await self._get(client, OKX_POSITION_TIERS_PATH, tier_params)
-            server_time = await self._get(client, OKX_TIME_PATH, {})
+            # Three independent public reads at once: one OKX round trip, not three (~1.5 s, #210).
+            data, tiers, server_time = await asyncio.gather(
+                self._get(client, OKX_INSTRUMENTS_PATH, params),
+                self._get(client, OKX_POSITION_TIERS_PATH, tier_params),
+                self._get(client, OKX_TIME_PATH, {}),
+            )
         self.last_raw_response = {
             "request_params": params,
             "response_body": data,

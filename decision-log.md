@@ -1,5 +1,37 @@
 # Decision Log
 
+## 2026-11-09 - The OKX instrument definition asks its three public calls at once (#210)
+
+Decision
+
+- The 8100 slow-request log (#202) showed
+  `GET /api/instruments/commodity/{XAG,CL}-USDT-SWAP?source=okx_swap_public&require_execution_venue=true`
+  at 1.4–1.6 s each. GridMind's Paper catalog reads both with a 2 s timeout
+  (zinan92/trading-system#1466), so a cold catalog cost ~3 s and a slow OKX
+  moment listed silver or crude as blocked for 30 s.
+- `OkxSwapProvider.fetch_instrument_definition` made three independent public
+  calls one after another on the shared client: instruments, position tiers,
+  server time. They now run together with `asyncio.gather`. The definition is
+  built from the same three answers; the first failing call raises the same
+  `ProviderError`.
+
+Gotchas
+
+- No cache: the definition carries OKX's server time and the local
+  `observed_at`, and a cached one would claim a read time it does not have.
+- With all three in flight, `last_raw_response` on an error holds whichever
+  call failed last. It is diagnostic only.
+
+Verification
+
+- `tests/test_okx_swap.py` (1 new): with each OKX call delayed 0.2 s, three
+  calls are in flight at once, the definition takes under 0.45 s, and it equals
+  the one built without delay (apart from `observed_at`). Red on the old code
+  (peak 1). Full suite 482.
+- Real OKX public API from this host, same script: old code 1.53–1.58 s per
+  definition, new 0.46–0.54 s (the first call of each run also opens the
+  connection: 2.9 s old, 2.0 s new).
+
 ## 2026-11-09 - Legacy timestamps are normalised once per database (#208)
 
 Decision

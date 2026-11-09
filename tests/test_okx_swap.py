@@ -318,3 +318,30 @@ def test_the_commodity_manifest_names_silver_and_crude() -> None:
     assert manifest.ticker_aliases["BRENT"] == "BZ-USDT-SWAP"
     assert manifest.canonical_instrument_ids["XAG-USDT-SWAP"] == "SILVER"
     assert "BTC" not in manifest.ticker_aliases
+
+
+@pytest.mark.asyncio
+async def test_instrument_definition_reads_its_three_public_calls_at_once() -> None:
+    """Instrument, position tiers and server time are independent: one round trip, not three (#210)."""
+    import asyncio
+    import time
+
+    sync = _public_handler()
+    in_flight = peak = 0
+
+    async def slow(request: httpx.Request) -> httpx.Response:
+        nonlocal in_flight, peak
+        in_flight += 1
+        peak = max(peak, in_flight)
+        await asyncio.sleep(0.2)
+        in_flight -= 1
+        return sync(request)
+
+    provider = OkxSwapProvider(transport=httpx.MockTransport(slow))
+    began = time.monotonic()
+    definition = await provider.fetch_instrument_definition("GOLD")
+    took = time.monotonic() - began
+    reference = await OkxSwapProvider(transport=httpx.MockTransport(sync)).fetch_instrument_definition("GOLD")
+    assert peak == 3
+    assert took < 0.45, took  # three calls one after another would take at least 0.6 s
+    assert definition.model_dump(exclude={"observed_at"}) == reference.model_dump(exclude={"observed_at"})  # observed_at is the local read time
