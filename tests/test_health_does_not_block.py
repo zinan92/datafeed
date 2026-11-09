@@ -1,5 +1,6 @@
-"""#194/#196/#198: /api/health must not block other requests, must not re-run PRAGMA integrity_check each call,
-and never makes a caller wait for that check."""
+"""#194/#196/#198/#200: /api/health never blocks other requests and never makes a caller wait for the
+database. PRAGMA integrity_check (~12 s on production) and the storage facts (~9 s) both run in
+background tasks; until a first result exists the answer is "pending", never "ok"."""
 from __future__ import annotations
 
 import asyncio
@@ -10,10 +11,11 @@ from kline import api
 
 
 class SlowStore:
-    """A store whose integrity check is slow, like the 485 MB production database."""
+    """A store whose integrity check and storage facts are slow, like the 485 MB production database."""
 
-    def __init__(self, integrity_seconds: float = 0.6) -> None:
+    def __init__(self, integrity_seconds: float = 0.0, storage_seconds: float = 0.0) -> None:
         self.integrity_seconds = integrity_seconds
+        self.storage_seconds = storage_seconds
         self.integrity_calls = 0
         self.storage_calls = 0
         self.threads: set[str] = set()
@@ -26,6 +28,8 @@ class SlowStore:
 
     def storage_health(self, *, integrity: str | None = None) -> dict:
         self.storage_calls += 1
+        self.threads.add(threading.current_thread().name)
+        time.sleep(self.storage_seconds)
         status = integrity if integrity in ("ok", "pending") else "error"
         return {"status": status, "integrity": integrity, "candle_rows": 2, "source_count": 1}
 
@@ -48,18 +52,18 @@ def _run_with(store: SlowStore, coroutine_factory):
 
 
 async def _settle(store: SlowStore) -> None:
-    """Wait until the background integrity check has finished."""
-    for _ in range(200):
+    """Wait until both background refreshes have finished."""
+    for _ in range(300):
         cache = api._HEALTH_CACHES.get(id(store))
-        if cache and cache.integrity is not None:
+        if cache and all(task is None or task.done() for task in (cache.integrity_refresh, cache.storage_refresh)):
             return
         await asyncio.sleep(0.01)
-    raise AssertionError("integrity check never finished")
+    raise AssertionError("background refresh never finished")
 
 
 def test_the_first_call_after_a_start_answers_pending_at_once_then_ok() -> None:
-    """#198: the first call used to wait 26.2 s on production. It now reports pending, never ok, until the check ends."""
-    store = SlowStore(integrity_seconds=0.6)
+    """#198/#200: the first call used to wait 26.2 s on production. It now reports pending, never ok."""
+    store = SlowStore(integrity_seconds=0.6, storage_seconds=0.4)
 
     async def scenario():
         ticks: list[float] = []
@@ -78,17 +82,34 @@ def test_the_first_call_after_a_start_answers_pending_at_once_then_ok() -> None:
         return first, quick, ticks, after
 
     first, quick, ticks, after = _run_with(store, scenario)
-    assert quick < 0.5  # did not wait for the 0.6 s check
-    assert first["storage"]["integrity"] == "pending" and first["storage"]["status"] == "pending"
-    assert first["storage"]["integrity_age_seconds"] is None
-    assert ticks[-1] < 0.5
-    assert after["storage"]["integrity"] == "ok" and after["storage"]["status"] == "ok"
-    assert after["storage"]["integrity_age_seconds"] >= 0.0
+    assert quick < 0.35  # waited for neither the 0.6 s check nor the 0.4 s facts
+    assert first["storage"]["status"] == "pending" and first["storage"]["integrity"] == "pending"
+    assert first["storage"]["integrity_age_seconds"] is None and first["storage_age_seconds"] is None
+    assert first["storage_coverage"] == [] and first["storage"]["candle_rows"] is None
+    assert ticks[-1] < 0.35
+    assert after["storage"]["status"] == "ok" and after["storage"]["integrity"] == "ok"
+    assert after["storage"]["candle_rows"] == 2 and after["storage_coverage"][0]["instrument_id"] == "BTC"
+    assert after["storage_age_seconds"] >= 0 and after["storage"]["integrity_age_seconds"] >= 0
     assert "MainThread" not in store.threads
 
 
-def test_concurrent_health_calls_share_one_integrity_check_and_reuse_it() -> None:
-    store = SlowStore(integrity_seconds=0.2)
+def test_facts_without_a_finished_integrity_check_are_pending_not_ok() -> None:
+    store = SlowStore(integrity_seconds=0.5, storage_seconds=0.0)
+
+    async def scenario():
+        await api.health()
+        await asyncio.sleep(0.1)  # facts are in; integrity is still running
+        middle = await api.health()
+        await _settle(store)
+        return middle
+
+    middle = _run_with(store, scenario)
+    assert middle["storage"]["candle_rows"] == 2
+    assert middle["storage"]["status"] == "pending" and middle["storage"]["integrity"] == "pending"
+
+
+def test_concurrent_calls_share_one_refresh_of_each() -> None:
+    store = SlowStore(integrity_seconds=0.2, storage_seconds=0.2)
 
     async def scenario():
         first = await asyncio.gather(*(api.health() for _ in range(5)))
@@ -97,16 +118,56 @@ def test_concurrent_health_calls_share_one_integrity_check_and_reuse_it() -> Non
         return first, second
 
     first, second = _run_with(store, scenario)
-    assert store.integrity_calls == 1
-    assert store.storage_calls == 2  # once while pending, once with the result
-    assert all(item["storage"]["integrity"] == "pending" for item in first)
-    assert all(item["storage"]["integrity"] == "ok" for item in second)
-    assert second[0]["storage_age_seconds"] >= 0 and second[0]["storage"]["integrity_age_seconds"] >= 0.0
-    assert second[0]["storage_coverage"][0]["instrument_id"] == "BTC"
+    assert store.integrity_calls == 1 and store.storage_calls == 1
+    assert all(item["storage"]["status"] == "pending" for item in first)
+    assert all(item["storage"]["status"] == "ok" for item in second)
+
+
+def test_expired_results_are_served_while_fresh_ones_run_in_the_background(monkeypatch) -> None:
+    """#196/#200: on production a call after either TTL waited 8-11 s; now nobody waits."""
+    store = SlowStore()
+    monkeypatch.setattr(api, "HEALTH_STORAGE_TTL_SECONDS", 0.2)
+    monkeypatch.setattr(api, "HEALTH_INTEGRITY_TTL_SECONDS", 0.3)
+
+    async def scenario():
+        await api.health()
+        await _settle(store)
+        store.integrity_seconds = store.storage_seconds = 0.5
+        await asyncio.sleep(0.35)  # both results are now older than their TTL
+        started = time.monotonic()
+        calls = await asyncio.gather(*(api.health() for _ in range(3)))
+        quick = time.monotonic() - started
+        await _settle(store)
+        after = await api.health()
+        return calls, quick, after
+
+    calls, quick, after = _run_with(store, scenario)
+    assert quick < 0.3  # nobody waited for the 0.5 s refreshes
+    assert all(item["storage"]["status"] == "ok" and item["storage_age_seconds"] >= 0.3 for item in calls)
+    assert all(item["storage"]["integrity_age_seconds"] >= 0.3 for item in calls)
+    assert store.integrity_calls == 2 and store.storage_calls == 2  # the first, then exactly one refresh each
+    assert after["storage_age_seconds"] < 0.3 and after["storage"]["integrity_age_seconds"] < 0.3
+
+
+def test_storage_facts_refresh_more_often_than_integrity(monkeypatch) -> None:
+    store = SlowStore()
+    monkeypatch.setattr(api, "HEALTH_STORAGE_TTL_SECONDS", 0.05)
+    monkeypatch.setattr(api, "HEALTH_INTEGRITY_TTL_SECONDS", 60.0)
+
+    async def scenario():
+        await api.health()
+        await _settle(store)
+        await asyncio.sleep(0.1)
+        await api.health()
+        await _settle(store)
+
+    _run_with(store, scenario)
+    assert store.storage_calls == 2  # coverage is re-read
+    assert store.integrity_calls == 1  # the full check is not
 
 
 def test_a_failing_integrity_check_reports_an_error_not_pending_forever() -> None:
-    store = SlowStore(integrity_seconds=0.0)
+    store = SlowStore()
 
     def broken() -> str:
         raise OSError("disk I/O error")
@@ -123,43 +184,27 @@ def test_a_failing_integrity_check_reports_an_error_not_pending_forever() -> Non
     assert after["storage"]["integrity"] == "unavailable: OSError"
 
 
-def test_storage_facts_refresh_after_their_ttl_but_integrity_waits_longer(monkeypatch) -> None:
-    store = SlowStore(integrity_seconds=0.0)
-    monkeypatch.setattr(api, "HEALTH_STORAGE_TTL_SECONDS", 0.05)
-    monkeypatch.setattr(api, "HEALTH_INTEGRITY_TTL_SECONDS", 60.0)
-
-    async def scenario():
-        await api.health()
-        await _settle(store)
-        await api.health()
-        await asyncio.sleep(0.1)
-        await api.health()
-
-    _run_with(store, scenario)
-    assert store.storage_calls == 3  # pending, then the result, then re-read after the TTL
-    assert store.integrity_calls == 1  # the full check is not
-
-
-def test_an_expired_integrity_result_is_served_while_a_fresh_one_runs_in_the_background(monkeypatch) -> None:
-    """#196: after the TTL, health answers at once with the last result; one refresh runs behind it."""
-    store = SlowStore(integrity_seconds=0.0)
+def test_failing_storage_facts_report_an_error_until_a_refresh_succeeds(monkeypatch) -> None:
+    store = SlowStore()
     monkeypatch.setattr(api, "HEALTH_STORAGE_TTL_SECONDS", 0.0)
-    monkeypatch.setattr(api, "HEALTH_INTEGRITY_TTL_SECONDS", 0.3)
+    original = store.source_coverage
+
+    def broken() -> list[dict]:
+        raise OSError("database is locked")
+
+    store.source_coverage = broken
 
     async def scenario():
-        await api.health()  # starts the first check
+        await api.health()
         await _settle(store)
-        store.integrity_seconds = 0.5
-        await asyncio.sleep(0.35)  # the result is now older than its TTL
-        started = time.monotonic()
-        calls = await asyncio.gather(*(api.health() for _ in range(3)))
-        quick = time.monotonic() - started
-        await asyncio.sleep(0.6)  # let the background refresh finish
-        after = await api.health()
-        return calls, quick, after
+        failed = await api.health()
+        await _settle(store)
+        store.source_coverage = original
+        await api.health()  # starts a refresh that succeeds
+        await _settle(store)
+        return failed, await api.health()
 
-    calls, quick, after = _run_with(store, scenario)
-    assert quick < 0.3  # nobody waited for the 0.5 s check
-    assert all(item["storage"]["integrity"] == "ok" and item["storage"]["integrity_age_seconds"] >= 0.3 for item in calls)
-    assert store.integrity_calls == 2  # the first one, then exactly one background refresh
-    assert after["storage"]["integrity_age_seconds"] < 0.3
+    failed, recovered = _run_with(store, scenario)
+    assert failed["storage"]["status"] == "error" and failed["storage"]["error"] == "unavailable: OSError"
+    assert failed["storage_coverage"] == []
+    assert recovered["storage"]["status"] == "ok" and recovered["storage_coverage"][0]["instrument_id"] == "BTC"

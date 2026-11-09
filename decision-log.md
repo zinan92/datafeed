@@ -1,5 +1,41 @@
 # Decision Log
 
+## 2026-11-09 - Health never waits on the database (#200)
+
+Decision
+
+- Measured on production after the #196 release (05:34-05:37Z): a call after the
+  storage TTL took 8.1, 8.8 and 11.2 s. The storage facts (`COUNT(*)` over
+  `klines`, distinct sources, coverage, latest observations) cost ~9 s on the
+  485 MB database and were recomputed inline every 15 s, so about every other
+  caller waited near trading-system's 10 s client timeout. The integrity check
+  was not the remaining cost.
+- Storage facts now refresh in a background task like integrity. Callers get
+  the last facts and `storage_age_seconds`. Before the first facts exist:
+  `storage.status = "pending"`, empty coverage, `storage_age_seconds = null`.
+  A failing refresh keeps serving the last facts (their age grows); with none,
+  `status = "error"` plus `storage.error`.
+- The integrity verdict is overlaid at serve time, so facts are not recomputed
+  when it changes. `status` is `ok` only when facts exist and integrity is `ok`.
+- Default `KLINE_HEALTH_STORAGE_TTL_SECONDS` 15 -> 60: a ~9 s scan every 15 s
+  kept the database busy most of the time.
+
+Gotchas
+
+- Consumers that read coverage from `/api/health` (trading-system's
+  `DatafeedMarketRepository.coverage()`) see an empty list for the first ~10 s
+  after a restart, together with `status = "pending"`. Its checks require
+  `status == "ok"`, so they fail closed in that window rather than reading the
+  empty list as "no data".
+
+Verification
+
+- `tests/test_health_does_not_block.py`, 7 tests, 5 runs in a row: the first
+  call returns pending in under 0.35 s while a 0.6 s check and 0.4 s facts run;
+  facts with a running check are pending; concurrent calls share one refresh of
+  each; expired results are served at once while one refresh of each runs; a
+  failing check or failing facts become errors and recover. Full suite 461.
+
 ## 2026-11-09 - The first health call after a start does not wait either (#198)
 
 Decision
