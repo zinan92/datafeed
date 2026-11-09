@@ -96,3 +96,27 @@ def test_storage_facts_refresh_after_their_ttl_but_integrity_waits_longer(monkey
     _run_with(store, scenario)
     assert store.storage_calls == 2  # coverage is re-read
     assert store.integrity_calls == 1  # the full check is not
+
+
+def test_an_expired_integrity_result_is_served_while_a_fresh_one_runs_in_the_background(monkeypatch) -> None:
+    """#196: after the TTL, health answers at once with the last result; one refresh runs behind it."""
+    store = SlowStore(integrity_seconds=0.0)
+    monkeypatch.setattr(api, "HEALTH_STORAGE_TTL_SECONDS", 0.0)
+    monkeypatch.setattr(api, "HEALTH_INTEGRITY_TTL_SECONDS", 0.3)
+
+    async def scenario():
+        await api.health()  # first call waits for the check
+        store.integrity_seconds = 0.5
+        await asyncio.sleep(0.35)  # the result is now older than its TTL
+        started = time.monotonic()
+        calls = await asyncio.gather(*(api.health() for _ in range(3)))
+        quick = time.monotonic() - started
+        await asyncio.sleep(0.6)  # let the background refresh finish
+        after = await api.health()
+        return calls, quick, after
+
+    calls, quick, after = _run_with(store, scenario)
+    assert quick < 0.3  # nobody waited for the 0.5 s check
+    assert all(item["storage"]["integrity"] == "ok" and item["storage"]["integrity_age_seconds"] >= 0.3 for item in calls)
+    assert store.integrity_calls == 2  # the first one, then exactly one background refresh
+    assert after["storage"]["integrity_age_seconds"] < 0.3

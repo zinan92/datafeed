@@ -1,5 +1,22 @@
 # Decision Log
 
+## 2026-11-09 - Health refreshes the integrity check in the background (#196)
+
+Decision
+
+- After #194 the event loop stayed free, but when the 600 s integrity cache
+  expired, the next health caller waited for the new `PRAGMA integrity_check`:
+  24.8 s measured on production, past trading-system's 10 s client timeout.
+- Once a result exists, an expired one is served at once (its age is in
+  `storage.integrity_age_seconds`) and one background task refreshes it. Only
+  the first call after a start waits.
+
+Verification
+
+- `test_an_expired_integrity_result_is_served_while_a_fresh_one_runs_in_the_background`:
+  three calls after the TTL return in under 0.3 s with the old result; exactly
+  one refresh runs; the next call sees the new one. Full suite 458 passed.
+
 ## 2026-11-09 - /api/health no longer blocks the event loop (#194)
 
 Decision

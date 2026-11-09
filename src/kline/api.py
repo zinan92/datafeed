@@ -1520,6 +1520,7 @@ class _HealthStorageCache:
     storage: dict[str, Any] | None = None
     integrity_at: float | None = None
     integrity: str | None = None
+    integrity_refresh: asyncio.Task | None = None
 
 
 _HEALTH_CACHES: dict[int, _HealthStorageCache] = {}
@@ -1547,15 +1548,27 @@ async def _cached_health_storage(store: Any) -> tuple[dict[str, Any], float, flo
         cache = _HEALTH_CACHES[id(store)] = _HealthStorageCache(lock=asyncio.Lock())
     async with cache.lock:  # one computation at a time; waiters reuse its result
         now = monotonic()
-        if cache.integrity is None or cache.integrity_at is None or now - cache.integrity_at > HEALTH_INTEGRITY_TTL_SECONDS:
+        if cache.integrity is None or cache.integrity_at is None:
+            # Only the first call after a start waits for the full check.
             cache.integrity = await asyncio.to_thread(store.storage_integrity)
             cache.integrity_at = monotonic()
-            cache.storage_at = None  # the integrity result changed: rebuild the storage block
+            cache.storage_at = None
+        elif now - cache.integrity_at > HEALTH_INTEGRITY_TTL_SECONDS and (
+            cache.integrity_refresh is None or cache.integrity_refresh.done()
+        ):
+            # Later checks run in the background; callers get the last result and its age (#196:
+            # waiting took 24.8 s on production, past trading-system's 10 s client timeout).
+            cache.integrity_refresh = asyncio.create_task(_refresh_integrity(store, cache))
         if cache.storage is None or cache.storage_at is None or now - cache.storage_at > HEALTH_STORAGE_TTL_SECONDS:
             cache.storage = await asyncio.to_thread(_health_storage, store, cache.integrity)
             cache.storage_at = monotonic()
         storage = dict(cache.storage)
         return storage, monotonic() - cache.storage_at, monotonic() - cache.integrity_at
+
+
+async def _refresh_integrity(store: Any, cache: _HealthStorageCache) -> None:
+    integrity = await asyncio.to_thread(store.storage_integrity)
+    cache.integrity, cache.integrity_at, cache.storage_at = integrity, monotonic(), None
 
 
 @router.get("/health")
