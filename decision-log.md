@@ -1,5 +1,44 @@
 # Decision Log
 
+## 2026-11-09 - The 8100 log says when, how long, and what blocked the loop (#202)
+
+Decision
+
+- Part of zinan92/trading-system#1358 item 1, round 2. During the gold outage
+  the 8100 log could not answer when a stall started, how long a request took,
+  or that the event loop was blocked. All three were found by timing curl calls.
+- `kline/observe.py`, stdlib `logging` only:
+  - one UTC format (`2026-11-09T07:46:56.721Z LEVEL logger: message`) on the
+    `uvicorn`, `uvicorn.error` and `uvicorn.access` handlers, which uvicorn
+    creates before it loads the factory, and on a `kline` stderr handler;
+  - `Timing`, a pure ASGI middleware (outermost), that logs a WARNING for each
+    request over `KLINE_SLOW_REQUEST_SECONDS` (1.0) and one INFO line for the
+    first request served;
+  - `watch_loop_lag`, a lifespan task that logs a WARNING when the loop wakes
+    more than `KLINE_LOOP_LAG_WARN_SECONDS` (1.0) late;
+  - the startup timeline: begin, registry `init()` duration, complete.
+- The `kline` logger is WARNING and `kline.observe` INFO. Provider "Fetched N
+  candles" INFO lines (GOLD is fetched several times a minute) stay out.
+- Query values under secret-like keys are redacted in our lines.
+
+Gotchas
+
+- Starlette builds its middleware stack on the first request, so `Timing`
+  cannot take its own start time. "First request served" is measured from when
+  `kline.observe` was imported, i.e. when uvicorn loaded the factory.
+- uvicorn's own access line still prints the raw query string, as before. 8100
+  takes no keys in queries; our lines redact anyway.
+- The stdout access log is 32 MB under launchd with no rotation. Out of scope
+  here.
+
+Verification
+
+- `tests/test_observe.py` (9): slow vs fast request, first request once,
+  redaction, blocked vs quiet loop, startup order, UTC format, uvicorn handlers,
+  provider INFO off. Full suite 470.
+- Real uvicorn on 18102 with a temp DB: timestamped uvicorn and kline lines,
+  startup timeline, `api_key` redacted in the slow-request line.
+
 ## 2026-11-09 - Health never waits on the database (#200)
 
 Decision
