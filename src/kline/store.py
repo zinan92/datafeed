@@ -1513,10 +1513,20 @@ class KlineStore:
             "created_at": row.created_at.isoformat() if row.created_at else None,
         }
 
-    def storage_health(self) -> dict[str, Any]:
-        """Return an owner-side integrity receipt without exposing the database path."""
+    def storage_integrity(self) -> str:
+        """Run SQLite's full integrity check. Slow on a large database: callers cache it (#194)."""
         with self._engine.connect() as connection:
-            integrity = str(connection.exec_driver_sql("PRAGMA integrity_check").scalar_one())
+            return str(connection.exec_driver_sql("PRAGMA integrity_check").scalar_one())
+
+    def storage_health(self, *, integrity: str | None = None) -> dict[str, Any]:
+        """Return an owner-side integrity receipt without exposing the database path.
+
+        ``integrity`` lets a caller pass a recent ``storage_integrity()`` result instead of
+        re-running the full check on every call.
+        """
+        if integrity is None:
+            integrity = self.storage_integrity()
+        with self._engine.connect() as connection:
             candle_rows = int(
                 connection.exec_driver_sql("SELECT COUNT(*) FROM klines").scalar_one()
             )

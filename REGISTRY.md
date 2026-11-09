@@ -4,6 +4,12 @@
 
 多资产 K 线数据服务：`ticker + timeframe → 标准化 OHLCV + provenance`，覆盖 A 股、美股、加密和商品；近期喂养 trading-system 与 tokenpulse，远期可作为独立 API 产品外卖。
 
+## 现在在哪里（2026-11-09，健康检查不再卡住整个服务 · #194）
+
+- `/api/health` 以前在主线程上同步读库，还每次跑一遍 `PRAGMA integrity_check`。生产库 485 MB，这一步约 12 秒，期间别的请求全部排队：同一个黄金读取平时 0.03 秒，健康检查进行中要 4.8 秒，冷盘时会超时。trading-system 交易台的「黄金行情中断」就是这么来的。
+- 现在：读库放到工作线程；并发的健康检查只算一次、共用结果；完整性检查 10 分钟最多跑一次，其余数据 15 秒内复用。响应里多了 `storage_age_seconds` 和 `storage.integrity_age_seconds`，说清楚数据是多久以前的。
+- 另一半原因在别的仓库：human-kline-review 一直在请求已到期的 `MGCV26.CMX`（Yahoo），见那边的 Issue。
+
 ## 现在在哪里（2026-11-07，OKX 白银和原油 · #188）
 
 - `okx_swap_public`（commodity）在黄金之外放开白银 `XAG-USDT-SWAP`、WTI 原油 `CL-USDT-SWAP`、布伦特 `BZ-USDT-SWAP`。
