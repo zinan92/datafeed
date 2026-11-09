@@ -1507,9 +1507,11 @@ async def market_sessions(
 
 # /api/health reads SQLite synchronously. Run on the event loop, one call blocked every other
 # request (a cached GOLD read went from 0.03 s to 4.8 s), and PRAGMA integrity_check alone takes
-# ~12 s on the production database (#194). So the storage part runs in a worker thread, concurrent
-# callers share one computation, and the full integrity check is reused for a while.
-HEALTH_STORAGE_TTL_SECONDS = float(os.environ.get("KLINE_HEALTH_STORAGE_TTL_SECONDS", "15"))
+# ~12 s on the production database (#194). The storage facts (row counts, coverage) take another
+# 8-11 s (#200). So both run in background tasks: callers always get the last result and its age at
+# once, and only one refresh of each runs at a time. Before a first result exists the answer is
+# "pending", never "ok" (#198).
+HEALTH_STORAGE_TTL_SECONDS = float(os.environ.get("KLINE_HEALTH_STORAGE_TTL_SECONDS", "60"))
 HEALTH_INTEGRITY_TTL_SECONDS = float(os.environ.get("KLINE_HEALTH_INTEGRITY_TTL_SECONDS", "600"))
 
 
@@ -1518,6 +1520,8 @@ class _HealthStorageCache:
     lock: asyncio.Lock
     storage_at: float | None = None
     storage: dict[str, Any] | None = None
+    storage_error: str | None = None
+    storage_refresh: asyncio.Task | None = None
     integrity_at: float | None = None
     integrity: str | None = None
     integrity_refresh: asyncio.Task | None = None
@@ -1526,7 +1530,7 @@ class _HealthStorageCache:
 _HEALTH_CACHES: dict[int, _HealthStorageCache] = {}
 
 
-def _health_storage(store: Any, integrity: str) -> dict[str, Any]:
+def _health_storage(store: Any) -> dict[str, Any]:
     coverage = store.source_coverage()
     for row in coverage:
         try:
@@ -1536,36 +1540,47 @@ def _health_storage(store: Any, integrity: str) -> dict[str, Any]:
         except (KeyError, ValueError):
             row["instrument_id"] = str(row["ticker"])
     return {
-        "storage": store.storage_health(integrity=integrity),
+        # The integrity verdict is overlaid when served; these facts do not depend on it.
+        "storage": store.storage_health(integrity="pending"),
         "storage_coverage": coverage,
         "latest_observations": store.latest_source_observations(),
     }
 
 
-async def _cached_health_storage(store: Any) -> tuple[dict[str, Any], float, float | None]:
+def _due(at: float | None, ttl: float, now: float) -> bool:
+    return at is None or now - at > ttl
+
+
+def _idle(task: asyncio.Task | None) -> bool:
+    return task is None or task.done()
+
+
+async def _cached_health_storage(store: Any) -> tuple[dict[str, Any], float | None, float | None]:
     cache = _HEALTH_CACHES.get(id(store))
     if cache is None:
         cache = _HEALTH_CACHES[id(store)] = _HealthStorageCache(lock=asyncio.Lock())
-    async with cache.lock:  # one computation at a time; waiters reuse its result
+    async with cache.lock:
         now = monotonic()
-        due = cache.integrity_at is None or now - cache.integrity_at > HEALTH_INTEGRITY_TTL_SECONDS
-        if due and (cache.integrity_refresh is None or cache.integrity_refresh.done()):
-            # The full check always runs in the background. Waiting took 24.8 s after the TTL (#196)
-            # and 26.2 s on the first call after a restart (#198), past trading-system's 10 s client
-            # timeout. Until the first result exists, storage reads "pending", never "ok".
+        if _due(cache.integrity_at, HEALTH_INTEGRITY_TTL_SECONDS, now) and _idle(cache.integrity_refresh):
             cache.integrity_refresh = asyncio.create_task(_refresh_integrity(store, cache))
+        if _due(cache.storage_at, HEALTH_STORAGE_TTL_SECONDS, now) and _idle(cache.storage_refresh):
+            cache.storage_refresh = asyncio.create_task(_refresh_storage(store, cache))
         integrity = cache.integrity or "pending"
-        if (
-            cache.storage is None
-            or cache.storage_at is None
-            or now - cache.storage_at > HEALTH_STORAGE_TTL_SECONDS
-            or cache.storage["storage"].get("integrity") != integrity
-        ):
-            cache.storage = await asyncio.to_thread(_health_storage, store, integrity)
-            cache.storage_at = monotonic()
-        storage = dict(cache.storage)
+        if cache.storage is None:
+            facts = {"status": "error" if cache.storage_error else "pending", "candle_rows": None, "source_count": None}
+            if cache.storage_error:
+                facts["error"] = cache.storage_error
+            storage = {"storage": facts, "storage_coverage": [], "latest_observations": []}
+        else:
+            storage = dict(cache.storage)
+            facts = dict(storage["storage"])
+        if facts["status"] != "error":
+            facts["status"] = integrity if integrity in ("ok", "pending") else "error"
+        facts["integrity"] = integrity
+        storage["storage"] = facts
+        storage_age = None if cache.storage_at is None else monotonic() - cache.storage_at
         integrity_age = None if cache.integrity_at is None else monotonic() - cache.integrity_at
-        return storage, monotonic() - cache.storage_at, integrity_age
+        return storage, storage_age, integrity_age
 
 
 async def _refresh_integrity(store: Any, cache: _HealthStorageCache) -> None:
@@ -1573,12 +1588,24 @@ async def _refresh_integrity(store: Any, cache: _HealthStorageCache) -> None:
         integrity = await asyncio.to_thread(store.storage_integrity)
     except Exception as error:  # report the failure; do not keep "pending" forever
         integrity = f"unavailable: {type(error).__name__}"
-    cache.integrity, cache.integrity_at, cache.storage_at = integrity, monotonic(), None
+    cache.integrity, cache.integrity_at = integrity, monotonic()
+
+
+async def _refresh_storage(store: Any, cache: _HealthStorageCache) -> None:
+    try:
+        storage = await asyncio.to_thread(_health_storage, store)
+    except Exception as error:  # keep serving the last facts (with their age); with none, report the error
+        cache.storage_error = f"unavailable: {type(error).__name__}"
+        if cache.storage is None:
+            cache.storage_at = None
+        return
+    cache.storage, cache.storage_at, cache.storage_error = storage, monotonic(), None
 
 
 @router.get("/health")
 async def health() -> dict:
-    """Health check. Storage facts are at most a few seconds old; see ``storage_age_seconds``."""
+    """Health check. Never waits on the database: storage facts and the integrity verdict come from
+    background refreshes; see ``storage_age_seconds`` and ``storage.integrity_age_seconds``."""
     from kline import __version__
 
     storage, storage_age, integrity_age = await _cached_health_storage(get_store())
@@ -1593,7 +1620,7 @@ async def health() -> dict:
         "runtime": runtime_status(),
         "providers": provider_status(),
         **storage,
-        "storage_age_seconds": round(storage_age, 1),
+        "storage_age_seconds": None if storage_age is None else round(storage_age, 1),
         "query_backend": query_backend_status(),
     }
 
