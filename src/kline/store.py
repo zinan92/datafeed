@@ -100,11 +100,25 @@ class KlineStore:
                     f"CREATE {unique_sql}INDEX IF NOT EXISTS {index_name} ON klines ({joined})"
                 )
 
+    # Once per database (#208). Every write goes through ``save()``, whose rows come from ``Candle`` and
+    # its ``normalize_timestamp`` validator, so only legacy rows can be non-canonical. The full-table
+    # scan took ~9 s on every production start and found 0 rows.
+    NORMALIZED_TIMESTAMPS = "normalized_stored_timestamps"
+
     def _normalize_stored_timestamps(self) -> None:
-        """Canonicalize UTC timestamps and merge logically duplicate legacy rows."""
+        """Canonicalize UTC timestamps and merge logically duplicate legacy rows, once per database."""
         from datetime import datetime, timezone
 
         with self._engine.begin() as connection:
+            connection.exec_driver_sql(
+                "CREATE TABLE IF NOT EXISTS kline_maintenance "
+                "(name VARCHAR PRIMARY KEY, completed_at VARCHAR NOT NULL)"
+            )
+            done = connection.exec_driver_sql(
+                "SELECT 1 FROM kline_maintenance WHERE name=?", (self.NORMALIZED_TIMESTAMPS,)
+            ).fetchone()
+            if done:
+                return
             rows = connection.exec_driver_sql(
                 "SELECT id, source_id, ticker, asset_class, timeframe, timestamp, "
                 "open, high, low, close, volume, amount FROM klines "
@@ -132,6 +146,10 @@ class KlineStore:
                     connection.exec_driver_sql(
                         "UPDATE klines SET timestamp=? WHERE id=?", (canonical, row[0])
                     )
+            connection.exec_driver_sql(
+                "INSERT INTO kline_maintenance (name, completed_at) VALUES (?, ?)",
+                (self.NORMALIZED_TIMESTAMPS, datetime.now(timezone.utc).replace(microsecond=0).isoformat()),
+            )
 
     def query(
         self,

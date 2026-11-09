@@ -220,3 +220,65 @@ class TestSourceObservations:
         source_a = next(item for item in observations if item["source_id"] == "source_a")
         assert source_a["success"] is False
         assert source_a["error"] == "timeout"
+
+
+class TestTimestampNormalizationRunsOnce:
+    """#208: the legacy-timestamp scan runs on the first open of a database, then never again."""
+
+    @staticmethod
+    def _legacy_db(path: Path) -> None:
+        import sqlite3
+
+        KlineStore(str(path))  # current schema, marker written
+        connection = sqlite3.connect(path)
+        connection.execute("DELETE FROM kline_maintenance")  # as a database from before #208
+        columns = "(source_id, ticker, asset_class, timeframe, timestamp, open, high, low, close, volume)"
+        connection.execute(f"INSERT INTO klines {columns} VALUES ('s', 'GOLD', 'commodity', '1h', '2026-03-25T08:00:00', 1, 2, 0, 1, 10)")
+        connection.execute(f"INSERT INTO klines {columns} VALUES ('s', 'GOLD', 'commodity', '1h', '2026-03-25T09:00:00+00:00', 5, 6, 4, 5, 50)")
+        connection.execute(f"INSERT INTO klines {columns} VALUES ('s', 'GOLD', 'commodity', '1h', '2026-03-25T09:00:00', 7, 8, 6, 7, 70)")
+        connection.commit()
+        connection.close()
+
+    @staticmethod
+    def _rows(path: Path) -> list[tuple]:
+        import sqlite3
+
+        connection = sqlite3.connect(path)
+        try:
+            return connection.execute("SELECT timestamp, close FROM klines ORDER BY timestamp").fetchall()
+        finally:
+            connection.close()
+
+    def test_a_legacy_database_is_normalized_and_marked_on_first_open(self, tmp_path: Path):
+        db_path = tmp_path / "legacy.db"
+        self._legacy_db(db_path)
+        KlineStore(str(db_path))
+        assert self._rows(db_path) == [("2026-03-25T08:00:00+00:00", 1.0), ("2026-03-25T09:00:00+00:00", 7.0)]
+        import sqlite3
+
+        connection = sqlite3.connect(db_path)
+        marker = connection.execute("SELECT name, completed_at FROM kline_maintenance").fetchall()
+        connection.close()
+        assert [row[0] for row in marker] == [KlineStore.NORMALIZED_TIMESTAMPS] and marker[0][1].endswith("+00:00")
+
+    def test_a_marked_database_skips_the_scan(self, tmp_path: Path):
+        import sqlite3
+
+        db_path = tmp_path / "marked.db"
+        KlineStore(str(db_path))
+        connection = sqlite3.connect(db_path)
+        columns = "(source_id, ticker, asset_class, timeframe, timestamp, open, high, low, close, volume)"
+        connection.execute(f"INSERT INTO klines {columns} VALUES ('s', 'GOLD', 'commodity', '1h', '2026-03-25T08:00:00', 1, 2, 0, 1, 10)")
+        connection.commit()
+        connection.close()
+        KlineStore(str(db_path))
+        assert self._rows(db_path) == [("2026-03-25T08:00:00", 1.0)]  # untouched: the scan did not run again
+
+    def test_a_fresh_database_is_marked(self, tmp_path: Path):
+        import sqlite3
+
+        db_path = tmp_path / "fresh.db"
+        KlineStore(str(db_path))
+        connection = sqlite3.connect(db_path)
+        assert connection.execute("SELECT count(*) FROM kline_maintenance").fetchone() == (1,)
+        connection.close()
