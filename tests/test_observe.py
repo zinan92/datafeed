@@ -136,3 +136,76 @@ def test_provider_fetch_lines_stay_out_but_the_timeline_stays_in(monkeypatch) ->
     assert not logging.getLogger("kline.providers.okx_swap").isEnabledFor(logging.INFO)
     assert logging.getLogger("kline.providers.okx_swap").isEnabledFor(logging.WARNING)
     assert observer.isEnabledFor(logging.INFO)
+
+
+def _failing_app() -> FastAPI:
+    from fastapi import HTTPException
+
+    app = FastAPI()
+
+    @app.get("/defs")
+    async def defs(slow: float = 0.0) -> dict:
+        await asyncio.sleep(slow)
+        raise HTTPException(status_code=502, detail={
+            "error": "instrument_definition_unavailable",
+            "detail": "OKX request failed: ConnectTimeout api_key=abc123 token: t0k",
+            "is_synthetic": False,
+        })
+
+    @app.get("/plain")
+    async def plain() -> dict:
+        raise HTTPException(status_code=503, detail="market query reader failed")
+
+    @app.get("/boom")
+    async def boom() -> dict:
+        raise RuntimeError("never shown")
+
+    @app.get("/fine")
+    async def fine() -> dict:
+        return {"ok": True}
+
+    app.add_middleware(observe.Timing, started_at=time.monotonic())
+    return app
+
+
+def test_a_fast_failure_is_logged_with_its_reason_and_the_body_is_unchanged(caplog) -> None:
+    caplog.set_level(logging.INFO, logger="kline")
+    response = TestClient(_failing_app()).get("/defs?ticker=XAG")
+    assert response.status_code == 502
+    assert response.json()["detail"]["error"] == "instrument_definition_unavailable"  # passed through
+    failed = _warnings(caplog, "failed request")
+    assert len(failed) == 1, failed
+    assert "GET /defs?ticker=XAG status=502 took" in failed[0]
+    assert "reason=instrument_definition_unavailable OKX request failed: ConnectTimeout" in failed[0]
+    assert "abc123" not in failed[0] and "t0k" not in failed[0] and "[redacted]" in failed[0]
+
+
+def test_a_slow_failure_is_logged_once(caplog, monkeypatch) -> None:
+    monkeypatch.setenv("KLINE_SLOW_REQUEST_SECONDS", "0.1")
+    caplog.set_level(logging.INFO, logger="kline")
+    TestClient(_failing_app()).get("/defs?slow=0.2")
+    lines = [r.getMessage() for r in caplog.records if r.name == "kline.observe" and r.levelno == logging.WARNING]
+    assert len(lines) == 1 and lines[0].startswith("failed request") and "/defs" in lines[0], lines
+
+
+def test_a_string_detail_and_an_unhandled_error_give_a_reason(caplog) -> None:
+    caplog.set_level(logging.INFO, logger="kline")
+    client = TestClient(_failing_app(), raise_server_exceptions=False)
+    client.get("/plain")
+    assert client.get("/boom").status_code == 500
+    failed = _warnings(caplog, "failed request")
+    assert any("/plain status=503" in line and "reason=market query reader failed" in line for line in failed), failed
+    assert any("/boom status=500" in line and "reason=unhandled RuntimeError" in line for line in failed), failed
+    assert not any("never shown" in line for line in failed)
+
+
+def test_a_success_logs_no_failure(caplog) -> None:
+    caplog.set_level(logging.INFO, logger="kline")
+    TestClient(_failing_app()).get("/fine")
+    assert _warnings(caplog, "failed request") == []
+
+
+def test_failure_reason_falls_back_to_text() -> None:
+    assert observe.failure_reason(b"Internal Server Error") == "Internal Server Error"
+    assert observe.failure_reason(b"") == "-"
+    assert len(observe.failure_reason(b"x" * 5000)) == observe.REASON_CHARS

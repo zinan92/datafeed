@@ -1,5 +1,36 @@
 # Decision Log
 
+## 2026-11-09 - A failed request is logged with its reason (#212)
+
+Decision
+
+- After the #210 release the first request was a 502 in 5579 ms, and the log
+  could not say why: the `ProviderError` text lives only in the response body.
+  A 5xx under 1 s was not logged at all.
+- `Timing` now logs one WARNING per response with status >= 500, whatever its
+  duration: `failed request <method> <target> status=<n> took <ms> ms reason=<text>`.
+  The reason is FastAPI's `detail` (`error` + `detail` for a dict, the string
+  itself, or else the body text), whitespace-collapsed, secret-like
+  `key=value` / `key: value` pairs redacted, cut to 300 characters. At most the
+  first 4 KB of a 5xx body is kept; the response passes through unchanged.
+- An exception that escapes the app is logged as `status=500 reason=unhandled
+  <ExceptionType>`, never with its message.
+- A slow failure is logged once, as a failed request.
+
+Gotchas
+
+- Starlette's `ServerErrorMiddleware` sits outside user middleware, so an
+  unhandled exception passes through `Timing` with no response yet; the type
+  is taken from the exception.
+
+Verification
+
+- `tests/test_observe.py` (5 new): fast 502 logged once with its reason,
+  secrets redacted, body unchanged; slow 502 logged once; string detail and
+  unhandled exception give a reason; a 200 logs no failure; text fallback,
+  empty body and the 300-character cut. 4 of them fail on the old code. Full
+  suite 487.
+
 ## 2026-11-09 - The OKX instrument definition asks its three public calls at once (#210)
 
 Decision
@@ -31,6 +62,10 @@ Verification
 - Real OKX public API from this host, same script: old code 1.53–1.58 s per
   definition, new 0.46–0.54 s (the first call of each run also opens the
   connection: 2.9 s old, 2.0 s new).
+- Released 1024b2f (08:56:15Z). Live: XAG 0.51 s, CL 0.47–0.49 s. During the
+  first 20 s after the restart (reader build) one XAG read was a 502 in 5.6 s,
+  reason unlogged and not reproduced (a cold provider beside a CPU-bound
+  thread took 3–7 s with old and new code, no failure). Led to #212.
 
 ## 2026-11-09 - Legacy timestamps are normalised once per database (#208)
 
