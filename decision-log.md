@@ -1,5 +1,26 @@
 # Decision Log
 
+## 2026-11-09 - The first health call after a start does not wait either (#198)
+
+Decision
+
+- After the #196 release, the first `/api/health` call after the restart still
+  waited for the full check: 26.2 s on production (05:23Z).
+- The check now always runs in a background task. Before the first result
+  exists, health answers at once with `storage.integrity = "pending"`,
+  `storage.status = "pending"` and `integrity_age_seconds = null`.
+- Fail-closed: nothing reports `"ok"` until the check has returned `"ok"`;
+  trading-system's preflight and data-integrity check require `status == "ok"`
+  and so still treat storage as not ready during those seconds.
+- If the check raises, health reports `integrity = "unavailable: <Error>"` with
+  `status = "error"` instead of staying pending; the next call retries.
+
+Verification
+
+- `tests/test_health_does_not_block.py`: the first call returns in under 0.5 s
+  while a 0.6 s check runs, shows pending/null, then ok with an age; five
+  concurrent first calls share one check; a raising check reports an error.
+
 ## 2026-11-09 - Health refreshes the integrity check in the background (#196)
 
 Decision

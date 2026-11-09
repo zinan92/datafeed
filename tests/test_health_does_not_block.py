@@ -1,4 +1,5 @@
-"""#194: /api/health must not block other requests, and must not re-run PRAGMA integrity_check each call."""
+"""#194/#196/#198: /api/health must not block other requests, must not re-run PRAGMA integrity_check each call,
+and never makes a caller wait for that check."""
 from __future__ import annotations
 
 import asyncio
@@ -25,7 +26,8 @@ class SlowStore:
 
     def storage_health(self, *, integrity: str | None = None) -> dict:
         self.storage_calls += 1
-        return {"status": "ok" if integrity == "ok" else "error", "integrity": integrity, "candle_rows": 2, "source_count": 1}
+        status = integrity if integrity in ("ok", "pending") else "error"
+        return {"status": status, "integrity": integrity, "candle_rows": 2, "source_count": 1}
 
     def source_coverage(self) -> list[dict]:
         return [{"source_id": "unknown_source", "asset_class": "crypto", "ticker": "BTC", "timeframe": "1m", "count": 2}]
@@ -45,8 +47,19 @@ def _run_with(store: SlowStore, coroutine_factory):
         api._HEALTH_CACHES.clear()
 
 
-def test_the_event_loop_keeps_serving_while_health_checks_integrity() -> None:
-    store = SlowStore()
+async def _settle(store: SlowStore) -> None:
+    """Wait until the background integrity check has finished."""
+    for _ in range(200):
+        cache = api._HEALTH_CACHES.get(id(store))
+        if cache and cache.integrity is not None:
+            return
+        await asyncio.sleep(0.01)
+    raise AssertionError("integrity check never finished")
+
+
+def test_the_first_call_after_a_start_answers_pending_at_once_then_ok() -> None:
+    """#198: the first call used to wait 26.2 s on production. It now reports pending, never ok, until the check ends."""
+    store = SlowStore(integrity_seconds=0.6)
 
     async def scenario():
         ticks: list[float] = []
@@ -58,13 +71,19 @@ def test_the_event_loop_keeps_serving_while_health_checks_integrity() -> None:
                 ticks.append(time.monotonic() - started)
 
         started = time.monotonic()
-        payload, _ = await asyncio.gather(api.health(), other_request())
-        return payload, ticks, time.monotonic() - started
+        first, _ = await asyncio.gather(api.health(), other_request())
+        quick = time.monotonic() - started
+        await _settle(store)
+        after = await api.health()
+        return first, quick, ticks, after
 
-    payload, ticks, elapsed = _run_with(store, scenario)
-    assert payload["storage"]["integrity"] == "ok" and payload["storage"]["status"] == "ok"
-    assert ticks[-1] < 0.5  # the other request finished while integrity_check (0.6 s) was still running
-    assert elapsed >= 0.6
+    first, quick, ticks, after = _run_with(store, scenario)
+    assert quick < 0.5  # did not wait for the 0.6 s check
+    assert first["storage"]["integrity"] == "pending" and first["storage"]["status"] == "pending"
+    assert first["storage"]["integrity_age_seconds"] is None
+    assert ticks[-1] < 0.5
+    assert after["storage"]["integrity"] == "ok" and after["storage"]["status"] == "ok"
+    assert after["storage"]["integrity_age_seconds"] >= 0.0
     assert "MainThread" not in store.threads
 
 
@@ -73,14 +92,35 @@ def test_concurrent_health_calls_share_one_integrity_check_and_reuse_it() -> Non
 
     async def scenario():
         first = await asyncio.gather(*(api.health() for _ in range(5)))
-        second = await api.health()
+        await _settle(store)
+        second = await asyncio.gather(*(api.health() for _ in range(3)))
         return first, second
 
     first, second = _run_with(store, scenario)
-    assert store.integrity_calls == 1 and store.storage_calls == 1
-    assert all(item["storage"]["integrity"] == "ok" for item in first)
-    assert second["storage_age_seconds"] >= 0 and second["storage"]["integrity_age_seconds"] >= 0.0
-    assert second["storage_coverage"][0]["instrument_id"] == "BTC"
+    assert store.integrity_calls == 1
+    assert store.storage_calls == 2  # once while pending, once with the result
+    assert all(item["storage"]["integrity"] == "pending" for item in first)
+    assert all(item["storage"]["integrity"] == "ok" for item in second)
+    assert second[0]["storage_age_seconds"] >= 0 and second[0]["storage"]["integrity_age_seconds"] >= 0.0
+    assert second[0]["storage_coverage"][0]["instrument_id"] == "BTC"
+
+
+def test_a_failing_integrity_check_reports_an_error_not_pending_forever() -> None:
+    store = SlowStore(integrity_seconds=0.0)
+
+    def broken() -> str:
+        raise OSError("disk I/O error")
+
+    store.storage_integrity = broken
+
+    async def scenario():
+        await api.health()
+        await _settle(store)
+        return await api.health()
+
+    after = _run_with(store, scenario)
+    assert after["storage"]["status"] == "error"
+    assert after["storage"]["integrity"] == "unavailable: OSError"
 
 
 def test_storage_facts_refresh_after_their_ttl_but_integrity_waits_longer(monkeypatch) -> None:
@@ -90,11 +130,13 @@ def test_storage_facts_refresh_after_their_ttl_but_integrity_waits_longer(monkey
 
     async def scenario():
         await api.health()
+        await _settle(store)
+        await api.health()
         await asyncio.sleep(0.1)
         await api.health()
 
     _run_with(store, scenario)
-    assert store.storage_calls == 2  # coverage is re-read
+    assert store.storage_calls == 3  # pending, then the result, then re-read after the TTL
     assert store.integrity_calls == 1  # the full check is not
 
 
@@ -105,7 +147,8 @@ def test_an_expired_integrity_result_is_served_while_a_fresh_one_runs_in_the_bac
     monkeypatch.setattr(api, "HEALTH_INTEGRITY_TTL_SECONDS", 0.3)
 
     async def scenario():
-        await api.health()  # first call waits for the check
+        await api.health()  # starts the first check
+        await _settle(store)
         store.integrity_seconds = 0.5
         await asyncio.sleep(0.35)  # the result is now older than its TTL
         started = time.monotonic()
