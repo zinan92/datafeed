@@ -32,6 +32,7 @@ from kline.config import get_settings
 from kline.market_query import (
     MarketQueryReader,
     MarketQueryResult,
+    cached_market_query_reader,
     get_market_query_reader,
     query_backend_status,
 )
@@ -1039,7 +1040,8 @@ async def get_candles(
         )
 
     try:
-        market_reader = get_market_query_reader()
+        # #204: building the reader scans the market database (~18 s). On the loop it froze every request.
+        market_reader = cached_market_query_reader() or await asyncio.to_thread(get_market_query_reader)
     except RuntimeError as error:
         raise _error(
             status_code=503,
