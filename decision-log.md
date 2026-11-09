@@ -1,5 +1,24 @@
 # Decision Log
 
+## 2026-11-09 - Execution-venue reads do not wait for the market query reader (#206)
+
+Decision
+
+- After #204 (183da35), the log showed health at 9 ms and no loop warning, but
+  `GET /api/candles/commodity/GOLD?…&mode=live took 18458 ms`. That read requires
+  the execution venue. `get_candles` never consults the reader for such reads
+  (`not policy.require_execution_venue`), yet it waited for the build.
+- `_market_reader_for(policy)`: a venue read returns `None` without building or
+  waiting. It still calls `cached_market_query_reader()`, so a misconfigured
+  backend or a failed build raises and the read is refused (503) as before.
+  Other reads wait for the build in a worker thread.
+
+Verification
+
+- `tests/test_market_reader_warmup.py` 8 (3 new): a venue read returns in under
+  0.2 s with no build; a misconfigured backend still raises; a cache read builds
+  once off the loop. Full suite 478.
+
 ## 2026-11-09 - The market query reader is built in the background, never on the loop (#204)
 
 Decision

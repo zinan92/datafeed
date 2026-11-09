@@ -111,5 +111,34 @@ def test_a_failed_build_is_reported_not_left_warming(monkeypatch, tmp_path: Path
 
 def test_get_candles_does_not_build_the_reader_on_the_loop() -> None:
     source = Path(api.__file__).read_text()
-    assert "cached_market_query_reader() or await asyncio.to_thread(get_market_query_reader)" in source
+    assert "market_reader = await _market_reader_for(policy)" in source
     assert "market_reader = get_market_query_reader()" not in source
+
+
+class _Policy:
+    def __init__(self, venue: bool) -> None:
+        self.require_execution_venue = venue
+
+
+def test_a_venue_read_neither_builds_nor_waits_for_the_reader(monkeypatch, tmp_path: Path) -> None:
+    """Production 07:53Z: a GOLD venue read waited 18.5 s for a reader it never uses."""
+    _market_first(monkeypatch, tmp_path)
+    started = time.monotonic()
+    assert asyncio.run(api._market_reader_for(_Policy(venue=True))) is None
+    assert time.monotonic() - started < 0.2 and SlowReader.builds == 0
+
+
+def test_a_venue_read_still_fails_closed_on_a_broken_market_backend(monkeypatch, tmp_path: Path) -> None:
+    _market_first(monkeypatch, tmp_path)
+    monkeypatch.setenv("KLINE_MARKET_DB_PATH", "")
+    try:
+        asyncio.run(api._market_reader_for(_Policy(venue=True)))
+    except RuntimeError:
+        return
+    raise AssertionError("a misconfigured market backend must still refuse the read")
+
+
+def test_a_cache_read_waits_for_the_reader_off_the_loop(monkeypatch, tmp_path: Path) -> None:
+    _market_first(monkeypatch, tmp_path)
+    reader = asyncio.run(api._market_reader_for(_Policy(venue=False)))
+    assert isinstance(reader, SlowReader) and SlowReader.builds == 1
