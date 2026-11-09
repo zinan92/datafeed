@@ -1522,7 +1522,8 @@ class KlineStore:
         """Return an owner-side integrity receipt without exposing the database path.
 
         ``integrity`` lets a caller pass a recent ``storage_integrity()`` result instead of
-        re-running the full check on every call.
+        re-running the full check on every call. ``"pending"`` means the check has not finished
+        yet; it is reported as ``status="pending"``, never as ``"ok"`` (#198).
         """
         if integrity is None:
             integrity = self.storage_integrity()
@@ -1536,7 +1537,7 @@ class KlineStore:
                 ).scalar_one()
             )
         return {
-            "status": "ok" if integrity == "ok" else "error",
+            "status": integrity if integrity in ("ok", "pending") else "error",
             "integrity": integrity,
             "candle_rows": candle_rows,
             "source_count": source_rows,

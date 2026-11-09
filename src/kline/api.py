@@ -1542,32 +1542,37 @@ def _health_storage(store: Any, integrity: str) -> dict[str, Any]:
     }
 
 
-async def _cached_health_storage(store: Any) -> tuple[dict[str, Any], float, float]:
+async def _cached_health_storage(store: Any) -> tuple[dict[str, Any], float, float | None]:
     cache = _HEALTH_CACHES.get(id(store))
     if cache is None:
         cache = _HEALTH_CACHES[id(store)] = _HealthStorageCache(lock=asyncio.Lock())
     async with cache.lock:  # one computation at a time; waiters reuse its result
         now = monotonic()
-        if cache.integrity is None or cache.integrity_at is None:
-            # Only the first call after a start waits for the full check.
-            cache.integrity = await asyncio.to_thread(store.storage_integrity)
-            cache.integrity_at = monotonic()
-            cache.storage_at = None
-        elif now - cache.integrity_at > HEALTH_INTEGRITY_TTL_SECONDS and (
-            cache.integrity_refresh is None or cache.integrity_refresh.done()
-        ):
-            # Later checks run in the background; callers get the last result and its age (#196:
-            # waiting took 24.8 s on production, past trading-system's 10 s client timeout).
+        due = cache.integrity_at is None or now - cache.integrity_at > HEALTH_INTEGRITY_TTL_SECONDS
+        if due and (cache.integrity_refresh is None or cache.integrity_refresh.done()):
+            # The full check always runs in the background. Waiting took 24.8 s after the TTL (#196)
+            # and 26.2 s on the first call after a restart (#198), past trading-system's 10 s client
+            # timeout. Until the first result exists, storage reads "pending", never "ok".
             cache.integrity_refresh = asyncio.create_task(_refresh_integrity(store, cache))
-        if cache.storage is None or cache.storage_at is None or now - cache.storage_at > HEALTH_STORAGE_TTL_SECONDS:
-            cache.storage = await asyncio.to_thread(_health_storage, store, cache.integrity)
+        integrity = cache.integrity or "pending"
+        if (
+            cache.storage is None
+            or cache.storage_at is None
+            or now - cache.storage_at > HEALTH_STORAGE_TTL_SECONDS
+            or cache.storage["storage"].get("integrity") != integrity
+        ):
+            cache.storage = await asyncio.to_thread(_health_storage, store, integrity)
             cache.storage_at = monotonic()
         storage = dict(cache.storage)
-        return storage, monotonic() - cache.storage_at, monotonic() - cache.integrity_at
+        integrity_age = None if cache.integrity_at is None else monotonic() - cache.integrity_at
+        return storage, monotonic() - cache.storage_at, integrity_age
 
 
 async def _refresh_integrity(store: Any, cache: _HealthStorageCache) -> None:
-    integrity = await asyncio.to_thread(store.storage_integrity)
+    try:
+        integrity = await asyncio.to_thread(store.storage_integrity)
+    except Exception as error:  # report the failure; do not keep "pending" forever
+        integrity = f"unavailable: {type(error).__name__}"
     cache.integrity, cache.integrity_at, cache.storage_at = integrity, monotonic(), None
 
 
@@ -1579,7 +1584,7 @@ async def health() -> dict:
     storage, storage_age, integrity_age = await _cached_health_storage(get_store())
     storage["storage"] = {
         **storage["storage"],
-        "integrity_age_seconds": round(integrity_age, 1),
+        "integrity_age_seconds": None if integrity_age is None else round(integrity_age, 1),
     }
     return {
         "status": "ok",
