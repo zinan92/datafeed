@@ -1040,8 +1040,7 @@ async def get_candles(
         )
 
     try:
-        # #204: building the reader scans the market database (~18 s). On the loop it froze every request.
-        market_reader = cached_market_query_reader() or await asyncio.to_thread(get_market_query_reader)
+        market_reader = await _market_reader_for(policy)
     except RuntimeError as error:
         raise _error(
             status_code=503,
@@ -1220,6 +1219,19 @@ async def get_candles(
         if market_reader is not None and market_miss is not None
         else response
     )
+
+
+async def _market_reader_for(policy: Any) -> MarketQueryReader | None:
+    """The market query reader this read needs, without blocking the event loop (#204).
+
+    Building the reader scans the market database (~18 s on production); on the loop it froze every
+    request. A read that requires the execution venue never consults the reader, so it neither builds
+    nor waits for it, but a broken market backend still fails it closed (RuntimeError -> 503) as before.
+    """
+    if policy.require_execution_venue:
+        cached_market_query_reader()
+        return None
+    return cached_market_query_reader() or await asyncio.to_thread(get_market_query_reader)
 
 
 @router.websocket("/ws/candles/{asset_class}/{ticker}")
