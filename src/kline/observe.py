@@ -6,6 +6,7 @@ stdlib ``logging`` only:
 
 - one UTC timestamp format for the ``kline`` and ``uvicorn`` loggers;
 - a WARNING for each request slower than ``KLINE_SLOW_REQUEST_SECONDS`` (default 1.0);
+- a WARNING for each 5xx response, whatever its duration, with the reason from its body (#212);
 - a WARNING when the event loop wakes more than ``KLINE_LOOP_LAG_WARN_SECONDS`` late (default 1.0);
 - a startup timeline (begin, registry init, complete, first request served).
 
@@ -15,6 +16,7 @@ measures around the app without changing what it returns.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import os
 import re
@@ -27,7 +29,10 @@ FORMAT = "%(asctime)s.%(msecs)03dZ %(levelname)s %(name)s: %(message)s"
 DATEFMT = "%Y-%m-%dT%H:%M:%S"
 REDACTED = "[redacted]"
 _SECRET_KEY = re.compile(r"secret|token|passw|api[_-]?key|private[_-]?key|signature|auth", re.I)
+_SECRET_PAIR = re.compile(r"((?:secret|token|passw|api[_-]?key|private[_-]?key|signature|auth)[\w-]*\s*[=:]\s*)[^\s&,;\"']+", re.I)
 _TIMESTAMPED = "_kline_timestamped"
+REASON_BODY_BYTES = 4096
+REASON_CHARS = 300
 # When this module was imported: uvicorn imports the app factory right after it starts, and Starlette only
 # builds the middleware on the first request, so the middleware cannot take its own start time.
 PROCESS_STARTED = time.monotonic()
@@ -84,8 +89,24 @@ def redacted_target(path: str, query: bytes | str) -> str:
     return f"{path}?{urlencode(pairs, safe='/:,')}"
 
 
+def failure_reason(body: bytes) -> str:
+    """Why a 5xx response failed, from its body: FastAPI's ``detail`` when it is JSON, else the text itself."""
+    text = body.decode("utf-8", "replace")
+    try:
+        detail = json.loads(text).get("detail")
+    except (ValueError, AttributeError):
+        detail = None
+    if isinstance(detail, dict):
+        text = " ".join(str(detail[key]) for key in ("error", "detail") if detail.get(key)) or json.dumps(detail)
+    elif isinstance(detail, str):
+        text = detail
+    text = _SECRET_PAIR.sub(lambda match: match.group(1) + REDACTED, " ".join(text.split()))
+    return text[:REASON_CHARS] or "-"
+
+
 class Timing:
-    """Pure ASGI middleware: a WARNING per slow request, and one line for the first request served."""
+    """Pure ASGI middleware: a WARNING per slow request, one per failed (5xx) request with its reason, and one
+    line for the first request served."""
 
     def __init__(self, app: Callable[..., Awaitable[None]], *, started_at: float | None = None) -> None:
         self.app = app
@@ -96,16 +117,22 @@ class Timing:
         if scope.get("type") != "http":
             await self.app(scope, receive, send)
             return
-        began, status = time.monotonic(), 0
+        began, status, body = time.monotonic(), 0, bytearray()
 
         async def watch(message: dict[str, Any]) -> None:
             nonlocal status
             if message.get("type") == "http.response.start":
                 status = int(message.get("status", 0))
+            elif message.get("type") == "http.response.body" and status >= 500 and len(body) < REASON_BODY_BYTES:
+                body.extend(bytes(message.get("body") or b"")[: REASON_BODY_BYTES - len(body)])
             await send(message)
 
+        raised = ""
         try:
             await self.app(scope, receive, watch)
+        except Exception as error:  # Starlette turns it into a 500 outside this middleware; say what it was
+            raised = type(error).__name__
+            raise
         finally:
             done = time.monotonic()
             took = done - began
@@ -114,7 +141,11 @@ class Timing:
                 self.first_served = True
                 LOGGER.info("first request served %.0f ms after the app was loaded: %s %s %s in %.0f ms",
                             (done - self.started_at) * 1000, scope.get("method", ""), target, status or "-", took * 1000)
-            if took > slow_request_seconds():
+            if status >= 500 or raised:  # a slow failure is logged once, here, with how long it took
+                LOGGER.warning("failed request %s %s status=%s took %.0f ms reason=%s",
+                               scope.get("method", ""), target, status or 500, took * 1000,
+                               f"unhandled {raised}" if raised and not status else failure_reason(bytes(body)))
+            elif took > slow_request_seconds():
                 LOGGER.warning("slow request %s %s status=%s took %.0f ms",
                                scope.get("method", ""), target, status or "-", took * 1000)
 
