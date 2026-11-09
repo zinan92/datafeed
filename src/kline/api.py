@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
@@ -1504,12 +1505,28 @@ async def market_sessions(
         ) from error
 
 
-@router.get("/health")
-async def health() -> dict:
-    """Health check."""
-    from kline import __version__
+# /api/health reads SQLite synchronously. Run on the event loop, one call blocked every other
+# request (a cached GOLD read went from 0.03 s to 4.8 s), and PRAGMA integrity_check alone takes
+# ~12 s on the production database (#194). So the storage part runs in a worker thread, concurrent
+# callers share one computation, and the full integrity check is reused for a while.
+HEALTH_STORAGE_TTL_SECONDS = float(os.environ.get("KLINE_HEALTH_STORAGE_TTL_SECONDS", "15"))
+HEALTH_INTEGRITY_TTL_SECONDS = float(os.environ.get("KLINE_HEALTH_INTEGRITY_TTL_SECONDS", "600"))
 
-    coverage = get_store().source_coverage()
+
+@dataclass
+class _HealthStorageCache:
+    lock: asyncio.Lock
+    storage_at: float | None = None
+    storage: dict[str, Any] | None = None
+    integrity_at: float | None = None
+    integrity: str | None = None
+
+
+_HEALTH_CACHES: dict[int, _HealthStorageCache] = {}
+
+
+def _health_storage(store: Any, integrity: str) -> dict[str, Any]:
+    coverage = store.source_coverage()
     for row in coverage:
         try:
             row["instrument_id"] = source_manifest(
@@ -1518,14 +1535,47 @@ async def health() -> dict:
         except (KeyError, ValueError):
             row["instrument_id"] = str(row["ticker"])
     return {
+        "storage": store.storage_health(integrity=integrity),
+        "storage_coverage": coverage,
+        "latest_observations": store.latest_source_observations(),
+    }
+
+
+async def _cached_health_storage(store: Any) -> tuple[dict[str, Any], float, float]:
+    cache = _HEALTH_CACHES.get(id(store))
+    if cache is None:
+        cache = _HEALTH_CACHES[id(store)] = _HealthStorageCache(lock=asyncio.Lock())
+    async with cache.lock:  # one computation at a time; waiters reuse its result
+        now = monotonic()
+        if cache.integrity is None or cache.integrity_at is None or now - cache.integrity_at > HEALTH_INTEGRITY_TTL_SECONDS:
+            cache.integrity = await asyncio.to_thread(store.storage_integrity)
+            cache.integrity_at = monotonic()
+            cache.storage_at = None  # the integrity result changed: rebuild the storage block
+        if cache.storage is None or cache.storage_at is None or now - cache.storage_at > HEALTH_STORAGE_TTL_SECONDS:
+            cache.storage = await asyncio.to_thread(_health_storage, store, cache.integrity)
+            cache.storage_at = monotonic()
+        storage = dict(cache.storage)
+        return storage, monotonic() - cache.storage_at, monotonic() - cache.integrity_at
+
+
+@router.get("/health")
+async def health() -> dict:
+    """Health check. Storage facts are at most a few seconds old; see ``storage_age_seconds``."""
+    from kline import __version__
+
+    storage, storage_age, integrity_age = await _cached_health_storage(get_store())
+    storage["storage"] = {
+        **storage["storage"],
+        "integrity_age_seconds": round(integrity_age, 1),
+    }
+    return {
         "status": "ok",
         "service": "kline",
         "version": __version__,
         "runtime": runtime_status(),
         "providers": provider_status(),
-        "storage": get_store().storage_health(),
-        "storage_coverage": coverage,
-        "latest_observations": get_store().latest_source_observations(),
+        **storage,
+        "storage_age_seconds": round(storage_age, 1),
         "query_backend": query_backend_status(),
     }
 

@@ -1,5 +1,39 @@
 # Decision Log
 
+## 2026-11-09 - /api/health no longer blocks the event loop (#194)
+
+Decision
+
+- `/api/health` read SQLite synchronously inside an `async` handler and ran
+  `PRAGMA integrity_check` on every call. Measured on production (485 MB
+  `kline.db`): the integrity check alone takes ~12 s cold; a cached GOLD 1m
+  read took 0.03 s normally and 4.8 s while one health call ran. That stall is
+  what trading-system saw as `datafeed unavailable: timed out`.
+- The storage part now runs in a worker thread (`asyncio.to_thread`), one
+  computation at a time per store, shared by concurrent callers. Coverage and
+  observations are reused for 15 s (`KLINE_HEALTH_STORAGE_TTL_SECONDS`), the
+  full integrity check for 600 s (`KLINE_HEALTH_INTEGRITY_TTL_SECONDS`).
+- The response says how old those facts are: `storage_age_seconds` and
+  `storage.integrity_age_seconds`. Nothing else in the payload changed.
+- `KlineStore.storage_integrity()` is split out of `storage_health()`, which
+  takes an optional recent result; the default still runs the check.
+
+Gotchas
+
+- The 2639+ `$MGCV26.CMX: possibly delisted` lines came from
+  human-kline-review asking for an expired dated contract with
+  `cache_policy=bypass` and retries. Yahoo calls already run in threads, so
+  they cost threads, not the event loop; that client is fixed in its own repo.
+- The cache is keyed by the store object, so a test or process with a new
+  store never sees another's numbers.
+
+Verification
+
+- `tests/test_health_does_not_block.py`: another coroutine keeps ticking while
+  a 0.6 s integrity check runs; five concurrent calls share one check; storage
+  refreshes after its TTL while integrity does not.
+- Full suite 457 passed.
+
 ## 2026-11-07 - OKX silver and crude under the commodity source (#188)
 
 Decision
