@@ -1,5 +1,35 @@
 # Decision Log
 
+## 2026-11-09 - Legacy timestamps are normalised once per database (#208)
+
+Decision
+
+- `registry init` took ~9 s before the port opened on every start (#202 log:
+  9264, 8824, 8790 ms). A profile on a backup copy put 3.24 s of 3.27 s in
+  `KlineStore._normalize_stored_timestamps`: a full-table
+  `LIKE '%T%' … NOT LIKE '%Z'` scan over 1,352,441 rows inside a write
+  transaction, which found 0 rows to change.
+- Writes go only through `save()`, whose rows come from `Candle`; its
+  `normalize_timestamp` validator stores canonical UTC. Nothing else inserts
+  into or updates `klines`. So only legacy rows can need it.
+- The normalisation now runs once per database. It records
+  `normalized_stored_timestamps` in a new `kline_maintenance (name, completed_at)`
+  table in the same transaction, and skips when the marker exists.
+
+Gotchas
+
+- The first start after release still scans once (it writes the marker).
+- `KlineReadOnlyStore` does not call the normaliser, so read-only opens are
+  unaffected.
+
+Verification
+
+- `tests/test_store.py` (3 new): a legacy database is normalised, its
+  duplicate merged and the marker written on first open; a marked database is
+  not scanned again; a fresh database is marked. Full suite 481.
+- On a backup copy of the production database: first `init()` 3.04 s, second
+  0.012 s, third 0.009 s; row count unchanged.
+
 ## 2026-11-09 - Execution-venue reads do not wait for the market query reader (#206)
 
 Decision
