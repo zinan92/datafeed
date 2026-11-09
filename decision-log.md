@@ -1,5 +1,41 @@
 # Decision Log
 
+## 2026-11-09 - The market query reader is built in the background, never on the loop (#204)
+
+Decision
+
+- The #202 log on the first restart after its release (07:47:55Z):
+  `first request served … GET /api/health 200 in 18138 ms` and
+  `event loop blocked: woke 17656 ms late`. `get_market_query_reader()` builds
+  `MarketQueryReader` on first use. Its constructor runs
+  `mvp_latest_closed_bars()` (a GROUP BY over the market database), and both
+  callers, `/api/health` and `get_candles`, ran it on the event loop. This is
+  the unexplained 28.8 s first request on #200.
+- The lifespan starts `warm_market_query_reader()`, which builds the reader in a
+  worker thread and logs `market query reader ready in N ms` (or the failure).
+- `cached_market_query_reader()` never builds. `query_backend_status()` uses it:
+  `status: "warming"` until the reader exists, and `invalid/failed` if the last
+  build failed (`_reader_failed`), so health is never stuck on warming.
+- `get_candles` takes the cached reader, or waits for the build in a worker
+  thread (`asyncio.to_thread`). A candle read during warm-up is slow; the loop is not.
+
+Gotchas
+
+- Measured, not changed: registry `init()` takes 9.3 s in production before the
+  port opens (3.2 s on a copy with a warm cache). It is all
+  `KlineStore._normalize_stored_timestamps`, a full-table
+  `LIKE '%T%' … NOT LIKE '%Z'` scan inside a write transaction on every start.
+  Next step.
+
+Verification
+
+- `tests/test_market_reader_warmup.py` (5): health returns warming at once
+  without building; the warm-up builds once in a thread with loop lag under
+  0.2 s against a 0.6 s build; a candle path during warm-up waits off the loop;
+  a failed build reports failed; `get_candles` source pin. Existing
+  `test_market_query.py` (missing database fails closed) unchanged and green.
+- Profile of `init()` on a backup copy of the production database (sqlite backup API, read-only source). Full suite 475.
+
 ## 2026-11-09 - The 8100 log says when, how long, and what blocked the loop (#202)
 
 Decision

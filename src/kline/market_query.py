@@ -304,6 +304,7 @@ class MarketQueryReader:
 
 _reader_lock = threading.Lock()
 _reader_cache: dict[tuple[str, str, int], MarketQueryReader] = {}
+_reader_failed: set[tuple[str, str, int]] = set()
 
 
 def query_backend_mode() -> str:
@@ -313,7 +314,7 @@ def query_backend_mode() -> str:
     return value
 
 
-def get_market_query_reader() -> MarketQueryReader | None:
+def _reader_key() -> tuple[str, str, int] | None:
     if query_backend_mode() != MARKET_FIRST:
         return None
     settings = get_settings()
@@ -321,11 +322,29 @@ def get_market_query_reader() -> MarketQueryReader | None:
     if not database:
         raise RuntimeError(f"{MARKET_DB_ENV} is required for market_first")
     manifest = Path(__file__).resolve().parents[2] / "configs" / "watchlist_manifest.json"
-    cache_key = (
+    return (
         str(manifest.resolve()),
         str(Path(database).expanduser().resolve()),
         settings.market_min_rows,
     )
+
+
+def cached_market_query_reader() -> MarketQueryReader | None:
+    """The reader if it is already built; never builds it (#204). ``None`` also for the legacy backend."""
+    key = _reader_key()
+    if key is None:
+        return None
+    if key in _reader_failed:  # the last build failed; report it rather than "warming" forever
+        raise RuntimeError("market query backend unavailable")
+    return _reader_cache.get(key)
+
+
+def get_market_query_reader() -> MarketQueryReader | None:
+    """Build the reader on first use. That scans the market database (~18 s on production), so call it
+    from a worker thread, never on the event loop (#204)."""
+    cache_key = _reader_key()
+    if cache_key is None:
+        return None
     with _reader_lock:
         if cache_key not in _reader_cache:
             try:
@@ -335,18 +354,33 @@ def get_market_query_reader() -> MarketQueryReader | None:
                     minimum_series_rows=cache_key[2],
                 )
             except Exception as error:
+                _reader_failed.add(cache_key)
                 raise RuntimeError("market query backend unavailable") from error
+            _reader_failed.discard(cache_key)
         return _reader_cache[cache_key]
 
 
 def query_backend_status() -> dict[str, Any]:
+    """Never builds the reader (#204): until the startup warm-up has built it, market_first is "warming"."""
     try:
-        reader = get_market_query_reader()
+        mode = query_backend_mode()
+        reader = cached_market_query_reader()
     except RuntimeError as error:
         return {
             "mode": "invalid",
             "status": "failed",
             "detail": type(error).__name__,
+            "market_database_path": "redacted",
+            "market_hits": 0,
+            "market_misses": 0,
+            "legacy_fallbacks": 0,
+            "legacy_unique_cells": 0,
+            "miss_reasons": {},
+        }
+    if reader is None and mode == MARKET_FIRST:
+        return {
+            "mode": MARKET_FIRST,
+            "status": "warming",
             "market_database_path": "redacted",
             "market_hits": 0,
             "market_misses": 0,
